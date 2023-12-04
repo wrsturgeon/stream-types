@@ -38,7 +38,7 @@ Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyHasTy : forall n p x s,
       MapsTo p x n ->
       PfxTyped p s ->
-      EnvTyped n (CtxHasTy (TmVar x) s)
+      EnvTyped n (CtxHasTy x s)
   | EnvTyComma : forall n G D,
       EnvTyped n G ->
       EnvTyped n D ->
@@ -62,7 +62,7 @@ Qed.
 
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,
-  Contains (CtxHasTy (TmVar x) s) G ->
+  Contains (CtxHasTy x s) G ->
   EnvTyped n G ->
   exists p, (MapsTo p x n /\ PfxTyped p s).
 Proof.

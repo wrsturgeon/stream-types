@@ -12,8 +12,8 @@ Inductive term : Set :=
   | TmComma (lhs rhs : term)
   | TmSemic (lhs rhs : term)
   | TmLet (bind : ident) (bound body : term)
-  | TmLetPar (lhs rhs : ident) (bound body : term) 
-  | TmLetCat (lhs rhs : ident) (bound body : term) 
+  | TmLetPar (lhs rhs bound : ident) (body : term) 
+  | TmLetCat (lhs rhs bound : ident) (body : term) 
   .
 
 Bind Scope term_scope with term.

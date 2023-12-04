@@ -8,7 +8,7 @@ From LambdaST Require Import
 
 Inductive context : Set :=
   | CtxEmpty
-  | CtxHasTy (tm : term) (ty : type)
+  | CtxHasTy (id : ident) (ty : type)
   | CtxComma (lhs rhs : context)
   | CtxSemic (lhs rhs : context)
   .
@@ -79,9 +79,9 @@ Theorem contains_is_find_repl_id : forall needle haystack,
   Contains needle haystack <-> FindReplace needle needle haystack haystack.
 Proof. split; intros; induction H; constructor; assumption. Qed.
 
-Fixpoint vars_in ctx :=
+Fixpoint vars_in ctx : list ident :=
   match ctx with
-  | CtxHasTy (TmVar x) _ => cons x nil
-  | CtxHasTy _ _ | CtxEmpty => nil
+  | CtxEmpty => nil
+  | CtxHasTy x _ => cons x nil
   | CtxComma lhs rhs | CtxSemic lhs rhs => vars_in lhs ++ vars_in rhs
   end.

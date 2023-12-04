@@ -13,7 +13,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       G |- e2 \in t ->
       G |- (TmComma e1 e2) \in (TyPar s t)
   | T_Par_L : forall Gxy Gz x y z s t e r,
-      FindReplace (CtxComma (CtxHasTy (TmVar x) s) (CtxHasTy (TmVar y) t)) (CtxHasTy z (TyPar s t)) Gxy Gz ->
+      FindReplace (CtxComma (CtxHasTy x s) (CtxHasTy y t)) (CtxHasTy z (TyPar s t)) Gxy Gz ->
       Gxy |- e \in r ->
       Gz |- (TmLetPar x y z e) \in r
   | T_Cat_R : forall G D e1 e2 s t,
@@ -21,7 +21,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       D |- e2 \in t ->
       (CtxSemic G D) |- (e1; e2) \in (TyDot s t)
   | T_Cat_L : forall Gxy Gz x y z s t e r,
-      FindReplace (CtxSemic (CtxHasTy (TmVar x) s) (CtxHasTy (TmVar y) t)) (CtxHasTy z (TyDot s t)) Gxy Gz ->
+      FindReplace (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) (CtxHasTy z (TyDot s t)) Gxy Gz ->
       Gxy |- e \in r ->
       Gz |- (TmLetCat x y z e) \in r
   | T_Eps_R : forall G,
@@ -30,13 +30,13 @@ Inductive Typed : context -> term -> type -> Prop :=
       G |- unit \in 1
   | T_Var : forall G x s,
       Contains (CtxHasTy x s) G ->
-      G |- x \in s
+      G |- (TmVar x) \in s
   | T_SubCtx : forall G G' e s,
       Contains G' G ->
       G' |- e \in s ->
       G |- e \in s
   | T_Let : forall Gxs GD D x e e' s t,
-      FindReplace (CtxHasTy (TmVar x) s) D Gxs GD ->
+      FindReplace (CtxHasTy x s) D Gxs GD ->
       D |- e \in s ->
       Gxs |- e' \in t ->
       GD |- TmLet x e e' \in t
