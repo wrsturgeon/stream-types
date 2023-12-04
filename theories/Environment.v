@@ -10,6 +10,9 @@ From LambdaST Require Import
 
 Definition env : Set := ident -> option prefix.
 
+Definition subst : ident -> prefix -> env -> env := fun id p n x => if eq_id id x then Some p else n x.
+Definition union : env -> env -> env := fun n n' x => match n' x with None => n x | Some y => Some y end.
+
 Definition MapsTo : prefix -> ident -> env -> Prop := fun p x n => n x = Some p.
 Arguments MapsTo/ p x n. (* unfold immediately *)
 
@@ -29,8 +32,7 @@ Definition MaximalOn : context -> env -> Prop := fun s n =>
 
 (* TODO: empty/maximal on (free variables in) terms *)
 
-(* NOTE: This definition is almost certainly wrong in the paper. *)
-Definition Agree n n' D D' : Prop := (MaximalOn D n <-> MaximalOn D' n') /\ (EmptyOn D n <-> MaximalOn D' n').
+Definition Agree n n' D D' : Prop := (MaximalOn D n <-> MaximalOn D' n') /\ (EmptyOn D n <-> EmptyOn D' n').
 
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
@@ -73,10 +75,13 @@ Qed.
 
 (*
 (* Theorem B.11 *)
-Theorem agree_dot : forall n n' G G' D D',
+Theorem agree_union : forall n n' G G' D D',
   FindReplace D D' G G' ->
   EnvTyped n G ->
   EnvTyped n' D' ->
   Agree n n' D D' ->
-  EnvTyped not_sure G'.
+  EnvTyped (union n n') G'.
+Proof.
+  intros n n' G G' D D' Hhole Hn Hn' HA.
+Qed.
 *)
