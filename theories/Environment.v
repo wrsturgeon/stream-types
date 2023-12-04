@@ -54,13 +54,24 @@ Inductive EnvTyped : env -> context -> Prop :=
 
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
-  Contains D G ->
-  EnvTyped n G ->
+  EnvTyped n (fill G D) ->
   EnvTyped n D.
 Proof.
+  intros n G D H. remember (fill G D) as GD eqn:EGD. induction H.
+  - destruct G; try discriminate EGD.
+    destruct D; try discriminate EGD.
+    constructor.
+  - destruct G; try discriminate EGD.
+    destruct D; try discriminate EGD.
+    invert EGD. apply (EnvTyHasTy n p); assumption.
+  - fail.
+
+(*
+Old proof:
   intros n G D Hc Ht. generalize dependent n.
   induction Hc; intros; try (invert Ht; apply IHHc); assumption.
 Qed.
+*)
 
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,

@@ -13,6 +13,26 @@ Inductive context : Set :=
   | CtxSemic (lhs rhs : context)
   .
 
+Inductive hole : Set :=
+  | HoleRoot
+  | HoleCommaL (lhs : hole) (rhs : context)
+  | HoleCommaR (lhs : context) (rhs : hole)
+  | HoleSemicL (lhs : hole) (rhs : context)
+  | HoleSemicR (lhs : context) (rhs : hole)
+  .
+
+Fixpoint fill hole ctx :=
+  match hole with
+  | HoleRoot => ctx
+  | HoleCommaL lhs rhs => CtxComma (fill lhs ctx) rhs
+  | HoleCommaR lhs rhs => CtxComma lhs (fill rhs ctx)
+  | HoleSemicL lhs rhs => CtxSemic (fill lhs ctx) rhs
+  | HoleSemicR lhs rhs => CtxSemic lhs (fill rhs ctx)
+  end.
+
+Notation "G ( H )" := (fill G H) (at level 190).
+
+(*
 Inductive Contains : context -> context -> Prop :=
   | ContainsExact : forall c,
       Contains c c
@@ -78,6 +98,7 @@ Qed.
 Theorem contains_is_find_repl_id : forall needle haystack,
   Contains needle haystack <-> FindReplace needle needle haystack haystack.
 Proof. split; intros; induction H; constructor; assumption. Qed.
+*)
 
 Fixpoint vars_in ctx : list ident :=
   match ctx with
