@@ -4,12 +4,12 @@ From LambdaST Require Import
   Prefix
   Types.
 
-Inductive NullableTy : type -> Prop :=
-  | NullableTyEps : NullableTy TyEps
+Inductive Nullable : type -> Prop :=
+  | NullableTyEps : Nullable TyEps
   | NullableTyPar : forall s t,
-      NullableTy s ->
-      NullableTy t ->
-      NullableTy (TyPar s t)
+      Nullable s ->
+      Nullable t ->
+      Nullable (TyPar s t)
   .
 
 Inductive NullableCtx : context -> Prop :=
@@ -19,14 +19,3 @@ Inductive NullableCtx : context -> Prop :=
       NullableCtx G' ->
       NullableCtx (CtxComma G G')
   .
-
-(* Theorem B.19 *)
-Theorem nullable_prefix_emp : forall p s,
-  PfxTyped p s ->
-  NullableTy s ->
-  p = emp s.
-Proof.
-  intros p s Ht Hn. generalize dependent p. induction Hn; intros; simpl in *; invert Ht.
-  - reflexivity.
-  - apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
-Qed.
