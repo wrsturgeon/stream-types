@@ -15,7 +15,7 @@ jobs:
       uses: cachix/install-nix-action@v22
       with:
         nix_path: nixpkgs=channel:nixos-unstable
-    - name: `make`
+    - name: make
       run: make
-    - name: `nix build`
+    - name: nix build
       run: nix build
