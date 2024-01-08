@@ -7,20 +7,14 @@
   outputs = { flake-utils, nixpkgs, self }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        name = "lambda-st";
+        pname = "lambda-st";
         version = "0.0.1";
-        system-nixpkgs = import nixpkgs { inherit system; };
-        coq-pkgs = system-nixpkgs.coqPackages;
+        os-pkgs = import nixpkgs { inherit system; };
+        pkgs = os-pkgs.coqPackages;
       in {
-        packages.default = system-nixpkgs.stdenv.mkDerivation {
-          inherit name version;
+        packages.default = pkgs.mkCoqDerivation {
+          inherit pname version;
           src = ./.;
-
-          buildInputs = (with system-nixpkgs; [ git ])
-            ++ (with coq-pkgs; [ coq ]);
-          buildPhase = ''
-            make
-          '';
         };
       });
 }

@@ -2,6 +2,7 @@ From Coq Require Import
   List.
 From LambdaST Require Import
   Context
+  Hole
   Ident
   Invert
   Prefix
@@ -73,24 +74,19 @@ Inductive EnvTyped : env -> context -> Prop :=
 
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
-  Contains D G ->
-  EnvTyped n G ->
+  EnvTyped n (fill G D) ->
   EnvTyped n D.
 Proof.
-  intros n G D Hc Ht. generalize dependent n.
-  induction Hc; intros; try (invert Ht; apply IHHc); assumption.
+  intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
+  generalize dependent G. generalize dependent D. induction H; intros; subst; simpl in *;
+  invert E; try econstructor; try eassumption; try (eapply IHEnvTyped1; eassumption); eapply IHEnvTyped2; eassumption.
 Qed.
 
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,
-  Contains (CtxHasTy x s) G ->
-  EnvTyped n G ->
+  EnvTyped n (fill G (CtxHasTy x s)) ->
   exists p, (MapsTo p x n /\ PfxTyped p s).
-Proof.
-  intros n G x s Hx Ht. generalize dependent x. generalize dependent s.
-  induction Ht; intros; invert Hx; try (apply IHHt1; assumption); try (apply IHHt2; assumption).
-  exists p. split; assumption.
-Qed.
+Proof. intros. assert (A := maps_to_hole _ _ _ H). invert A. eexists. split; eassumption. Qed.
 
 Lemma prop_on_item_weakening : forall P n n' vs,
   prop_on_item P n' vs ->
@@ -108,18 +104,62 @@ Proof.
   destruct H1; [left | right]; (eapply Forall_impl in H1; [apply H1 | apply prop_on_item_weakening]).
 Qed.
 
-(* Theorem B.11 *)
-Theorem agree_union : forall n n' G G' D D',
-  FindReplace D D' G G' ->
+Definition NoConflict (n n' : env) := forall x p,
+  MapsTo p x n -> (n' x = None \/ MapsTo p x n').
+Arguments NoConflict/ n n'.
+
+Lemma env_typed_weakening_alt : forall n n' G,
+  NoConflict n n' ->
   EnvTyped n G ->
+  EnvTyped (union n n') G.
+Proof.
+  intros n n' G Hm Ht. generalize dependent n'.
+  induction Ht; intros; simpl in *; econstructor; try apply IHHt1; try apply IHHt2; try eassumption.
+  - simpl. specialize (Hm _ _ H) as [Hm | Hm]; rewrite Hm; [assumption | reflexivity].
+  - destruct H; [left | right]; (eapply Forall_impl; [| eassumption]); intros; simpl in *;
+    destruct H0 as [p [Hpn Hp]]; eexists; (split; [| eassumption]);
+    (specialize (Hm _ _ Hpn) as [Hm | Hm]; rewrite Hm; [assumption | reflexivity]).
+Qed.
+
+Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
+  NoConflict n n' ->
+  (PropOn P D n <-> PropOn P D' n') ->
+  FillWith D  lhs lhs'  ->
+  FillWith D' lhs lhs'' ->
+  PropOn P lhs' n ->
+  PropOn P lhs'' (union n n').
+Proof.
+  intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
+  generalize dependent D'. generalize dependent lhs''. induction Hf; intros; invert Hf'; simpl in *; [
+    apply Hp in H; eapply Forall_impl; [| eassumption]; intros a [p [Ha Hm]];
+    eexists; split; [| eassumption]; simpl; rewrite Ha; reflexivity | | | |];
+  apply Forall_app in H as [Hl Hr]; apply Forall_app; split; try (eapply IHHf; eassumption);
+  (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
+  simpl; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
+Qed.
+
+(* Theorem B.11 *)
+Theorem agree_typed : forall n n' G D D',
+  NoConflict n n' ->
+  EnvTyped n (fill G D) ->
   EnvTyped n' D' ->
   Agree n n' D D' ->
-  EnvTyped (union n n') G'.
+  EnvTyped (union n n') (fill G D').
 Proof.
-  intros n n' G G' D D' Hhole Hn Hn' [HAm HAe].
-  generalize dependent n. generalize dependent n'.
-  induction Hhole; intros.
-  - apply env_typed_weakening. assumption.
-  - invert Hn. constructor.
-    + apply IHHhole; assumption.
-    + Abort.
+  intros n n' G D D' Hn Ht Ht' [Hm He]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
+  remember (fill G D') as GD' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
+  generalize dependent D'. generalize dependent GD'. induction E; intros; simpl in *.
+  - invert E'. apply env_typed_weakening. assumption.
+  - invert E'. invert Ht. econstructor. { eapply IHE; eassumption. }
+    (* NOTE: this is where the extra assumption becomes necessary, since the wrong side of `union` is weakened *)
+    apply env_typed_weakening_alt; assumption.
+  - invert E'. invert Ht. constructor. { apply env_typed_weakening_alt; assumption. } eapply IHE; eassumption.
+  - invert E'. invert Ht. constructor; [eapply IHE | apply env_typed_weakening_alt |]; try eassumption. destruct H5.
+    + left. eapply Forall_impl; [| eassumption]. intros a [p [Ha Hp]]. simpl in *. eexists. split; [| eassumption].
+      specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity].
+    + right. clear IHE. eapply agree_union; eassumption.
+  - invert E'. invert Ht. constructor. { apply env_typed_weakening_alt; assumption. } { eapply IHE; eassumption. }
+    clear IHE. destruct H5; [left | right]. { eapply agree_union; eassumption. } eapply Forall_impl; [| eassumption].
+    intros a [p [Ha Hp]]. eexists. split; [| eassumption]. simpl.
+    specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity].
+Qed.

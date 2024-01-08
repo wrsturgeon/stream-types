@@ -140,3 +140,74 @@ Proof.
   intros p s Ht Hn. generalize dependent p. induction Hn; intros; invert Ht. { reflexivity. }
   apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
 Qed.
+
+Fixpoint maybe_derivative p s : option type :=
+  match p, s with
+  | PfxEpsEmp, TyEps => Some TyEps
+  | PfxOneEmp, TyOne => Some TyOne
+  | PfxOneFull, TyOne => Some TyEps
+  | PfxParPair p1 p2, TyPar s t =>
+      match maybe_derivative p1 s, maybe_derivative p2 t with
+      | Some a, Some b => Some (TyPar a b)
+      | _, _ => None
+      end
+  | PfxCatFst p, TyDot s t => match maybe_derivative p s with Some s' => Some (TyDot s' t) | None => None end
+  | PfxCatBoth p1 p2, TyDot s t => maybe_derivative p2 t
+  | PfxSumEmp, TySum s t => Some (TySum s t)
+  | PfxSumInl p, TySum s t => maybe_derivative p s
+  | PfxSumInr p, TySum s t => maybe_derivative p t
+  | PfxStarEmp, TyStar s => Some (TyStar s)
+  | PfxStarDone, TyStar s => Some TyEps
+  | PfxStarFirst p, TyStar s => match maybe_derivative p s with Some s' => Some (TyDot s' (TyStar s)) | None => None end
+  | PfxStarRest p p', TyStar s => maybe_derivative p' (TyStar s)
+  | _, _ => None
+  end.
+
+Theorem reflect_derivative : forall p s s',
+  Derivative p s s' <-> maybe_derivative p s = Some s'.
+Proof.
+  split; intros.
+  - induction H; simpl in *;
+    try rewrite IHDerivative1;
+    try rewrite IHDerivative2;
+    try rewrite IHDerivative;
+    reflexivity.
+  - generalize dependent s. generalize dependent s'. induction p; intros;
+    try solve [destruct s; invert H; constructor];
+    destruct s; try discriminate H;
+    simpl in *.
+    + destruct (maybe_derivative p1 s1) eqn:E1; try discriminate H.
+      destruct (maybe_derivative p2 s2) eqn:E2; try discriminate H.
+      apply IHp1 in E1. apply IHp2 in E2.
+      invert H. constructor; assumption.
+    + destruct (maybe_derivative p s1) eqn:E; try discriminate H.
+      apply IHp in E. invert H. constructor. assumption.
+    + apply IHp2 in H. constructor. assumption.
+    + apply IHp in H. constructor. assumption.
+    + apply IHp in H. constructor. assumption.
+    + destruct (maybe_derivative p s) eqn:E; try discriminate H.
+      apply IHp in E. invert H. constructor. assumption.
+    + apply IHp2 in H. constructor. assumption.
+Qed.
+
+Theorem reflect_no_derivative : forall p s,
+  maybe_derivative p s = None ->
+  ~exists s', Derivative p s s'.
+Proof.
+  intros p s H [s' C]. generalize dependent H. induction C; simpl; intros;
+  try destruct (maybe_derivative p s);
+  try destruct (maybe_derivative p1 s);
+  try destruct (maybe_derivative p2 t);
+  try solve [apply IHC; assumption];
+  try solve [apply IHC1; assumption];
+  try solve [apply IHC2; assumption];
+  discriminate H.
+Qed.
+
+Definition derivative : forall p s, PfxTyped p s -> type.
+Proof.
+  intros p s H. destruct (maybe_derivative p s) as [d |] eqn:E. { apply d. }
+  apply derivative_when_well_typed in H.
+  apply reflect_no_derivative in E.
+  apply E in H. destruct H.
+Qed.
