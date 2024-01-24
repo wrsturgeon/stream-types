@@ -135,17 +135,13 @@ Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   PropOn P lhs' n ->
   PropOn P lhs'' (union n n').
 Proof.
-Admitted.
-(*
   intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
   generalize dependent D'. generalize dependent lhs''.
-  induction Hf; intros; invert Hf'; simpl in *; [
-    apply Hp in H; eapply Forall_impl; [| eauto]; intros a [p [Ha Hm]];
-    eexists; split; [| eassumption]; simpl; rewrite Ha; reflexivity | | | |];
+  induction Hf; intros; sinvert Hf'; simpl in *; [ apply Hp in H; eapply Forall_impl; [|eauto]; hauto q:on | | | |];
   apply Forall_app in H as [Hl Hr]; apply Forall_app; split; try (eapply IHHf; eassumption);
   (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
   simpl; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
-Qed. *)
+Qed. 
 
 (* Theorem B.11 *)
 Theorem agree_typed : forall n n' G D D',
