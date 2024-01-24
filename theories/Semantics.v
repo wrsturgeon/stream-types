@@ -3,7 +3,7 @@ From LambdaST Require Import
   Prefix
   Terms.
 
-(*
+
 Inductive Step : env -> term -> term -> prefix -> Prop :=
   | S_Eps_R : forall n,
       Step n sink sink PfxEpsEmp
@@ -29,11 +29,11 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       MapsTo (PfxParPair p1 p2) z n ->
       Step (subst x p1 (subst y p2 n)) e e' p' ->
       Step n (TmLetPar x y z e) (TmLetPar x y z e') p'
-  | S_Cat_L_1 : forall n x y z e e' p p',
+  | S_Cat_L_1 : forall t n x y z e e' p p',
       MapsTo (PfxCatFst p) z n ->
-      Step (subst x p (subst y (emp _) n)) e e' p' ->
-      Step n (TmLetCat x y z e) (TmLetCat x y z e') p'
+      Step (subst x p (subst y (emp t) n)) e e' p' ->
+      Step n (TmLetCat t x y z e) (TmLetCat t x y z e') p'
   .
 
 Print Step.
-*)
+

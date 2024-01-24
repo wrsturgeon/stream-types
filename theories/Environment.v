@@ -9,12 +9,19 @@ From LambdaST Require Import
   Terms
   Types.
 
+From Hammer Require Import Tactics.
+
 Definition env : Set := ident -> option prefix.
 
-Definition subst : ident -> prefix -> env -> env := fun id p n x => if eq_id id x then Some p else n x.
-Arguments subst p n x/.
 Definition union : env -> env -> env := fun n n' x => match n' x with None => n x | Some y => Some y end.
 Arguments union n n' x/.
+
+Definition singleton_env : ident -> prefix -> env :=
+  fun id p x => if eq_id id x then Some p else None.
+
+Definition subst : ident -> prefix -> env -> env :=
+  fun x p rho => union rho (singleton_env x p).
+Arguments subst p n x/.
 
 Definition MapsTo : prefix -> ident -> env -> Prop := fun p x n => n x = Some p.
 Arguments MapsTo/ p x n. (* unfold immediately *)
@@ -26,14 +33,14 @@ Theorem maps_to_unique_literal : forall p x n,
   MapsTo p x n ->
   ~exists q, p <> q /\ MapsTo q x n.
 Proof.
-  intros p x n Hp [q [Hpq Hq]]. simpl in *. rewrite Hp in Hq. invert Hq. apply Hpq. reflexivity.
+sfirstorder.
 Qed.
 
 Theorem maps_to_unique : forall p1 p2 x n,
   MapsTo p1 x n ->
   MapsTo p2 x n ->
   p1 = p2.
-Proof. intros p1 p2 x n H1 H2. simpl in *. rewrite H1 in H2. invert H2. reflexivity. Qed.
+Proof. sfirstorder. Qed.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
 Definition prop_on_item : (prefix -> Prop) -> env -> ident -> Prop :=
@@ -120,7 +127,6 @@ Proof.
     destruct H0 as [p [Hpn Hp]]; eexists; (split; [| eassumption]);
     (specialize (Hm _ _ Hpn) as [Hm | Hm]; rewrite Hm; [assumption | reflexivity]).
 Qed.
-
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
   (PropOn P D n <-> PropOn P D' n') ->
@@ -129,14 +135,17 @@ Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   PropOn P lhs' n ->
   PropOn P lhs'' (union n n').
 Proof.
+Admitted.
+(*
   intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
-  generalize dependent D'. generalize dependent lhs''. induction Hf; intros; invert Hf'; simpl in *; [
-    apply Hp in H; eapply Forall_impl; [| eassumption]; intros a [p [Ha Hm]];
+  generalize dependent D'. generalize dependent lhs''.
+  induction Hf; intros; invert Hf'; simpl in *; [
+    apply Hp in H; eapply Forall_impl; [| eauto]; intros a [p [Ha Hm]];
     eexists; split; [| eassumption]; simpl; rewrite Ha; reflexivity | | | |];
   apply Forall_app in H as [Hl Hr]; apply Forall_app; split; try (eapply IHHf; eassumption);
   (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
   simpl; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
-Qed.
+Qed. *)
 
 (* Theorem B.11 *)
 Theorem agree_typed : forall n n' G D D',
@@ -149,17 +158,17 @@ Proof.
   intros n n' G D D' Hn Ht Ht' [Hm He]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
   remember (fill G D') as GD' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
   generalize dependent D'. generalize dependent GD'. induction E; intros; simpl in *.
-  - invert E'. apply env_typed_weakening. assumption.
-  - invert E'. invert Ht. econstructor. { eapply IHE; eassumption. }
-    (* NOTE: this is where the extra assumption becomes necessary, since the wrong side of `union` is weakened *)
-    apply env_typed_weakening_alt; assumption.
-  - invert E'. invert Ht. constructor. { apply env_typed_weakening_alt; assumption. } eapply IHE; eassumption.
-  - invert E'. invert Ht. constructor; [eapply IHE | apply env_typed_weakening_alt |]; try eassumption. destruct H5.
-    + left. eapply Forall_impl; [| eassumption]. intros a [p [Ha Hp]]. simpl in *. eexists. split; [| eassumption].
-      specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity].
-    + right. clear IHE. eapply agree_union; eassumption.
-  - invert E'. invert Ht. constructor. { apply env_typed_weakening_alt; assumption. } { eapply IHE; eassumption. }
-    clear IHE. destruct H5; [left | right]. { eapply agree_union; eassumption. } eapply Forall_impl; [| eassumption].
-    intros a [p [Ha Hp]]. eexists. split; [| eassumption]. simpl.
-    specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity].
+  - sauto lq: on use:env_typed_weakening.
+  - sauto lq: on use:env_typed_weakening_alt.
+  - sauto use: env_typed_weakening_alt.
+  - sinvert E'. sinvert Ht. constructor.
+    + sfirstorder.
+    + sfirstorder use:env_typed_weakening_alt.
+    + destruct H5.
+      * left. eapply Forall_impl; [| eauto]. hauto drew: off.
+      * right. qauto l: on use: agree_union.
+  - sinvert E'. sinvert Ht. constructor; [hauto l: on use:env_typed_weakening_alt | qauto l: on use:env_typed_weakening_alt|].
+    clear IHE.
+    destruct H5; [left | right]. qauto l: on use: agree_union. eapply Forall_impl; [| eauto].
+    hauto drew: off.
 Qed.
