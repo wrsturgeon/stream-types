@@ -14,12 +14,17 @@
         pname = "lambda-st";
         version = "0.0.1";
         os-pkgs = import nixpkgs { inherit system; };
-        pkgs = os-pkgs.coqPackages;
-        hammer = import ./hammer.nix {
-          inherit hammer-src nixpkgs system;
-        }; # build it manually
+        coq-pkgs = os-pkgs.coqPackages;
+        hammer = let
+          coq = coq-pkgs.coq;
+          ml-pkgs = coq.ocamlPackages; # guaranteed Coq-OCaml version match
+          ocaml = ml-pkgs.ocaml;
+        in import ./hammer.nix {
+          inherit coq coq-pkgs ml-pkgs ocaml os-pkgs;
+          src = hammer-src;
+        };
       in {
-        packages.default = pkgs.mkCoqDerivation {
+        packages.default = coq-pkgs.mkCoqDerivation {
           inherit pname version;
           src = ./.;
           buildInputs = [ hammer ];

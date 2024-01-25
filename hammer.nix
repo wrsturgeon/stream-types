@@ -1,14 +1,7 @@
-inputs:
-with inputs;
+{ coq, coq-pkgs, ocaml, os-pkgs, ml-pkgs, src }:
 let
-  src = hammer-src;
   pname = "hammer";
   version = "none";
-  os-pkgs = import nixpkgs { inherit system; };
-  coq-pkgs = os-pkgs.coqPackages;
-  coq = coq-pkgs.coq;
-  ml-pkgs = coq.ocamlPackages;
-  ocaml = ml-pkgs.ocaml;
   propagatedBuildInputs = [ coq ocaml ml-pkgs.findlib ];
   mlPlugin = true;
   BINDIR = "bin";
