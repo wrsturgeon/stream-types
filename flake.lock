@@ -18,6 +18,22 @@
         "type": "github"
       }
     },
+    "hammer-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1699732112,
+        "narHash": "sha256-FO5aTCNTbKt20jSHDL57HDhbfFEEkKPqG5PtMOMh56Y=",
+        "owner": "lukaszcz",
+        "repo": "coqhammer",
+        "rev": "1ae38bc43b84c49877008f80caa767c6919edc55",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lukaszcz",
+        "repo": "coqhammer",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1705856552,
@@ -37,6 +53,7 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "hammer-src": "hammer-src",
         "nixpkgs": "nixpkgs"
       }
     },
