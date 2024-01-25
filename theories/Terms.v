@@ -6,6 +6,7 @@ From LambdaST Require Import
   Ident
   FV.
 
+From Hammer Require Import Tactics.
 
 From LambdaST Require Import Types.
 
@@ -50,32 +51,45 @@ Instance term_fv_inst : FV term :=
   fv := term_fv
 }.
 
-Inductive wf : term -> Prop :=
-  | wf_TmSink : wf TmSink
-  | wf_TmUnit : wf TmUnit
-  | wf_TmVar : forall x , wf (TmVar x)
-  | wf_TmComma : forall e e',
-      wf e ->
-      wf e' ->
-      wf (e , e')
-  | wf_TmSemic : forall e e',
-      wf e ->
-      wf e' ->
-      wf (e ; e')
-  | wf_TmLet : forall x e e',
-      wf e ->
-      wf e' ->
-      wf (TmLet x e e')
-  | wf_TmLetPar : forall x y z e,
-      wf e ->
+(* term is well-formed under a set of free variables. this ensures there's no shadowing, 
+and all bindings are coherent. *)
+Inductive wf : set ident -> term -> Prop :=
+  | wf_TmSink : forall s, wf s TmSink
+  | wf_TmUnit : forall s, wf s TmUnit
+  | wf_TmVar : forall x s, s x -> wf s (TmVar x)
+  | wf_TmComma : forall e e' s,
+      wf s e ->
+      wf s e' ->
+      wf s (e , e')
+  | wf_TmSemic : forall e e' s,
+      wf s e ->
+      wf s e' ->
+      wf s (e ; e')
+  | wf_TmLet : forall x e e' s,
+      ~(s x) ->
+      (* is this right? *)
+      wf s e ->
+      wf (union s (singleton x)) e' ->
+      wf s (TmLet x e e')
+  | wf_TmLetPar : forall x y z e s,
+      wf (union (minus s (singleton z)) (union (singleton x) (singleton y))) e ->
+      s z ->
+      ~(s x) ->
+      ~(s y) ->
       x <> y ->
-      y <> z ->
-      x <> z ->
-      wf (TmLetPar x y z e)
-  | wf_TmLetCat : forall x y z e t,
-      wf e ->
+      wf s (TmLetPar x y z e)
+  | wf_TmLetCat : forall x y z e t s,
+      wf (union (minus s (singleton z)) (union (singleton x) (singleton y))) e ->
+      s z ->
+      ~(s x) ->
+      ~(s y) ->
       x <> y ->
-      y <> z ->
-      x <> z ->
-      wf (TmLetCat t x y z e)
+      wf s (TmLetCat t x y z e)
 .
+
+Theorem wf_iff : forall s s' e, (forall x, s x <-> s' x) -> wf s e -> wf s' e.
+Proof.
+  intros.
+  generalize dependent s'.
+  induction H0; sauto.
+Qed.

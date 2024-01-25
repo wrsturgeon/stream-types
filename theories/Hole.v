@@ -105,17 +105,21 @@ Inductive wf_hole : hole -> Prop :=
 
 Theorem wf_fill_reflect : forall h d g,
   FillWith d h g ->
-  wf_ctx g ->
-  wf_hole h /\ wf_ctx d /\ disjoint (fv h) (fv d).
+  wf_ctx g <-> wf_hole h /\ wf_ctx d /\ disjoint (fv h) (fv d).
 Proof.
-  intros h d g H. induction H; cbn in *; intros; sauto lq: on use:fv_fill_reflect.
+  intros h d g H. induction H; cbn in *; intros.
+  - sfirstorder.
+  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
+  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
+  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
+  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
 Qed.
 
 Theorem wf_fill : forall h d,
-  wf_ctx (fill h d) -> (wf_hole h /\ wf_ctx d /\ disjoint (fv h) (fv d)).
+  wf_ctx (fill h d) <-> (wf_hole h /\ wf_ctx d /\ disjoint (fv h) (fv d)).
 Proof.
   intros h d.
   remember (fill h d) as g.
   apply reflect_fill in Heqg.
-  best use: wf_fill_reflect.
+  hauto l: on use: wf_fill_reflect.
 Qed.

@@ -19,14 +19,14 @@ Inductive Typed : context -> term -> type -> Prop :=
       G |- e2 \in t ->
       G |- (TmComma e1 e2) \in (TyPar s t)
   | T_Par_L : forall G x y z s t e r,
-      fill G (CtxComma (CtxHasTy x s) (CtxHasTy y r)) |- e \in r ->
+      fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
       fill G (CtxHasTy z (TyPar s t)) |- (TmLetPar x y z e) \in r
   | T_Cat_R : forall G D e1 e2 s t,
       G |- e1 \in s ->
       D |- e2 \in t ->
       (CtxSemic G D) |- (e1; e2) \in (TyDot s t)
   | T_Cat_L : forall G x y z s t e r,
-      fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y r)) |- e \in r ->
+      fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
       fill G (CtxHasTy z (TyPar s t)) |- (TmLetCat t x y z e) \in r
   | T_Eps_R : forall G,
       G |- sink \in eps
