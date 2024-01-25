@@ -49,7 +49,14 @@ Theorem typing_fv : forall G e s,
     forall x, fv e x -> fv G x.
 Proof.
     intros G e s H.
-    induction H; intros x0 Hfv.
+    induction H; intros x0 Hfv; cbn in *; unfold union in *; unfold minus in *; unfold singleton in *.
+    - sfirstorder.
+    - destruct Hfv; hauto q: on use: fill_fv. 
+    - sfirstorder.
+    - destruct Hfv; hauto q: on use: fill_fv.
     - sfirstorder.
     - sfirstorder.
-Admitted.
+    - sfirstorder use: fill_fv.
+    - sfirstorder.
+    - destruct Hfv; hauto q: on use: fill_fv.
+Qed.
