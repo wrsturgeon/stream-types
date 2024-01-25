@@ -7,6 +7,7 @@ From LambdaST Require Import
   Invert
   Prefix
   Terms
+  FV
   Types.
 
 From Hammer Require Import Tactics.
@@ -47,14 +48,14 @@ Definition prop_on_item : (prefix -> Prop) -> env -> ident -> Prop :=
   fun P n x => exists p, MapsTo p x n /\ P p.
 Arguments prop_on_item P n x/.
 
-Definition PropOn : (prefix -> Prop) -> context -> env -> Prop := fun P s n => Forall (prop_on_item P n) (vars_in s).
-Arguments PropOn/ P s n.
+Definition PropOn : (prefix -> Prop) -> context -> env -> Prop := fun P G n => forall x, fv G x -> prop_on_item P n x.
+Arguments PropOn/ P G n.
 
 Definition EmptyOn := PropOn Empty.
-Arguments EmptyOn/ s n.
+Arguments EmptyOn/ G n.
 
 Definition MaximalOn := PropOn Maximal.
-Arguments MaximalOn/ s n.
+Arguments MaximalOn/ G n.
 
 (* TODO: empty/maximal on (free variables in) terms *)
 
@@ -105,10 +106,7 @@ Lemma env_typed_weakening : forall n n' G,
   EnvTyped (union n n') G.
 Proof.
   intros n n' G H. generalize dependent n.
-  induction H; intros; econstructor;
-  try apply IHEnvTyped1; try apply IHEnvTyped2;
-  [simpl; rewrite H; reflexivity | assumption |].
-  destruct H1; [left | right]; (eapply Forall_impl in H1; [apply H1 | apply prop_on_item_weakening]).
+  induction H; intros; econstructor; hauto lq: on.
 Qed.
 
 Definition NoConflict (n n' : env) := forall x p,
@@ -122,11 +120,10 @@ Lemma env_typed_weakening_alt : forall n n' G,
 Proof.
   intros n n' G Hm Ht. generalize dependent n'.
   induction Ht; intros; simpl in *; econstructor; try apply IHHt1; try apply IHHt2; try eassumption.
-  - simpl. specialize (Hm _ _ H) as [Hm | Hm]; rewrite Hm; [assumption | reflexivity].
-  - destruct H; [left | right]; (eapply Forall_impl; [| eassumption]); intros; simpl in *;
-    destruct H0 as [p [Hpn Hp]]; eexists; (split; [| eassumption]);
-    (specialize (Hm _ _ Hpn) as [Hm | Hm]; rewrite Hm; [assumption | reflexivity]).
+  hauto l: on.
+  destruct H; [left | right]; hauto drew: off.
 Qed.
+(* 
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
   (PropOn P D n <-> PropOn P D' n') ->
@@ -167,4 +164,4 @@ Proof.
     clear IHE.
     destruct H5; [left | right]. qauto l: on use: agree_union. eapply Forall_impl; [| eauto].
     hauto drew: off.
-Qed.
+Qed. *)

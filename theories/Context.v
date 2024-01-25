@@ -5,7 +5,8 @@ From LambdaST Require Import
   Ident
   Terms
   Types
-  ListUtil.
+  FV.
+
 
 Inductive context : Set :=
   | CtxEmpty
@@ -14,12 +15,19 @@ Inductive context : Set :=
   | CtxSemic (lhs rhs : context)
   .
 
-Fixpoint vars_in ctx : list ident :=
-  match ctx with
-  | CtxEmpty => nil
-  | CtxHasTy x _ => cons x nil
-  | CtxComma lhs rhs | CtxSemic lhs rhs => vars_in lhs ++ vars_in rhs
-  end.
+Fixpoint context_fv (G : context) : set ident :=
+  match G with
+  | CtxEmpty => FV.empty
+  | CtxHasTy x _ => FV.singleton x
+  | CtxComma g g' | CtxSemic g g' => FV.union (context_fv g) (context_fv g')
+  end
+  .
+
+
+Instance context_fv_inst : FV context :=
+{
+  fv := context_fv
+}.
 
 Inductive wf_ctx : context -> Prop :=
 | wf_CtxEmpty : wf_ctx CtxEmpty
@@ -27,13 +35,15 @@ Inductive wf_ctx : context -> Prop :=
 | wf_CtxComma : forall g g',
     wf_ctx g ->
     wf_ctx g' ->
-    disjoint (vars_in g) (vars_in g') ->
+    disjoint (fv g) (fv g') ->
     wf_ctx (CtxComma g g')
 | wf_CtxSemic : forall g g',
     wf_ctx g ->
     wf_ctx g' ->
-    disjoint (vars_in g) (vars_in g') ->
+    disjoint (fv g) (fv g') ->
     wf_ctx (CtxSemic g g')
 .
+
+Inductive sub_ctx : context -> context -> Prop := .
 
 (* will need to prove that context derivatives preserve this... *)

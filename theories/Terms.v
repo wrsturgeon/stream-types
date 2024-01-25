@@ -3,7 +3,8 @@ From Coq Require Import
   List
   Classes.EquivDec.
 From LambdaST Require Import
-  Ident.
+  Ident
+  FV.
 
 
 From LambdaST Require Import Types.
@@ -35,20 +36,24 @@ Notation "'let' ( lhs , rhs ) = both 'in' body" :=
 Notation "'let' t ( lhs ; rhs ) = both 'in' body" :=
   (TmLetCat t lhs rhs both body) (at level 98, right associativity) : term_scope.
 
-(* should probably be sets *)
-Fixpoint fv e : list ident :=
+Fixpoint term_fv e : FV.set ident :=
   match e with
-  | TmSink | TmUnit => nil
-  | TmVar x => cons x nil
-  | TmComma e1 e2 | TmSemic e1 e2 => fv e1 ++ fv e2
-  | TmLet x e e' => fv e ++ remove equiv_dec x (fv e')
-  | TmLetPar x y z e | TmLetCat _ x y z e => cons z (remove equiv_dec x (remove equiv_dec y (fv e)))
+  | TmSink | TmUnit => empty
+  | TmVar x => singleton x
+  | TmComma e1 e2 | TmSemic e1 e2 => union (term_fv e1) (term_fv e2)
+  | TmLet x e e' => union (term_fv e) (minus (term_fv e') (singleton x))
+  | TmLetPar x y z e | TmLetCat _ x y z e => union (singleton z) (minus (minus (term_fv e) (singleton x)) (singleton y))
   end.
 
+Instance term_fv_inst : FV term :=
+{
+  fv := term_fv
+}.
+
 Inductive wf : term -> Prop :=
-  | wf_TmSink : wf sink
-  | wf_TmUnit : wf unit
-  | wf_TmVar : forall x, wf x
+  | wf_TmSink : wf TmSink
+  | wf_TmUnit : wf TmUnit
+  | wf_TmVar : forall x , wf (TmVar x)
   | wf_TmComma : forall e e',
       wf e ->
       wf e' ->
@@ -67,26 +72,10 @@ Inductive wf : term -> Prop :=
       y <> z ->
       x <> z ->
       wf (TmLetPar x y z e)
+  | wf_TmLetCat : forall x y z e t,
+      wf e ->
+      x <> y ->
+      y <> z ->
+      x <> z ->
+      wf (TmLetCat t x y z e)
 .
-
-(*
-Fixpoint eq_tm lhs rhs :=
-  match lhs, rhs with
-  | TmSink, TmSink
-  | TmUnit, TmUnit =>
-      true
-  | TmVar a, TmVar b =>
-      a =i b
-  | TmComma xl yl, TmComma xr yr
-  | TmSemic xl yl, TmSemic xr yr =>
-      andb (eq_tm xl yl) (eq_tm xr yr)
-  | TmLetPar xl yl zl bl, TmLetPar xr yr zr br
-  | TmLetCat xl yl zl bl, TmLetPar xr yr zr br =>
-      andb (andb (andb
-        (xl =? xr)%string
-        (yl =? yr)%string)
-        (eq_tm zl zr))
-        (eq_tm bl br)
-  | _, _ => false
-  end.
-*)
