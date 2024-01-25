@@ -4,6 +4,7 @@ From LambdaST Require Import
     Typing
     Prefix
     Environment
+    Hole
     Context.
 Require Import Coq.Program.Equality.
 

@@ -51,12 +51,12 @@ Proof.
     intros G e s H.
     induction H; intros x0 Hfv; cbn in *; unfold union in *; unfold minus in *; unfold singleton in *.
     - sfirstorder.
-    - destruct Hfv; hauto q: on use: fill_fv. 
+    - destruct Hfv; hauto q: on use: fv_fill. 
     - sfirstorder.
-    - destruct Hfv; hauto q: on use: fill_fv.
+    - destruct Hfv; hauto q: on use: fv_fill.
     - sfirstorder.
     - sfirstorder.
-    - sfirstorder use: fill_fv.
+    - sfirstorder use: fv_fill.
     - sfirstorder.
-    - destruct Hfv; hauto q: on use: fill_fv.
+    - destruct Hfv; hauto q: on use: fv_fill.
 Qed.

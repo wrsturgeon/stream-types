@@ -62,7 +62,7 @@ Instance hole_fv_inst : FV hole :=
   fv := hole_fv
 }.
 
-Theorem fill_fv_reflect: forall H D G,
+Theorem fv_fill_reflect: forall H D G,
   FillWith H D G ->
   forall x, fv G x <-> fv H x \/ fv D x.
 Proof.
@@ -71,12 +71,12 @@ Proof.
 Qed.
 
 
-Theorem fill_fv : forall H D,
+Theorem fv_fill : forall H D,
   forall x, fv (fill H D) x <-> fv H x \/ fv D x.
 Proof.
   intros H D.
   remember (fill H D).
-  hauto lq: on use:fill_fv_reflect, reflect_fill.
+  hauto lq: on use:fv_fill_reflect, reflect_fill.
 Qed.
 
 Inductive wf_hole : hole -> Prop :=
@@ -108,7 +108,7 @@ Theorem wf_fill_reflect : forall h d g,
   wf_ctx g ->
   wf_hole h /\ wf_ctx d /\ disjoint (fv h) (fv d).
 Proof.
-  intros h d g H. induction H; cbn in *; intros; sauto lq: on use:fill_fv_reflect.
+  intros h d g H. induction H; cbn in *; intros; sauto lq: on use:fv_fill_reflect.
 Qed.
 
 Theorem wf_fill : forall h d,
