@@ -31,26 +31,21 @@ Definition subst (x : ident) (p : prefix) (rho : env) : env :=
   env_union rho (singleton_env x p).
 Arguments subst x p rho x/.
 
-Definition MapsTo (p : prefix) (x : ident) (n : env) : Prop := n x = Some p.
-Arguments MapsTo/ p x n. (* unfold immediately *)
-
-Notation "n x |-> p" := (MapsTo p x n) (at level 98).
-
 (* Theorem B.10, part I *)
-Theorem maps_to_unique_literal : forall p x n,
-  MapsTo p x n ->
-  ~exists q, p <> q /\ MapsTo q x n.
+Theorem maps_to_unique_literal : forall p x (n : env),
+  n x = Some p ->
+  ~exists q, p <> q /\ n x = Some q.
 Proof. sfirstorder. Qed.
 
-Theorem maps_to_unique : forall p1 p2 x n,
-  MapsTo p1 x n ->
-  MapsTo p2 x n ->
+Theorem maps_to_unique : forall p1 p2 x (n : env),
+  n x = Some p1 ->
+  n x = Some p2 ->
   p1 = p2.
 Proof. sfirstorder. Qed.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
 Definition PropOnItem (P : prefix -> Prop) (n : env) (x : ident) : Prop :=
-  exists p, MapsTo p x n /\ P p.
+  exists p, n x = Some p /\ P p.
 Arguments PropOnItem P n x/.
 
 Definition PropOn (P : prefix -> Prop) (s : set ident) (n : env) : Prop := forall x, s x -> PropOnItem P n x.
@@ -76,7 +71,7 @@ Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
       EnvTyped n CtxEmpty
   | EnvTyHasTy : forall n p x s,
-      MapsTo p x n ->
+      n x = Some p ->
       PfxTyped p s ->
       EnvTyped n (CtxHasTy x s)
   | EnvTyComma : forall n G D,
@@ -103,7 +98,7 @@ Qed.
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,
   EnvTyped n (fill G (CtxHasTy x s)) ->
-  exists p, (MapsTo p x n /\ PfxTyped p s).
+  exists p, (n x = Some p /\ PfxTyped p s).
 Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
 
 Lemma prop_on_item_weakening : forall P n n' vs,
@@ -120,7 +115,7 @@ Proof.
 Qed.
 
 Definition NoConflictOn (s : set ident) (n n' : env) := forall x p,
-  s x -> MapsTo p x n -> (n' x = None \/ MapsTo p x n').
+  s x -> n x = Some p -> (n' x = None \/ n' x = Some p).
 Arguments NoConflictOn/ s n n'.
 
 Theorem no_conflict_restrict : forall s s' n n',
@@ -146,15 +141,15 @@ Proof.
 Qed.
 
 Lemma env_typed_weakening_alt : forall n n' G,
-  NoConflictOn (fv G) n n' ->
+  NoConflictOn (fv G (* fun _ => True *)) n n' ->
   EnvTyped n G ->
   EnvTyped (env_union n n') G.
 Proof.
-  intros n n' G Hm Ht. generalize dependent n'.
-  (* induction Ht; intros; simpl in *; econstructor; try apply IHHt1; try apply IHHt2; try eassumption. *)
-  (* hauto l: on. *)
-  (* destruct H; [left | right]; hauto drew: off. *)
-Admitted.
+  intros n n' G Hc Ht. generalize dependent n'. induction Ht; intros; simpl in *. { constructor. }
+  - sauto.
+  - sauto lq: on.
+  - constructor. { hauto l: on. } { hauto l: on. } destruct H; simpl in *. { hauto lq: on. } qauto l: on.
+Qed.
 
 Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
   NoConflictOn (fv h) n n' ->
@@ -171,6 +166,12 @@ Proof.
   (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
   simpl; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
 Qed.  *)
+  intros P n n' d d' h hd hd' Hc Ha Hf Hf' Hp. generalize dependent P. generalize dependent n.
+  generalize dependent n'. generalize dependent d'. generalize dependent hd'.
+  induction Hf; intros; sinvert Hf'; simpl in *; intros.
+  - sauto lq: on.
+  - eapply IHHf; clear IHHf. { sfirstorder. } { hauto lq: on rew: off. } { sfirstorder. } { qauto l: on. }
+    destruct H. { assumption. }
 Admitted.
 
 Theorem fill_replace : forall h d d' n n',

@@ -49,7 +49,7 @@ Inductive ContextDerivative : env -> context -> context -> Prop :=
   | CtxDrvEmpty : forall n,
       ContextDerivative n CtxEmpty CtxEmpty
   | CtxDrvHasTy : forall n x p s s',
-      MapsTo p x n ->
+      n x = Some p ->
       Derivative p s s' ->
       ContextDerivative n (CtxHasTy x s) (CtxHasTy x s')
   | CtxDrvComma : forall n G G' D D',
