@@ -191,7 +191,7 @@ Proof.
     + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
-  - sinvert E'. constructor. 
+  - sinvert E'. constructor.
     + sauto q: on use:env_typed_weakening_alt.
     + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
@@ -225,7 +225,7 @@ Proof.
       * right. qauto l: on use: prop_on_union.
   - sinvert E'. sinvert Ht. constructor; [hauto l: on use:env_typed_weakening_alt | qauto l: on use:env_typed_weakening_alt|].
     clear IHE.
-    destruct H5; [left | right]. qauto l: on use: prop_on_union. hauto qb: on drew: off. 
+    destruct H5; [left | right]. qauto l: on use: prop_on_union. hauto qb: on drew: off.
 Qed. *)
 
 (* environment typing smart constructors *)
@@ -246,7 +246,7 @@ Theorem env_typed_comma: forall n n' g g',
 Proof.
   intros.
   constructor.
-  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict. 
+  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict.
   + sfirstorder use: env_typed_weakening.
 Qed.
 
@@ -259,7 +259,7 @@ Theorem env_typed_semic : forall n n' g g',
 Proof.
   intros.
   constructor.
-  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict. 
+  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict.
   + sfirstorder use: env_typed_weakening.
   + destruct H2; [left | right]; hfcrush.
 Qed.

@@ -19,8 +19,8 @@ Inductive term : Set :=
   | TmComma (lhs rhs : term)
   | TmSemic (lhs rhs : term)
   | TmLet (bind : ident) (bound body : term)
-  | TmLetPar (lhs rhs bound : ident) (body : term) 
-  | TmLetCat (t : type) (lhs rhs bound : ident) (body : term) 
+  | TmLetPar (lhs rhs bound : ident) (body : term)
+  | TmLetCat (t : type) (lhs rhs bound : ident) (body : term)
   .
 
 Bind Scope term_scope with term.
@@ -49,7 +49,7 @@ Fixpoint fv_term e : FV.set ident :=
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 
-(* term is well-formed under a set of free variables. this ensures there's no shadowing, 
+(* term is well-formed under a set of free variables. this ensures there's no shadowing,
 and all bindings are coherent. *)
 Inductive WFTerm : set ident -> term -> Prop :=
   | WFTmSink : forall s,

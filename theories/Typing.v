@@ -53,7 +53,7 @@ Proof.
     intros G e s H.
     induction H; intros x0 Hfv; cbn in *.
     - sfirstorder.
-    - destruct Hfv; hauto q: on use: fv_fill. 
+    - destruct Hfv; hauto q: on use: fv_fill.
     - sfirstorder.
     - destruct Hfv; hauto q: on use: fv_fill.
     - sfirstorder.
