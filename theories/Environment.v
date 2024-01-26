@@ -2,32 +2,37 @@ From Coq Require Import
   List.
 From LambdaST Require Import
   Context
+  FV
   Hole
   Ident
   Invert
   Prefix
   Terms
-  FV
   Types.
-
-From Hammer Require Import Tactics.
+From Hammer Require Import
+  Tactics.
 
 Definition env : Set := ident -> option prefix.
 
 Definition dom (n : env) : set ident :=
   fun x => exists p, n x = Some p.
 
-Definition union : env -> env -> env := fun n n' x => match n' x with None => n x | Some y => Some y end.
-Arguments union n n' x/.
+Definition env_union (n n' : env) : env := fun x =>
+  match n' x with
+  | None => n x
+  | Some y => Some y
+  end.
+Arguments env_union n n' x/.
 
-Definition singleton_env : ident -> prefix -> env :=
-  fun id p x => if eq_id id x then Some p else None.
+Definition singleton_env (id : ident) (p : prefix) : env := fun x =>
+  if eq_id id x then Some p else None.
+Arguments singleton_env id p x/.
 
-Definition subst : ident -> prefix -> env -> env :=
-  fun x p rho => union rho (singleton_env x p).
-Arguments subst p n x/.
+Definition subst (x : ident) (p : prefix) (rho : env) : env :=
+  env_union rho (singleton_env x p).
+Arguments subst x p rho x/.
 
-Definition MapsTo : prefix -> ident -> env -> Prop := fun p x n => n x = Some p.
+Definition MapsTo (p : prefix) (x : ident) (n : env) : Prop := n x = Some p.
 Arguments MapsTo/ p x n. (* unfold immediately *)
 
 Notation "n x |-> p" := (MapsTo p x n) (at level 98).
@@ -36,9 +41,7 @@ Notation "n x |-> p" := (MapsTo p x n) (at level 98).
 Theorem maps_to_unique_literal : forall p x n,
   MapsTo p x n ->
   ~exists q, p <> q /\ MapsTo q x n.
-Proof.
-sfirstorder.
-Qed.
+Proof. sfirstorder. Qed.
 
 Theorem maps_to_unique : forall p1 p2 x n,
   MapsTo p1 x n ->
@@ -47,27 +50,27 @@ Theorem maps_to_unique : forall p1 p2 x n,
 Proof. sfirstorder. Qed.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
-Definition prop_on_item : (prefix -> Prop) -> env -> ident -> Prop :=
-  fun P n x => exists p, MapsTo p x n /\ P p.
-Arguments prop_on_item P n x/.
+Definition PropOnItem (P : prefix -> Prop) (n : env) (x : ident) : Prop :=
+  exists p, MapsTo p x n /\ P p.
+Arguments PropOnItem P n x/.
 
-Definition PropOn : (prefix -> Prop) -> set ident -> env -> Prop := fun P s n => forall x, s x -> prop_on_item P n x.
-Arguments PropOn/ P G n.
+Definition PropOn (P : prefix -> Prop) (s : set ident) (n : env) : Prop := forall x, s x -> PropOnItem P n x.
+Arguments PropOn/ P s n.
 
-Definition EmptyOn := PropOn Empty.
-Arguments EmptyOn/ G n.
+Definition EmptyOn := PropOn PfxEmpty.
+Arguments EmptyOn/ s n.
 
-Definition MaximalOn := PropOn Maximal.
-Arguments MaximalOn/ G n.
+Definition MaximalOn := PropOn MaximalPrefix.
+Arguments MaximalOn/ s n.
 
-Theorem PropOn_restrict : forall P s s' n,
-  (forall x, s x -> s' x) -> PropOn P s' n -> PropOn P s n.
-Proof.
-sfirstorder.
-Qed.
+Theorem prop_on_restrict : forall P s s' n,
+  Contains s s' ->
+  PropOn P s' n ->
+  PropOn P s n.
+Proof. sfirstorder. Qed.
 
-
-Definition Agree n n' (D : context) (D' : context) : Prop := (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\ (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
+Definition Agree n n' (D : context) (D' : context) : Prop :=
+  (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\ (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
 Arguments Agree/ n n' D D'.
 
 Inductive EnvTyped : env -> context -> Prop :=
@@ -88,10 +91,6 @@ Inductive EnvTyped : env -> context -> Prop :=
       EnvTyped n (CtxSemic G D)
   .
 
-
-
-
-
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
   EnvTyped n (fill G D) ->
@@ -109,13 +108,13 @@ Theorem maps_to_has_type : forall n G x s,
 Proof. intros. assert (A := maps_to_hole _ _ _ H). invert A. eexists. split; eassumption. Qed.
 
 Lemma prop_on_item_weakening : forall P n n' vs,
-  prop_on_item P n' vs ->
-  prop_on_item P (union n n') vs.
+  PropOnItem P n' vs ->
+  PropOnItem P (env_union n n') vs.
 Proof. intros P n n' vs [p [Hn' Hp]]. exists p. split; [| assumption]. simpl. rewrite Hn'. reflexivity. Qed.
 
 Lemma env_typed_weakening : forall n n' G,
   EnvTyped n' G ->
-  EnvTyped (union n n') G.
+  EnvTyped (env_union n n') G.
 Proof.
   intros n n' G H. generalize dependent n.
   induction H; intros; econstructor; hauto lq: on.
@@ -125,12 +124,13 @@ Definition NoConflictOn (s : set ident) (n n' : env) := forall x p,
   s x -> MapsTo p x n -> (n' x = None \/ MapsTo p x n').
 Arguments NoConflictOn/ s n n'.
 
-Theorem NoConflict_restrict : forall s s' n n', (forall x, s x -> s' x) -> NoConflictOn s' n n' -> NoConflictOn s n n'.
-Proof.
-hauto lq: on.
-Qed.
+Theorem no_conflict_restrict : forall s s' n n',
+  Contains s s' ->
+  NoConflictOn s' n n' ->
+  NoConflictOn s n n'.
+Proof. hauto lq:on. Qed.
 
-Theorem NoConflict_sym : forall s n n', NoConflictOn s n n' -> NoConflictOn s n' n.
+Theorem no_conflict_sym : forall s n n', NoConflictOn s n n' -> NoConflictOn s n' n.
 Proof.
   unfold NoConflictOn in *; intros.
   remember (n x) as nx.
@@ -139,7 +139,9 @@ Proof.
   - sfirstorder.
 Qed.
 
-Theorem disjoint_noconflict : forall s n n', disjoint (intersection s (dom n)) (intersection s (dom n')) -> NoConflictOn s n n'.
+Theorem disjoint_noconflict : forall s n n',
+  Disjoint (set_intersection s (dom n)) (set_intersection s (dom n')) ->
+  NoConflictOn s n n'.
 Proof.
   unfold NoConflictOn in *; intros s n n' H x. remember (n' x) as n'x; destruct n'x. sfirstorder. sfirstorder.
 Qed.
@@ -148,7 +150,7 @@ Qed.
 Lemma env_typed_weakening_alt : forall n n' G,
   NoConflictOn (fv G) n n' ->
   EnvTyped n G ->
-  EnvTyped (union n n') G.
+  EnvTyped (env_union n n') G.
 Proof.
   intros n n' G Hm Ht. generalize dependent n'.
 Admitted.
@@ -156,13 +158,13 @@ Admitted.
   (* hauto l: on. *)
   (* destruct H; [left | right]; hauto drew: off. *)
 
-Lemma propon_union_fill : forall P n n' d d' h hd hd',
+Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
   NoConflictOn (fv h) n n' ->
   (PropOn P (fv d) n <-> PropOn P (fv d') n') ->
   FillWith d  h hd  ->
   FillWith d' h hd' ->
   PropOn P (fv hd) n ->
-  PropOn P (fv hd') (union n n').
+  PropOn P (fv hd') (env_union n n').
 Proof.
 Admitted.
   (* intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
@@ -178,7 +180,7 @@ Theorem fill_replace : forall h d d' n n',
   EnvTyped n (fill h d) ->
   EnvTyped n' d' ->
   Agree n n' d d' ->
-  EnvTyped (union n n') (fill h d').
+  EnvTyped (env_union n n') (fill h d').
 Proof.
   intros h d d' n n' Hnc Ht Ht' [Hm He].
   remember (fill h d) as hd eqn:E. apply reflect_fill in E.
@@ -187,13 +189,16 @@ Proof.
   induction E; intros.
   - sauto lq: on use: env_typed_weakening.
   - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply NoConflict_restrict; [|eauto]; sfirstorder. sauto lq: on. sfirstorder. sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+      sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
   - sinvert E'. constructor.
     + sauto q: on use:env_typed_weakening_alt.
-    + eapply IHE. eauto. eauto. eapply NoConflict_restrict; [|eauto]; sfirstorder. sauto lq: on. sfirstorder. sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+      sauto lq: on. sfirstorder. sfirstorder.
   - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply NoConflict_restrict; [|eauto]; sfirstorder. sauto lq: on. sfirstorder. sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+      sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
     + sinvert Ht. destruct H5; [left | right]; admit.
   - admit.
@@ -218,27 +223,27 @@ Proof.
     + hauto l: on use:env_typed_weakening_alt.
     + destruct H5.
       * left. hauto qb: on drew: off.
-      * right. qauto l: on use: propon_union.
+      * right. qauto l: on use: prop_on_union.
   - sinvert E'. sinvert Ht. constructor; [hauto l: on use:env_typed_weakening_alt | qauto l: on use:env_typed_weakening_alt|].
     clear IHE.
-    destruct H5; [left | right]. qauto l: on use: propon_union. hauto qb: on drew: off. 
+    destruct H5; [left | right]. qauto l: on use: prop_on_union. hauto qb: on drew: off. 
 Qed. *)
 
 (* environment typing smart constructors *)
-Theorem envtyped_singleton : forall x s p,
+Theorem env_typed_singleton : forall x s p,
   PfxTyped p s ->
   EnvTyped (singleton_env x p) (CtxHasTy x s).
 Proof.
   intros; econstructor; [| eauto]; cbn.
   unfold singleton_env.
-  best use:eq_id_refl.
+  hauto lq: on use: eq_id_refl.
 Qed.
 
-Theorem envtyped_comma: forall n n' g g',
-  disjoint (dom n) (dom n') ->
+Theorem env_typed_comma: forall n n' g g',
+  Disjoint (dom n) (dom n') ->
   EnvTyped n g ->
   EnvTyped n' g' ->
-  EnvTyped (union n n') (CtxComma g g').
+  EnvTyped (env_union n n') (CtxComma g g').
 Proof.
   intros.
   constructor.
@@ -246,12 +251,12 @@ Proof.
   + sfirstorder use: env_typed_weakening.
 Qed.
 
-Theorem envtyped_semic : forall n n' g g',
-  disjoint (dom n) (dom n') ->
+Theorem env_typed_semic : forall n n' g g',
+  Disjoint (dom n) (dom n') ->
   EnvTyped n g ->
   EnvTyped n' g' ->
   EmptyOn (fv g') n' \/ MaximalOn (fv g) n ->
-  EnvTyped (union n n') (CtxSemic g g').
+  EnvTyped (env_union n n') (CtxSemic g g').
 Proof.
   intros.
   constructor.

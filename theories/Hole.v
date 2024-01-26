@@ -1,9 +1,10 @@
 From LambdaST Require Import
+  Context
   FV
-  Ident
-  Context.
+  Ident.
 
-From Hammer Require Import Tactics.
+From Hammer Require Import
+  Tactics.
 
 Inductive hole : Set :=
   | HoleHere
@@ -47,29 +48,21 @@ Proof.
   - induction H; simpl; try rewrite IHFillWith; reflexivity.
 Qed.
 
-
 Fixpoint hole_fv (h : hole) : set ident :=
   match h with
-  | HoleHere => FV.empty
+  | HoleHere => empty_set
   | HoleCommaL h g
   | HoleCommaR g h
   | HoleSemicL h g
-  | HoleSemicR g h => FV.union (hole_fv h) (fv g)
+  | HoleSemicR g h => set_union (hole_fv h) (fv g)
   end.
 
-Instance hole_fv_inst : FV hole :=
-{
-  fv := hole_fv
-}.
+Instance hole_fv_inst : FV hole := { fv := hole_fv }.
 
 Theorem fv_fill_reflect: forall H D G,
   FillWith H D G ->
   forall x, fv G x <-> fv H x \/ fv D x.
-Proof.
-  intros H D G Hfill.
-  induction Hfill; sfirstorder.
-Qed.
-
+Proof. intros H D G Hfill. induction Hfill; sfirstorder. Qed.
 
 Theorem fv_fill : forall H D,
   forall x, fv (fill H D) x <-> fv H x \/ fv D x.
@@ -83,40 +76,36 @@ Inductive wf_hole : hole -> Prop :=
 | wf_HoleHere : wf_hole HoleHere
 | wf_HoleCommaL : forall h g,
   wf_hole h ->
-  wf_ctx g ->
-  disjoint (fv h) (fv g) ->
+  WFContext g ->
+  Disjoint (fv h) (fv g) ->
   wf_hole (HoleCommaL h g)
 | wf_HoleCommaR : forall h g,
   wf_hole h ->
-  wf_ctx g ->
-  disjoint (fv h) (fv g) ->
+  WFContext g ->
+  Disjoint (fv h) (fv g) ->
   wf_hole (HoleCommaR g h)
 | wf_HoleSemicL : forall h g,
   wf_hole h ->
-  wf_ctx g ->
-  disjoint (fv h) (fv g) ->
+  WFContext g ->
+  Disjoint (fv h) (fv g) ->
   wf_hole (HoleSemicL h g)
 | wf_HoleSemicR : forall h g,
   wf_hole h ->
-  wf_ctx g ->
-  disjoint (fv h) (fv g) ->
+  WFContext g ->
+  Disjoint (fv h) (fv g) ->
   wf_hole (HoleSemicR g h)
 .
 
 Theorem wf_fill_reflect : forall h d g,
   FillWith d h g ->
-  wf_ctx g <-> wf_hole h /\ wf_ctx d /\ disjoint (fv h) (fv d).
+  WFContext g <-> wf_hole h /\ WFContext d /\ Disjoint (fv h) (fv d).
 Proof.
-  intros h d g H. induction H; cbn in *; intros.
-  - sfirstorder.
-  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
-  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
-  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
-  - split. sauto lq: on use:fv_fill_reflect. sauto l: on use:fv_fill_reflect.
+  intros h d g H. induction H; cbn in *; intros; [sfirstorder | | | |];
+  (split; [sauto lq: on use:fv_fill_reflect | sauto l: on use:fv_fill_reflect]).
 Qed.
 
 Theorem wf_fill : forall h d,
-  wf_ctx (fill h d) <-> (wf_hole h /\ wf_ctx d /\ disjoint (fv h) (fv d)).
+  WFContext (fill h d) <-> (wf_hole h /\ WFContext d /\ Disjoint (fv h) (fv d)).
 Proof.
   intros h d.
   remember (fill h d) as g.

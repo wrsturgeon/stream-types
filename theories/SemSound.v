@@ -1,20 +1,22 @@
 From LambdaST Require Import
-    Terms
-    Semantics
-    Typing
-    Prefix
-    Environment
-    Hole
-    FV
-    Context.
-Require Import Coq.Program.Equality.
+  Context
+  Environment
+  FV
+  Hole
+  Ident
+  Prefix
+  Semantics
+  Terms
+  Typing.
+From Coq Require Import
+  Program.Equality.
+From Hammer Require Import
+  Tactics.
 
-From Hammer Require Import Tactics.
-
-Theorem maximalpush : forall e e' eta p,
+Theorem maximal_push : forall e e' eta p,
   Step eta e e' p ->
   MaximalOn (fv e) eta ->
-  Maximal p.
+  MaximalPrefix p.
 Proof.
   intros.
   generalize dependent H0.
@@ -29,13 +31,11 @@ Proof.
   - admit.
 Admitted.
 
-
-
 Theorem soundout : forall G e e' s eta p,
     Typed G e s ->
     Step eta e e' p ->
-    wf (fv G) e ->
-    wf_ctx G ->
+    WFTerm (fv G) e ->
+    WFContext G ->
     EnvTyped eta G ->
     PfxTyped p s
 .
@@ -59,7 +59,7 @@ Proof.
         (* here, we need to know that x and y are not free in G.*)
         split; try split. sfirstorder. sauto l: on. cbn in *. sfirstorder use:fv_fill.
       + eapply fill_replace; [|eauto| |]. admit.
-        * eapply envtyped_comma; [| eapply envtyped_singleton; eauto | eapply envtyped_singleton; eauto]. admit.
+        * eapply env_typed_comma; [| eapply env_typed_singleton; eauto | eapply env_typed_singleton; eauto]. admit.
         * admit. 
     - sinvert Hwfe; sinvert HwfG; sinvert Heta. sinvert Hstep; admit.
     - sinvert Hwfe. admit.

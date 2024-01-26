@@ -17,31 +17,31 @@ Inductive prefix : Set :=
   | PfxStarRest (b p : prefix)
   .
 
-Inductive Maximal : prefix -> Prop :=
-  | MaxEpsEmp :
-      Maximal PfxEpsEmp
-  | MaxOneFull :
-      Maximal PfxOneFull
-  | MaxParPair : forall p1 p2,
-      Maximal p1 ->
-      Maximal p2 ->
-      Maximal (PfxParPair p1 p2)
-  | MaxCatBoth : forall p1 p2,
-      Maximal p1 ->
-      Maximal p2 ->
-      Maximal (PfxCatBoth p1 p2)
-  | MaxSumInl : forall p,
-      Maximal p ->
-      Maximal (PfxSumInl p)
-  | MaxSumInr : forall p,
-      Maximal p ->
-      Maximal (PfxSumInr p)
-  | MaxStarDone :
-      Maximal PfxStarDone
-  | MaxStarRest : forall p p',
-      Maximal p ->
-      Maximal p' ->
-      Maximal (PfxStarRest p p')
+Inductive MaximalPrefix : prefix -> Prop :=
+  | PfxMaxEpsEmp :
+      MaximalPrefix PfxEpsEmp
+  | PfxMaxOneFull :
+      MaximalPrefix PfxOneFull
+  | PfxMaxParPair : forall p1 p2,
+      MaximalPrefix p1 ->
+      MaximalPrefix p2 ->
+      MaximalPrefix (PfxParPair p1 p2)
+  | PfxMaxCatBoth : forall p1 p2,
+      MaximalPrefix p1 ->
+      MaximalPrefix p2 ->
+      MaximalPrefix (PfxCatBoth p1 p2)
+  | PfxMaxSumInl : forall p,
+      MaximalPrefix p ->
+      MaximalPrefix (PfxSumInl p)
+  | PfxMaxSumInr : forall p,
+      MaximalPrefix p ->
+      MaximalPrefix (PfxSumInr p)
+  | PfxMaxStarDone :
+      MaximalPrefix PfxStarDone
+  | PfxMaxStarRest : forall p p',
+      MaximalPrefix p ->
+      MaximalPrefix p' ->
+      MaximalPrefix (PfxStarRest p p')
   .
 
 Inductive PfxTyped : prefix -> type -> Prop :=
@@ -60,7 +60,7 @@ Inductive PfxTyped : prefix -> type -> Prop :=
       PfxTyped (PfxCatFst p) (TyDot s t)
   | PfxTyCatBoth : forall p1 p2 s t,
       PfxTyped p1 s ->
-      Maximal p1 ->
+      MaximalPrefix p1 ->
       PfxTyped p2 t ->
       PfxTyped (PfxCatBoth p1 p2) (TyDot s t)
   | PfxTySumEmp : forall s t,
@@ -80,7 +80,7 @@ Inductive PfxTyped : prefix -> type -> Prop :=
       PfxTyped (PfxStarFirst p) (TyStar s)
   | PfxTyStarRest : forall p p' s,
       PfxTyped p s ->
-      Maximal p ->
+      MaximalPrefix p ->
       PfxTyped p' (TyStar s) ->
       PfxTyped (PfxStarRest p p') (TyStar s)
   .
@@ -98,21 +98,21 @@ Fixpoint emp ty :=
 Theorem emp_well_typed : forall s, PfxTyped (emp s) s.
 Proof. induction s; simpl; constructor; assumption. Qed.
 
-Inductive Empty : prefix -> Prop :=
-  | EmptyEpsEmp :
-      Empty PfxEpsEmp
-  | EmptyOneEmp :
-      Empty PfxOneEmp
-  | EmptyParPair : forall p1 p2,
-      Empty p1 ->
-      Empty p2 ->
-      Empty (PfxParPair p1 p2)
-  | EmptyCatFst : forall p,
-      Empty p ->
-      Empty (PfxCatFst p)
-  | EmptySumEmp :
-      Empty PfxSumEmp
+Inductive PfxEmpty : prefix -> Prop :=
+  | PfxEmptyEpsEmp :
+      PfxEmpty PfxEpsEmp
+  | PfxEmptyOneEmp :
+      PfxEmpty PfxOneEmp
+  | PfxEmptyParPair : forall p1 p2,
+      PfxEmpty p1 ->
+      PfxEmpty p2 ->
+      PfxEmpty (PfxParPair p1 p2)
+  | PfxEmptyCatFst : forall p,
+      PfxEmpty p ->
+      PfxEmpty (PfxCatFst p)
+  | PfxEmptySumEmp :
+      PfxEmpty PfxSumEmp
   .
 
-Definition EmptyOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in Empty p.
-Definition MaximalOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in Maximal p.
+Definition PfxEmptyOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in PfxEmpty p.
+Definition MaximalPrefixOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in MaximalPrefix p.
