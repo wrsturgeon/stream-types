@@ -189,7 +189,7 @@ Proof.
   - sinvert E'. constructor.
     + eapply IHE. eauto. eauto. eapply NoConflict_restrict; [|eauto]; sfirstorder. sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
-  - sinvert E'. constructor.
+  - sinvert E'. constructor. 
     + sauto q: on use:env_typed_weakening_alt.
     + eapply IHE. eauto. eauto. eapply NoConflict_restrict; [|eauto]; sfirstorder. sauto lq: on. sfirstorder. sfirstorder.
   - sinvert E'. constructor.
@@ -231,7 +231,7 @@ Theorem envtyped_singleton : forall x s p,
 Proof.
   intros; econstructor; [| eauto]; cbn.
   unfold singleton_env.
-  best use:eq_id_refl.
+  hauto lq: on drew: off use:eq_id_refl.
 Qed.
 
 Theorem envtyped_comma: forall n n' g g',

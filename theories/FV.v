@@ -22,3 +22,4 @@ Definition disjoint {A : Type} (X Y : set A) : Prop :=
 
 Class FV (A : Type) :=
   { fv : A -> set ident }.
+

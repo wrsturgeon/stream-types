@@ -18,15 +18,23 @@ Theorem maximalpush : forall e e' eta p,
 Proof.
   intros.
   generalize dependent H0.
-  induction H; intros.
-  - sauto lq: on.
-  - sauto lq: on.
+  induction H.
+  - hauto l: on.
+  - hauto l: on.
   - qauto l: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - admit.
-  - admit.
+  - sauto l: on.
+  - sauto l: on.
+  - sauto l: on.  
+  - intros. eapply IHStep.
+    simpl in H1.
+    edestruct (H1 z) as [p [A B]]; [sfirstorder|].
+    assert (p = PfxParPair p1 p2) by scongruence.
+    subst.
+    sinvert B.
+    unfold MaximalOn. unfold PropOn. intros.
+    unfold prop_on_item.
+    unfold MapsTo.
+    
 Admitted.
 
 
