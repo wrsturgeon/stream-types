@@ -98,21 +98,21 @@ Fixpoint emp ty :=
 Theorem emp_well_typed : forall s, PfxTyped (emp s) s.
 Proof. induction s; simpl; constructor; assumption. Qed.
 
-Inductive PfxEmpty : prefix -> Prop :=
-  | PfxEmptyEpsEmp :
-      PfxEmpty PfxEpsEmp
-  | PfxEmptyOneEmp :
-      PfxEmpty PfxOneEmp
-  | PfxEmptyParPair : forall p1 p2,
-      PfxEmpty p1 ->
-      PfxEmpty p2 ->
-      PfxEmpty (PfxParPair p1 p2)
-  | PfxEmptyCatFst : forall p,
-      PfxEmpty p ->
-      PfxEmpty (PfxCatFst p)
-  | PfxEmptySumEmp :
-      PfxEmpty PfxSumEmp
+Inductive EmptyPrefix : prefix -> Prop :=
+  | EmptyPrefixEpsEmp :
+      EmptyPrefix PfxEpsEmp
+  | EmptyPrefixOneEmp :
+      EmptyPrefix PfxOneEmp
+  | EmptyPrefixParPair : forall p1 p2,
+      EmptyPrefix p1 ->
+      EmptyPrefix p2 ->
+      EmptyPrefix (PfxParPair p1 p2)
+  | EmptyPrefixCatFst : forall p,
+      EmptyPrefix p ->
+      EmptyPrefix (PfxCatFst p)
+  | EmptyPrefixSumEmp :
+      EmptyPrefix PfxSumEmp
   .
 
-Definition PfxEmptyOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in PfxEmpty p.
+Definition EmptyPrefixOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in EmptyPrefix p.
 Definition MaximalPrefixOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in MaximalPrefix p.

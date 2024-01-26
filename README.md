@@ -27,7 +27,7 @@ Open a terminal in this folder and run `make`.
 
 ## Style?
 
-Very not set in stone. My mind could easily be changed on any of these. At the moment, though, just for my own memory:
+Not set in stone. My mind could easily be changed on any of these. At the moment, though, just for my own memory:
 - Anything that's a `Prop` or usually ends up fully saturated as a `Prop`: uppercase.
 - Constructors for inductive/variant types: uppercase.
 - Everything else: lowercase.

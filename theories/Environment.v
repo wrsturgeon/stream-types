@@ -57,7 +57,7 @@ Arguments PropOnItem P n x/.
 Definition PropOn (P : prefix -> Prop) (s : set ident) (n : env) : Prop := forall x, s x -> PropOnItem P n x.
 Arguments PropOn/ P s n.
 
-Definition EmptyOn := PropOn PfxEmpty.
+Definition EmptyOn := PropOn EmptyPrefix.
 Arguments EmptyOn/ s n.
 
 Definition MaximalOn := PropOn MaximalPrefix.
