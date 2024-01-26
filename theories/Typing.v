@@ -35,7 +35,7 @@ Inductive Typed : context -> term -> type -> Prop :=
   | T_Var : forall G x s,
       fill G (CtxHasTy x s) |- (TmVar x) \in s
   | T_SubCtx : forall G G' e s,
-      sub_ctx G G' ->
+      SubCtx G G' ->
       G' |- e \in s ->
       G |- e \in s
   | T_Let : forall G D x e e' s t,
@@ -46,10 +46,12 @@ where "G '|-' x '\in' T" := (Typed G x T).
 
 Theorem typing_fv : forall G e s,
     G |- e \in s ->
-    forall x, fv e x -> fv G x.
+    forall x,
+    fv e x ->
+    fv G x.
 Proof.
     intros G e s H.
-    induction H; intros x0 Hfv; cbn in *; unfold union in *; unfold minus in *; unfold singleton in *.
+    induction H; intros x0 Hfv; cbn in *.
     - sfirstorder.
     - destruct Hfv; hauto q: on use: fv_fill. 
     - sfirstorder.

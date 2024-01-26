@@ -2,11 +2,10 @@ From Coq Require Import
   List
   String.
 From LambdaST Require Import
+  FV
   Ident
   Terms
-  Types
-  FV.
-
+  Types.
 
 Inductive context : Set :=
   | CtxEmpty
@@ -15,35 +14,32 @@ Inductive context : Set :=
   | CtxSemic (lhs rhs : context)
   .
 
-Fixpoint context_fv (G : context) : set ident :=
+Fixpoint fv_ctx (G : context) : set ident :=
   match G with
-  | CtxEmpty => FV.empty
-  | CtxHasTy x _ => FV.singleton x
-  | CtxComma g g' | CtxSemic g g' => FV.union (context_fv g) (context_fv g')
-  end
+  | CtxEmpty => empty_set
+  | CtxHasTy x _ => singleton_set x
+  | CtxComma g g' | CtxSemic g g' => set_union (fv_ctx g) (fv_ctx g')
+  end.
+
+Instance fv_ctx_inst : FV context := { fv := fv_ctx }.
+
+Inductive WFContext : context -> Prop :=
+  | WFCtxEmpty :
+      WFContext CtxEmpty
+  | WFCtxHasTy : forall x t,
+      WFContext (CtxHasTy x t)
+  | WFCtxComma : forall g g',
+      WFContext g ->
+      WFContext g' ->
+      Disjoint (fv g) (fv g') ->
+      WFContext (CtxComma g g')
+  | WFCtxSemic : forall g g',
+      WFContext g ->
+      WFContext g' ->
+      Disjoint (fv g) (fv g') ->
+      WFContext (CtxSemic g g')
   .
 
-
-Instance context_fv_inst : FV context :=
-{
-  fv := context_fv
-}.
-
-Inductive wf_ctx : context -> Prop :=
-| wf_CtxEmpty : wf_ctx CtxEmpty
-| wf_CtxHasTy : forall x t, wf_ctx (CtxHasTy x t)
-| wf_CtxComma : forall g g',
-    wf_ctx g ->
-    wf_ctx g' ->
-    disjoint (fv g) (fv g') ->
-    wf_ctx (CtxComma g g')
-| wf_CtxSemic : forall g g',
-    wf_ctx g ->
-    wf_ctx g' ->
-    disjoint (fv g) (fv g') ->
-    wf_ctx (CtxSemic g g')
-.
-
-Inductive sub_ctx : context -> context -> Prop := .
+Inductive SubCtx : context -> context -> Prop := . (* TODO: Huh? *)
 
 (* will need to prove that context derivatives preserve this... *)

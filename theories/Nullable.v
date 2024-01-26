@@ -1,6 +1,5 @@
 From LambdaST Require Import
   Context
-  Invert
   Prefix
   Types.
 

@@ -2,11 +2,10 @@ From Coq Require Import
   Strings.String
   Classes.EquivDec
   Logic.Decidable.
+From Hammer Require Import
+  Tactics.
 
 Definition ident : Set := string.
-
-From Hammer Require Import Tactics.
-
 Bind Scope string_scope with ident.
 
 Definition eq_id : ident -> ident -> bool := eqb.
@@ -22,8 +21,4 @@ Proof.
 sfirstorder use:eqb_neq.
 Qed.
 
-
-Instance EqDec : EqDec Ident.ident eq :=
-{
-  equiv_dec x y := string_dec x y
-}.
+Instance EqDec : EqDec Ident.ident eq := { equiv_dec x y := string_dec x y }.

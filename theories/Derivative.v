@@ -1,10 +1,11 @@
 From LambdaST Require Import
   Context
   Environment
-  Invert
   Nullable
   Prefix
   Types.
+From Hammer Require Import
+  Tactics.
 
 Inductive Derivative : prefix -> type -> type -> Prop :=
   | DrvEpsEmp :
@@ -48,7 +49,7 @@ Inductive ContextDerivative : env -> context -> context -> Prop :=
   | CtxDrvEmpty : forall n,
       ContextDerivative n CtxEmpty CtxEmpty
   | CtxDrvHasTy : forall n x p s s',
-      MapsTo p x n ->
+      n x = Some p ->
       Derivative p s s' ->
       ContextDerivative n (CtxHasTy x s) (CtxHasTy x s')
   | CtxDrvComma : forall n G G' D D',
@@ -68,7 +69,7 @@ Theorem derivative_unique : forall p s s'1 s'2,
   s'1 = s'2.
 Proof.
   intros p s s'1 s'2 H1 H2. generalize dependent s'2. induction H1; intros;
-  invert H2; try reflexivity; auto.
+  sinvert H2; try reflexivity; auto.
   - apply IHDerivative1 in H5. apply IHDerivative2 in H6. subst. reflexivity.
   - apply IHDerivative in H5. subst. reflexivity.
   - apply IHDerivative in H3. subst. reflexivity.
@@ -104,7 +105,7 @@ Theorem context_derivative_unique : forall n G G'1 G'2,
   G'1 = G'2.
 Proof.
   intros n G G'1 G'2 H1 H2. generalize dependent G'2. induction H1; intros;
-  invert H2; try (apply IHContextDerivative1 in H3; apply IHContextDerivative2 in H5; subst); try reflexivity.
+  sinvert H2; try (apply IHContextDerivative1 in H3; apply IHContextDerivative2 in H5; subst); try reflexivity.
   remember (maps_to_unique _ _ _ _ H H5) as U eqn:E. clear E. subst.
   remember (derivative_unique _ _ _ _ H0 H7) as U eqn:E. clear E. subst.
   reflexivity.
@@ -124,11 +125,11 @@ Qed.
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
   Derivative p s s' ->
-  Maximal p ->
+  MaximalPrefix p ->
   Nullable s'.
 Proof.
   intros p s s' Hd Hm. generalize dependent s. generalize dependent s'.
-  induction Hm; intros; invert Hd; try constructor; eauto.
+  induction Hm; intros; sinvert Hd; try constructor; eauto.
 Qed.
 
 (* Theorem B.19 *)
@@ -137,7 +138,7 @@ Theorem nullable_prefix_empty : forall p s,
   Nullable s ->
   p = emp s.
 Proof.
-  intros p s Ht Hn. generalize dependent p. induction Hn; intros; invert Ht. { reflexivity. }
+  intros p s Ht Hn. generalize dependent p. induction Hn; intros; sinvert Ht. { reflexivity. }
   apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
 Qed.
 
@@ -173,20 +174,20 @@ Proof.
     try rewrite IHDerivative;
     reflexivity.
   - generalize dependent s. generalize dependent s'. induction p; intros;
-    try solve [destruct s; invert H; constructor];
+    try solve [destruct s; sinvert H; constructor];
     destruct s; try discriminate H;
     simpl in *.
     + destruct (maybe_derivative p1 s1) eqn:E1; try discriminate H.
       destruct (maybe_derivative p2 s2) eqn:E2; try discriminate H.
       apply IHp1 in E1. apply IHp2 in E2.
-      invert H. constructor; assumption.
+      sinvert H. constructor; assumption.
     + destruct (maybe_derivative p s1) eqn:E; try discriminate H.
-      apply IHp in E. invert H. constructor. assumption.
+      apply IHp in E. sinvert H. constructor. assumption.
     + apply IHp2 in H. constructor. assumption.
     + apply IHp in H. constructor. assumption.
     + apply IHp in H. constructor. assumption.
     + destruct (maybe_derivative p s) eqn:E; try discriminate H.
-      apply IHp in E. invert H. constructor. assumption.
+      apply IHp in E. sinvert H. constructor. assumption.
     + apply IHp2 in H. constructor. assumption.
 Qed.
 

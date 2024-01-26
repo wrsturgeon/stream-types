@@ -5,10 +5,10 @@ From Coq Require Import
 From LambdaST Require Import
   Ident
   FV.
-
-From Hammer Require Import Tactics.
-
-From LambdaST Require Import Types.
+From Hammer Require Import
+  Tactics.
+From LambdaST Require Import
+  Types.
 
 Declare Scope term_scope.
 
@@ -37,57 +37,62 @@ Notation "'let' ( lhs , rhs ) = both 'in' body" :=
 Notation "'let' t ( lhs ; rhs ) = both 'in' body" :=
   (TmLetCat t lhs rhs both body) (at level 98, right associativity) : term_scope.
 
-Fixpoint term_fv e : FV.set ident :=
+Fixpoint fv_term e : FV.set ident :=
   match e with
-  | TmSink | TmUnit => empty
-  | TmVar x => singleton x
-  | TmComma e1 e2 | TmSemic e1 e2 => union (term_fv e1) (term_fv e2)
-  | TmLet x e e' => union (term_fv e) (minus (term_fv e') (singleton x))
-  | TmLetPar x y z e | TmLetCat _ x y z e => union (singleton z) (minus (minus (term_fv e) (singleton x)) (singleton y))
+  | TmSink | TmUnit => empty_set
+  | TmVar x => singleton_set x
+  | TmComma e1 e2 | TmSemic e1 e2 => set_union (fv_term e1) (fv_term e2)
+  | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
+  | TmLetPar x y z e | TmLetCat _ x y z e => set_union (singleton_set z) (
+      set_minus (set_minus (fv_term e) (singleton_set x)) (singleton_set y))
   end.
 
-Instance term_fv_inst : FV term :=
-{
-  fv := term_fv
-}.
+Instance fv_term_inst : FV term := { fv := fv_term }.
 
 (* term is well-formed under a set of free variables. this ensures there's no shadowing, 
 and all bindings are coherent. *)
-Inductive wf : set ident -> term -> Prop :=
-  | wf_TmSink : forall s, wf s TmSink
-  | wf_TmUnit : forall s, wf s TmUnit
-  | wf_TmVar : forall x s, s x -> wf s (TmVar x)
-  | wf_TmComma : forall e e' s,
-      wf s e ->
-      wf s e' ->
-      wf s (e , e')
-  | wf_TmSemic : forall e e' s,
-      wf s e ->
-      wf s e' ->
-      wf s (e ; e')
-  | wf_TmLet : forall x e e' s,
+Inductive WFTerm : set ident -> term -> Prop :=
+  | WFTmSink : forall s,
+      WFTerm s TmSink
+  | WFTmUnit : forall s,
+      WFTerm s TmUnit
+  | WFTmVar : forall x s,
+      s x ->
+      WFTerm s (TmVar x)
+  | WFTmComma : forall e e' s,
+      WFTerm s e ->
+      WFTerm s e' ->
+      WFTerm s (e , e')
+  | WFTmSemic : forall e e' s,
+      WFTerm s e ->
+      WFTerm s e' ->
+      WFTerm s (e ; e')
+  | WFTmLet : forall x e e' s,
       ~(s x) ->
       (* is this right? *)
-      wf s e ->
-      wf (union s (singleton x)) e' ->
-      wf s (TmLet x e e')
-  | wf_TmLetPar : forall x y z e s,
-      wf (union (minus s (singleton z)) (union (singleton x) (singleton y))) e ->
+      WFTerm s e ->
+      WFTerm (set_union s (singleton_set x)) e' ->
+      WFTerm s (TmLet x e e')
+  | WFTmLetPar : forall x y z e s,
+      WFTerm (set_union (set_minus s (singleton_set z)) (set_union (singleton_set x) (singleton_set y))) e ->
       s z ->
       ~(s x) ->
       ~(s y) ->
       x <> y ->
-      wf s (TmLetPar x y z e)
-  | wf_TmLetCat : forall x y z e t s,
-      wf (union (minus s (singleton z)) (union (singleton x) (singleton y))) e ->
+      WFTerm s (TmLetPar x y z e)
+  | WFTmLetCat : forall x y z e t s,
+      WFTerm (set_union (set_minus s (singleton_set z)) (set_union (singleton_set x) (singleton_set y))) e ->
       s z ->
       ~(s x) ->
       ~(s y) ->
       x <> y ->
-      wf s (TmLetCat t x y z e)
+      WFTerm s (TmLetCat t x y z e)
 .
 
-Theorem wf_iff : forall s s' e, (forall x, s x <-> s' x) -> wf s e -> wf s' e.
+Theorem wf_iff : forall s s' e,
+  SetEq s s' ->
+  WFTerm s e ->
+  WFTerm s' e.
 Proof.
   intros.
   generalize dependent s'.

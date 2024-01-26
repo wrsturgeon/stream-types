@@ -24,3 +24,13 @@ Install Coq ([here](https://coq.inria.fr/download)) and CoqHammer ([here](https:
 ## Building
 
 Open a terminal in this folder and run `make`.
+
+## Style?
+
+Not set in stone. My mind could easily be changed on any of these. At the moment, though, just for my own memory:
+- Anything that's a `Prop` or usually ends up fully saturated as a `Prop`: uppercase.
+- Constructors for inductive/variant types: uppercase.
+- Everything else: lowercase.
+- Two-space indentation.
+- Inductive/variant types have all their constructors (e.g. `| Nil`) on separate lines, each indented.
+    - Also, unless everything fits on one line, `forall`s go on the same line as the constructor, and everything else goes after, indented again.
