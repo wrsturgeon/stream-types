@@ -29,11 +29,16 @@ let
     installPhase = "make install-plugin";
     propagatedBuildInputs = [ tactics ] ++ propagatedBuildInputs;
   };
+  tptp = import ./tptp.nix { inherit (os-pkgs) cmake stdenv z3; };
 in os-pkgs.stdenv.mkDerivation {
   inherit pname src version;
-  phases = [ ];
   buildPhase = ":"; # just in case
-  installPhase = ":"; # ^^
-  propagatedBuildInputs = [ plugin tactics ];
+  installPhase = ''
+    mkdir -p $out/bin
+    cp ${
+      builtins.trace "${os-pkgs.z3-tptp}" os-pkgs.z3-tptp
+    }/bin/z3-tptp $out/bin/z3_tptp
+  '';
+  propagatedBuildInputs = [ plugin tactics ]
+    ++ (with os-pkgs; [ cvc4 eprover vampire z3 tptp ]);
 }
-

@@ -133,12 +133,10 @@ Proof.
   - sfirstorder.
 Qed.
 
-Theorem disjoint_noconflict : forall s n n',
+Theorem disjoint_no_conflict : forall s n n',
   Disjoint (set_intersection s (dom n)) (set_intersection s (dom n')) ->
   NoConflictOn s n n'.
-Proof.
-  unfold NoConflictOn in *; intros s n n' H x. remember (n' x) as n'x; destruct n'x. sfirstorder. sfirstorder.
-Qed.
+Proof. simpl. intros. destruct (n' x) eqn:E; sfirstorder. Qed.
 
 Lemma env_typed_weakening_alt : forall n n' G,
   NoConflictOn (fv G (* fun _ => True *)) n n' ->
@@ -151,6 +149,7 @@ Proof.
   - constructor. { hauto l: on. } { hauto l: on. } destruct H; simpl in *. { hauto lq: on. } qauto l: on.
 Qed.
 
+(* TODO: If we're forbidding shadowing, why do we need to change the lemmas above from the `main` branch? *)
 Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
   NoConflictOn (fv h) n n' ->
   (PropOn P (fv d) n <-> PropOn P (fv d') n') ->
@@ -170,8 +169,9 @@ Qed.  *)
   generalize dependent n'. generalize dependent d'. generalize dependent hd'.
   induction Hf; intros; sinvert Hf'; simpl in *; intros.
   - sauto lq: on.
-  - eapply IHHf; clear IHHf. { sfirstorder. } { hauto lq: on rew: off. } { sfirstorder. } { qauto l: on. }
-    destruct H. { assumption. }
+  - eapply IHHf; clear IHHf; [sfirstorder | hauto lq: on rew: off | sfirstorder | qauto l: on |].
+    destruct H. { assumption. } specialize (Hp x). destruct Hp as [p [Hp1 Hp2]]. { right. assumption. }
+    specialize (Hc x p). destruct Hc; [right; assumption | assumption | |].
 Admitted.
 
 Theorem fill_replace : forall h d d' n n',
@@ -246,7 +246,7 @@ Theorem env_typed_comma: forall n n' g g',
 Proof.
   intros.
   constructor.
-  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_noconflict. 
+  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict. 
   + sfirstorder use: env_typed_weakening.
 Qed.
 
@@ -259,7 +259,7 @@ Theorem env_typed_semic : forall n n' g g',
 Proof.
   intros.
   constructor.
-  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_noconflict. 
+  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict. 
   + sfirstorder use: env_typed_weakening.
   + destruct H2; [left | right]; hfcrush.
 Qed.

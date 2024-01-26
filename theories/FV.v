@@ -25,6 +25,7 @@ Arguments set_minus {A} X Y/ x.
 
 Definition Disjoint {A} (X Y : set A) : Prop :=
   (forall x, X x -> ~(Y x)) /\ (forall x, Y x -> ~(X x)).
+Arguments Disjoint {A} X Y/.
 
 (* Meant to be read with *currying* in mind: `Contains a b` = `(Contains a) b`, i.e. "b contains a" *)
 Definition Contains {T} (a b : set T) : Prop := forall x, a x -> b x.

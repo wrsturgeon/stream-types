@@ -3,6 +3,7 @@ From LambdaST Require Import
   FV
   Ident.
 From Hammer Require Import
+  Hammer
   Tactics.
 
 Inductive hole : Set :=
@@ -66,9 +67,9 @@ Proof. intros H D G Hfill. induction Hfill; sfirstorder. Qed.
 Theorem fv_fill : forall H D,
   forall x, fv (fill H D) x <-> fv H x \/ fv D x.
 Proof.
-  intros H D.
-  remember (fill H D).
-  hauto lq: on use:fv_fill_reflect, reflect_fill.
+  simpl in *. split; intros.
+  - hauto q: on use: fv_fill_reflect, reflect_fill.
+  - hauto lq: on rew: off use: fv_fill_reflect, reflect_fill.
 Qed.
 
 Inductive wf_hole : hole -> Prop :=
@@ -100,7 +101,7 @@ Theorem wf_fill_reflect : forall h d g,
   WFContext g <-> wf_hole h /\ WFContext d /\ Disjoint (fv h) (fv d).
 Proof.
   intros h d g H. induction H; cbn in *; intros; [sfirstorder | | | |];
-  (split; [sauto lq: on use:fv_fill_reflect | sauto l: on use:fv_fill_reflect]).
+  repeat (split; intros); sauto lq: on use: fv_fill_reflect.
 Qed.
 
 Theorem wf_fill : forall h d,

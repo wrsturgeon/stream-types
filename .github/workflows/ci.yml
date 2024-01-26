@@ -24,4 +24,4 @@ jobs:
     - name: nix build
       run: nix build
     - name: Check for `Admitted`
-      run: for f in $(find . -name '*.v'); do echo "Checking for 'Admitted' in ${f}..."; if grep -q Admitted ${f}; then grep -Rnw . -e 'Admitted'; exit 1; fi; done
+      run: for f in $(find . -name '*.v'); do echo "Checking for 'Admitted' in ${f}..."; if grep -q Admitted ${f}; then grep -Rnw theories -e 'Admitted'; exit 1; fi; done
