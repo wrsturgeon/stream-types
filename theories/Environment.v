@@ -5,7 +5,6 @@ From LambdaST Require Import
   FV
   Hole
   Ident
-  Invert
   Prefix
   Terms
   Types.
@@ -98,14 +97,14 @@ Theorem maps_to_hole : forall n G D,
 Proof.
   intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
   generalize dependent G. generalize dependent D. induction H; intros; subst; simpl in *;
-  invert E; try econstructor; try eassumption; try (eapply IHEnvTyped1; eassumption); eapply IHEnvTyped2; eassumption.
+  sinvert E; try econstructor; try eassumption; try (eapply IHEnvTyped1; eassumption); eapply IHEnvTyped2; eassumption.
 Qed.
 
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,
   EnvTyped n (fill G (CtxHasTy x s)) ->
   exists p, (MapsTo p x n /\ PfxTyped p s).
-Proof. intros. assert (A := maps_to_hole _ _ _ H). invert A. eexists. split; eassumption. Qed.
+Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
 
 Lemma prop_on_item_weakening : forall P n n' vs,
   PropOnItem P n' vs ->
@@ -146,17 +145,16 @@ Proof.
   unfold NoConflictOn in *; intros s n n' H x. remember (n' x) as n'x; destruct n'x. sfirstorder. sfirstorder.
 Qed.
 
-
 Lemma env_typed_weakening_alt : forall n n' G,
   NoConflictOn (fv G) n n' ->
   EnvTyped n G ->
   EnvTyped (env_union n n') G.
 Proof.
   intros n n' G Hm Ht. generalize dependent n'.
-Admitted.
   (* induction Ht; intros; simpl in *; econstructor; try apply IHHt1; try apply IHHt2; try eassumption. *)
   (* hauto l: on. *)
   (* destruct H; [left | right]; hauto drew: off. *)
+Admitted.
 
 Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
   NoConflictOn (fv h) n n' ->
@@ -166,7 +164,6 @@ Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
   PropOn P (fv hd) n ->
   PropOn P (fv hd') (env_union n n').
 Proof.
-Admitted.
   (* intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
   generalize dependent D'. generalize dependent lhs''.
   induction Hf; intros; sinvert Hf'; simpl in *; [ apply Hp in H; eapply Forall_impl; [|eauto]; hauto q:on | | | |];
@@ -174,6 +171,7 @@ Admitted.
   (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
   simpl; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
 Qed.  *)
+Admitted.
 
 Theorem fill_replace : forall h d d' n n',
   NoConflictOn (fv h) n n' ->

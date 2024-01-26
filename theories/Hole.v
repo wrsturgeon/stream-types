@@ -2,7 +2,6 @@ From LambdaST Require Import
   Context
   FV
   Ident.
-
 From Hammer Require Import
   Tactics.
 
