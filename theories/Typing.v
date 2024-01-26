@@ -46,7 +46,9 @@ where "G '|-' x '\in' T" := (Typed G x T).
 
 Theorem typing_fv : forall G e s,
     G |- e \in s ->
-    forall x, fv e x -> fv G x.
+    forall x,
+    fv e x ->
+    fv G x.
 Proof.
     intros G e s H.
     induction H; intros x0 Hfv; cbn in *.

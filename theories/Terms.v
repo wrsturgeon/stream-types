@@ -37,17 +37,17 @@ Notation "'let' ( lhs , rhs ) = both 'in' body" :=
 Notation "'let' t ( lhs ; rhs ) = both 'in' body" :=
   (TmLetCat t lhs rhs both body) (at level 98, right associativity) : term_scope.
 
-Fixpoint term_fv e : FV.set ident :=
+Fixpoint fv_term e : FV.set ident :=
   match e with
   | TmSink | TmUnit => empty_set
   | TmVar x => singleton_set x
-  | TmComma e1 e2 | TmSemic e1 e2 => set_union (term_fv e1) (term_fv e2)
-  | TmLet x e e' => set_union (term_fv e) (set_minus (term_fv e') (singleton_set x))
+  | TmComma e1 e2 | TmSemic e1 e2 => set_union (fv_term e1) (fv_term e2)
+  | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
   | TmLetPar x y z e | TmLetCat _ x y z e => set_union (singleton_set z) (
-      set_minus (set_minus (term_fv e) (singleton_set x)) (singleton_set y))
+      set_minus (set_minus (fv_term e) (singleton_set x)) (singleton_set y))
   end.
 
-Instance term_fv_inst : FV term := { fv := term_fv }.
+Instance fv_term_inst : FV term := { fv := fv_term }.
 
 (* term is well-formed under a set of free variables. this ensures there's no shadowing, 
 and all bindings are coherent. *)

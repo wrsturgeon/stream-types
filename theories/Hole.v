@@ -47,16 +47,16 @@ Proof.
   - induction H; simpl; try rewrite IHFillWith; reflexivity.
 Qed.
 
-Fixpoint hole_fv (h : hole) : set ident :=
+Fixpoint fv_hole (h : hole) : set ident :=
   match h with
   | HoleHere => empty_set
   | HoleCommaL h g
   | HoleCommaR g h
   | HoleSemicL h g
-  | HoleSemicR g h => set_union (hole_fv h) (fv g)
+  | HoleSemicR g h => set_union (fv_hole h) (fv g)
   end.
 
-Instance hole_fv_inst : FV hole := { fv := hole_fv }.
+Instance fv_hole_inst : FV hole := { fv := fv_hole }.
 
 Theorem fv_fill_reflect: forall H D G,
   FillWith H D G ->
