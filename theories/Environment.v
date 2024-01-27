@@ -149,68 +149,18 @@ Proof.
   - constructor. { hauto l: on. } { hauto l: on. } destruct H; simpl in *. { hauto lq: on. } qauto l: on.
 Qed.
 
-(* TODO: If we're forbidding shadowing, why do we need to change the lemmas above from the `main` branch? *)
-Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
-  NoConflictOn (fv h) n n' ->
-  (PropOn P (fv d) n <-> PropOn P (fv d') n') ->
-  FillWith d  h hd  ->
-  FillWith d' h hd' ->
-  PropOn P (fv hd) n ->
-  PropOn P (fv hd') (env_union n n').
-Proof.
-  (* intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
-  generalize dependent D'. generalize dependent lhs''.
-  induction Hf; intros; sinvert Hf'; simpl in *; [ apply Hp in H; eapply Forall_impl; [|eauto]; hauto q:on | | | |];
-  apply Forall_app in H as [Hl Hr]; apply Forall_app; split; try (eapply IHHf; eassumption);
-  (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
-  simpl; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
-Qed.  *)
-  intros P n n' d d' h hd hd' Hc Ha Hf Hf' Hp. generalize dependent P. generalize dependent n.
-  generalize dependent n'. generalize dependent d'. generalize dependent hd'.
-  induction Hf; intros; sinvert Hf'; simpl in *; intros.
-  - sauto lq: on.
-  - eapply IHHf; clear IHHf; [sfirstorder | hauto lq: on rew: off | sfirstorder | qauto l: on |].
-    destruct H. { assumption. } specialize (Hp x). destruct Hp as [p [Hp1 Hp2]]. { right. assumption. }
-    specialize (Hc x p). destruct Hc; [right; assumption | assumption | |].
-Admitted.
-
-Theorem fill_replace : forall h d d' n n',
-  NoConflictOn (fv h) n n' ->
-  EnvTyped n (fill h d) ->
-  EnvTyped n' d' ->
-  Agree n n' d d' ->
-  EnvTyped (env_union n n') (fill h d').
-Proof.
-  intros h d d' n n' Hnc Ht Ht' [Hm He].
-  remember (fill h d) as hd eqn:E. apply reflect_fill in E.
-  remember (fill h d') as hd' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
-  generalize dependent d'. generalize dependent hd'.
-  induction E; intros.
-  - sauto lq: on use: env_typed_weakening.
-  - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
-      sauto lq: on. sfirstorder. sfirstorder.
-    + sauto q: on use:env_typed_weakening_alt.
-  - sinvert E'. constructor.
-    + sauto q: on use:env_typed_weakening_alt.
-    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
-      sauto lq: on. sfirstorder. sfirstorder.
-  - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
-      sauto lq: on. sfirstorder. sfirstorder.
-    + sauto q: on use:env_typed_weakening_alt.
-    + sinvert Ht. destruct H5; [left | right]; admit.
-  - admit.
-Admitted.
-
-(* Theorem B.11
+(* Theorem B.11 *)
 Theorem agree_typed : forall n n' G D D',
-  NoConflictOn n n' ->
   EnvTyped n (fill G D) ->
   EnvTyped n' D' ->
   Agree n n' D D' ->
-  EnvTyped (union n n') (fill G D').
+  EnvTyped (env_union n n') (fill G D').
 Proof.
+  cbn. intros n n' G D D' Ht Ht' [Ham Hae]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
+  generalize dependent n. generalize dependent n'. generalize dependent D'. induction E; intros; cbn in *.
+  - (* We have an assumption that this holds for the right side of the union, so weaken away the left. *)
+    apply env_typed_weakening. assumption.
+(*
   intros n n' G D D' Hn Ht Ht' [Hm He]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
   remember (fill G D') as GD' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
   generalize dependent D'. generalize dependent GD'. induction E; intros; simpl in *.
@@ -226,7 +176,9 @@ Proof.
   - sinvert E'. sinvert Ht. constructor; [hauto l: on use:env_typed_weakening_alt | qauto l: on use:env_typed_weakening_alt|].
     clear IHE.
     destruct H5; [left | right]. qauto l: on use: prop_on_union. hauto qb: on drew: off.
-Qed. *)
+Qed.
+*)
+Admitted.
 
 (* environment typing smart constructors *)
 Theorem env_typed_singleton : forall x s p,
