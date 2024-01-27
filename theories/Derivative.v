@@ -44,6 +44,7 @@ Inductive Derivative : prefix -> type -> type -> Prop :=
       Derivative p' (TyStar s) s' ->
       Derivative (PfxStarRest p p') (TyStar s) s'
   .
+Hint Constructors Derivative : core.
 
 Inductive ContextDerivative : env -> context -> context -> Prop :=
   | CtxDrvEmpty : forall n,
@@ -61,6 +62,7 @@ Inductive ContextDerivative : env -> context -> context -> Prop :=
       ContextDerivative n D D' ->
       ContextDerivative n (CtxSemic G D) (CtxSemic G' D')
   .
+Hint Constructors ContextDerivative : core.
 
 (* Theorem B.15, part I *)
 Theorem derivative_unique : forall p s s'1 s'2,
@@ -74,6 +76,7 @@ Proof.
   - apply IHDerivative in H5. subst. reflexivity.
   - apply IHDerivative in H3. subst. reflexivity.
 Qed.
+Hint Resolve derivative_unique : core.
 
 (* Theorem B.15, part II *)
 Theorem derivative_when_well_typed : forall p s,
@@ -92,11 +95,13 @@ Proof.
   - exists (TyDot s' (TyStar s)). constructor. assumption.
   - exists t'. constructor. assumption.
 Qed.
+Hint Resolve derivative_when_well_typed : core.
 
 (* Theorem B.16 *)
 Theorem derivative_emp : forall s,
   Derivative (emp s) s s.
-Proof. induction s; simpl; constructor; assumption. Qed.
+Proof. induction s; cbn; constructor; assumption. Qed.
+Hint Resolve derivative_emp : core.
 
 (* Theorem B.17, part I *)
 Theorem context_derivative_unique : forall n G G'1 G'2,
@@ -110,6 +115,7 @@ Proof.
   remember (derivative_unique _ _ _ _ H0 H7) as U eqn:E. clear E. subst.
   reflexivity.
 Qed.
+Hint Resolve context_derivative_unique : core.
 
 (* Theorem B.17, part II *)
 Theorem derivative_when_env_well_typed : forall n G,
@@ -121,6 +127,7 @@ Proof.
   try (remember (derivative_when_well_typed p s H0) as D eqn:E; clear E; destruct D as [s' D]);
   eexists; econstructor; try apply H; try apply HG; try apply HD; apply D.
 Qed.
+Hint Resolve derivative_when_env_well_typed : core.
 
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
@@ -131,6 +138,7 @@ Proof.
   intros p s s' Hd Hm. generalize dependent s. generalize dependent s'.
   induction Hm; intros; sinvert Hd; try constructor; eauto.
 Qed.
+Hint Resolve maximal_derivative_nullable : core.
 
 (* Theorem B.19 *)
 Theorem nullable_prefix_empty : forall p s,
@@ -141,6 +149,7 @@ Proof.
   intros p s Ht Hn. generalize dependent p. induction Hn; intros; sinvert Ht. { reflexivity. }
   apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
 Qed.
+Hint Resolve nullable_prefix_empty : core.
 
 Fixpoint maybe_derivative p s : option type :=
   match p, s with
@@ -168,7 +177,7 @@ Theorem reflect_derivative : forall p s s',
   Derivative p s s' <-> maybe_derivative p s = Some s'.
 Proof.
   split; intros.
-  - induction H; simpl in *;
+  - induction H; cbn in *;
     try rewrite IHDerivative1;
     try rewrite IHDerivative2;
     try rewrite IHDerivative;
@@ -176,7 +185,7 @@ Proof.
   - generalize dependent s. generalize dependent s'. induction p; intros;
     try solve [destruct s; sinvert H; constructor];
     destruct s; try discriminate H;
-    simpl in *.
+    cbn in *.
     + destruct (maybe_derivative p1 s1) eqn:E1; try discriminate H.
       destruct (maybe_derivative p2 s2) eqn:E2; try discriminate H.
       apply IHp1 in E1. apply IHp2 in E2.
@@ -190,12 +199,13 @@ Proof.
       apply IHp in E. sinvert H. constructor. assumption.
     + apply IHp2 in H. constructor. assumption.
 Qed.
+Hint Resolve reflect_derivative : core.
 
 Theorem reflect_no_derivative : forall p s,
   maybe_derivative p s = None ->
   ~exists s', Derivative p s s'.
 Proof.
-  intros p s H [s' C]. generalize dependent H. induction C; simpl; intros;
+  intros p s H [s' C]. generalize dependent H. induction C; cbn; intros;
   try destruct (maybe_derivative p s);
   try destruct (maybe_derivative p1 s);
   try destruct (maybe_derivative p2 t);
@@ -204,6 +214,7 @@ Proof.
   try solve [apply IHC2; assumption];
   discriminate H.
 Qed.
+Hint Resolve reflect_no_derivative : core.
 
 Definition derivative : forall p s, PfxTyped p s -> type.
 Proof.

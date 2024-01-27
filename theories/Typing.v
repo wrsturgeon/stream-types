@@ -43,6 +43,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       fill G (CtxHasTy x s) |- e' \in t ->
       fill G D |- TmLet x e e' \in t
 where "G '|-' x '\in' T" := (Typed G x T).
+Hint Constructors Typed : core.
 
 Theorem typing_fv : forall G e s,
     G |- e \in s ->
@@ -62,3 +63,4 @@ Proof.
     - sfirstorder.
     - destruct Hfv; hauto q: on use: fv_fill.
 Qed.
+Hint Resolve typing_fv : core.

@@ -8,6 +8,7 @@ Inductive type : Set :=
   | TySum (lhs rhs : type)
   | TyStar (starred : type)
   .
+Hint Constructors type : core.
 
 Bind Scope stream_type_scope with type.
 

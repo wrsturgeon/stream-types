@@ -22,6 +22,7 @@ Inductive term : Set :=
   | TmLetPar (lhs rhs bound : ident) (body : term)
   | TmLetCat (t : type) (lhs rhs bound : ident) (body : term)
   .
+Hint Constructors term : core.
 
 Bind Scope term_scope with term.
 

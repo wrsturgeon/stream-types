@@ -36,3 +36,4 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step n (TmLetCat t x y z e) (TmLetCat t x y z e') p'
   .
 (* TODO: FINISH DEFINITION *)
+Hint Constructors Step : core.
