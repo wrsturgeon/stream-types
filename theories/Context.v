@@ -12,6 +12,7 @@ Inductive context : Set :=
   | CtxComma (lhs rhs : context)
   | CtxSemic (lhs rhs : context)
   .
+Hint Constructors context : core.
 
 Fixpoint vars_in ctx : list ident :=
   match ctx with

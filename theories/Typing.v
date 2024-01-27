@@ -42,4 +42,5 @@ Inductive Typed : context -> term -> type -> Prop :=
       Gxs |- e' \in t ->
       GD |- TmLet x e e' \in t
 where "G '|-' x '\in' T" := (Typed G x T).
+Hint Constructors Typed : core.
 *)

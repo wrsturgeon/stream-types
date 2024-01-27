@@ -34,6 +34,5 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step (subst x p (subst y (emp _) n)) e e' p' ->
       Step n (TmLetCat x y z e) (TmLetCat x y z e') p'
   .
-
-Print Step.
+Hint Constructors Step : core.
 *)
