@@ -57,7 +57,7 @@ Arguments EmptyOn/ s n.
 Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ s n.
 
-Theorem prop_on_restrict : forall P s s' n,
+Theorem prop_on_contains : forall P s s' n,
   Contains s s' ->
   PropOn P s' n ->
   PropOn P s n.
@@ -118,7 +118,7 @@ Definition NoConflictOn (s : set ident) (n n' : env) := forall x p,
   s x -> n x = Some p -> (n' x = None \/ n' x = Some p).
 Arguments NoConflictOn/ s n n'.
 
-Theorem no_conflict_restrict : forall s s' n n',
+Theorem no_conflict_contains : forall s s' n n',
   Contains s s' ->
   NoConflictOn s' n n' ->
   NoConflictOn s n n'.
@@ -188,15 +188,15 @@ Proof.
   induction E; intros.
   - sauto lq: on use: env_typed_weakening.
   - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
   - sinvert E'. constructor.
     + sauto q: on use:env_typed_weakening_alt.
-    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
   - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
     + sinvert Ht. destruct H5; [left | right]; admit.

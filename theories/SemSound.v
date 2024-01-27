@@ -34,8 +34,7 @@ Proof.
     subst.
     sinvert B.
     unfold MaximalOn. unfold PropOn. intros.
-    unfold prop_on_item.
-    unfold MapsTo.
+    unfold PropOnItem.
 Admitted.
 
 Theorem soundout : forall G e e' s eta p,
