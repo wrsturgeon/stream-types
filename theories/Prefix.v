@@ -16,6 +16,7 @@ Inductive prefix : Set :=
   | PfxStarFirst (p : prefix)
   | PfxStarRest (b p : prefix)
   .
+Hint Constructors prefix : core.
 
 Inductive Maximal : prefix -> Prop :=
   | MaxEpsEmp :
@@ -43,6 +44,7 @@ Inductive Maximal : prefix -> Prop :=
       Maximal p' ->
       Maximal (PfxStarRest p p')
   .
+Hint Constructors Maximal : core.
 
 Inductive PfxTyped : prefix -> type -> Prop :=
   | PfxTyEpsEmp :
@@ -84,6 +86,7 @@ Inductive PfxTyped : prefix -> type -> Prop :=
       PfxTyped p' (TyStar s) ->
       PfxTyped (PfxStarRest p p') (TyStar s)
   .
+Hint Constructors PfxTyped : core.
 
 Fixpoint emp ty :=
   match ty with
@@ -96,7 +99,8 @@ Fixpoint emp ty :=
   end.
 
 Theorem emp_well_typed : forall s, PfxTyped (emp s) s.
-Proof. induction s; simpl; constructor; assumption. Qed.
+Proof. induction s; cbn; constructor; assumption. Qed.
+Hint Resolve emp_well_typed : core.
 
 Inductive Empty : prefix -> Prop :=
   | EmptyEpsEmp :
@@ -113,6 +117,9 @@ Inductive Empty : prefix -> Prop :=
   | EmptySumEmp :
       Empty PfxSumEmp
   .
+Hint Constructors Empty : core.
 
 Definition EmptyOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in Empty p.
+Hint Unfold EmptyOn : core.
 Definition MaximalOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in Maximal p.
+Hint Unfold MaximalOn : core.

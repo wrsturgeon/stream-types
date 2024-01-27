@@ -8,6 +8,7 @@ Inductive hole : Set :=
   | HoleSemicL (lhs : hole) (rhs : context)
   | HoleSemicR (lhs : context) (rhs : hole)
   .
+Hint Constructors hole : core.
 
 Fixpoint fill h y :=
   match h with
@@ -34,11 +35,13 @@ Inductive FillWith y : hole -> context -> Prop :=
       FillWith y rhs rhs' ->
       FillWith y (HoleSemicR lhs rhs) (CtxSemic lhs rhs')
   .
+Hint Constructors FillWith : core.
 
 Theorem reflect_fill : forall h y c,
   c = fill h y <-> FillWith y h c.
 Proof.
   split; intros.
-  - subst. generalize dependent y. induction h; intros; simpl in *; constructor; apply IHh.
-  - induction H; simpl; try rewrite IHFillWith; reflexivity.
+  - subst. generalize dependent y. induction h; intros; cbn in *; constructor; apply IHh.
+  - induction H; cbn; try rewrite IHFillWith; reflexivity.
 Qed.
+Hint Resolve reflect_fill : core.
