@@ -8,7 +8,7 @@ From LambdaST Require Import
   Prefix.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
-Theorem environment_subcontext_bind_straightforward : forall hole plug n n',
+Theorem environment_subcontext_bind_equal : forall hole plug n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug ->
@@ -19,15 +19,20 @@ Proof.
   generalize dependent n. generalize dependent n'. generalize dependent Ef.
   induction Hf; sfirstorder.
 Qed.
-Hint Resolve environment_subcontext_bind_straightforward : core.
+Hint Resolve environment_subcontext_bind_equal : core.
 
-Conjecture agree_union : forall P n n' D D' lhs lhs' lhs'',
+Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
   (PropOn P D n <-> PropOn P D' n') ->
   FillWith D  lhs lhs'  ->
   FillWith D' lhs lhs'' ->
   PropOn P lhs' n ->
   PropOn P lhs'' (env_union n n').
+Proof.
+  intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n.
+  generalize dependent n'. generalize dependent D'. generalize dependent lhs''.
+  induction Hf; cbn in *; intros; sinvert Hf'.
+Admitted.
 Hint Resolve agree_union : core.
 
 (* Theorem B.11 *)
