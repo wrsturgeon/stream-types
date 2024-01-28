@@ -8,8 +8,7 @@ From LambdaST Require Import
   Prefix
   Terms
   Types.
-From Hammer Require Import
-  Tactics.
+From Hammer Require Import Tactics.
 
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.

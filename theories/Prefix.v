@@ -1,6 +1,5 @@
 From QuickChick Require Import QuickChick.
-From LambdaST Require Import
-  Types.
+From LambdaST Require Import Types.
 
 Inductive prefix : Set :=
   | PfxOneEmp

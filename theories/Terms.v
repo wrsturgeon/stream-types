@@ -1,8 +1,6 @@
 From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
-From Coq Require Import
-  Program.Wf
-  String.
+From Coq Require Import String.
 From LambdaST Require Import Eqb.
 
 Declare Scope term_scope.
