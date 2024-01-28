@@ -3,6 +3,7 @@ From Coq Require Import
   String.
 From LambdaST Require Import
   Ident
+  Sets
   Terms
   Types.
 
@@ -14,9 +15,9 @@ Inductive context : Set :=
   .
 Hint Constructors context : core.
 
-Fixpoint vars_in ctx : list ident :=
+Fixpoint vars_in ctx : set ident :=
   match ctx with
-  | CtxEmpty => nil
-  | CtxHasTy x _ => cons x nil
-  | CtxComma lhs rhs | CtxSemic lhs rhs => vars_in lhs ++ vars_in rhs
+  | CtxEmpty => empty_set
+  | CtxHasTy x _ => singleton_set x
+  | CtxComma lhs rhs | CtxSemic lhs rhs => set_union (vars_in lhs) (vars_in rhs)
   end.
