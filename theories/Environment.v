@@ -1,19 +1,19 @@
 From Coq Require Import
-  List.
+  List
+  String.
 From LambdaST Require Import
   Context
   Hole
-  Ident
   Prefix
   Terms
   Types.
 From Hammer Require Import
   Tactics.
 
-Definition env : Set := ident -> option prefix.
+Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
 
-Definition subst : ident -> prefix -> env -> env := fun id p n x => if eq_id id x then Some p else n x.
+Definition subst : string -> prefix -> env -> env := fun id p n x => if eqb id x then Some p else n x.
 Arguments subst p n x/.
 Hint Unfold subst : core.
 
@@ -38,7 +38,7 @@ Proof. intros p1 p2 x n H1 H2. cbn in *. rewrite H1 in H2. sinvert H2. reflexivi
 Hint Resolve maps_to_unique : core.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
-Definition prop_on_item : (prefix -> Prop) -> env -> ident -> Prop :=
+Definition prop_on_item : (prefix -> Prop) -> env -> string -> Prop :=
   fun P n x => exists p, n x = Some p /\ P p.
 Arguments prop_on_item P n x/.
 Hint Unfold prop_on_item : core.

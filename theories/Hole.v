@@ -1,3 +1,4 @@
+From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Context.
 
@@ -9,6 +10,8 @@ Inductive hole : Set :=
   | HoleSemicR (lhs : context) (rhs : hole)
   .
 Hint Constructors hole : core.
+Derive Show for hole.
+Derive Arbitrary for hole.
 
 Fixpoint fill h y :=
   match h with

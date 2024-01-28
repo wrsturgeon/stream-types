@@ -5,7 +5,7 @@ From LambdaST Require Import
 
 Declare Scope typing_scope.
 
-Reserved Notation "G '|-' x '\in' T" (at level 98).
+Reserved Notation "G '|-' x '\in' T" (at level 97).
 
 (*
 Inductive Typed : context -> term -> type -> Prop :=
