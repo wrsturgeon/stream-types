@@ -1,5 +1,9 @@
+From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
-From LambdaST Require Import Context.
+From LambdaST Require Import
+  Context
+  FV
+  Sets.
 
 Inductive hole : Set :=
   | HoleHere
@@ -47,3 +51,27 @@ Proof.
   - induction H; cbn; try rewrite IHFillWith; reflexivity.
 Qed.
 Hint Resolve reflect_fill : core.
+
+Fixpoint fv_hole h :=
+  match h with
+  | HoleHere =>
+      empty_set
+  | HoleCommaL h c
+  | HoleCommaR c h
+  | HoleSemicL h c
+  | HoleSemicR c h =>
+      set_union (fv c) (fv_hole h)
+  end.
+
+(* Sanity check: *)
+Theorem fv_hole_plug : forall h,
+  SetEq (fv_hole h) (fv (fill h CtxEmpty)).
+Proof. induction h; intros; split; sfirstorder. Qed.
+
+Instance fv_hole_inst : FV hole := { fv := fv_hole }.
+
+Lemma fv_fill : forall h plug ctx,
+  FillWith plug h ctx ->
+  SetEq (fv ctx) (set_union (fv plug) (fv h)).
+Proof. intros. induction H; sfirstorder. Qed.
+Hint Resolve fv_fill : core.

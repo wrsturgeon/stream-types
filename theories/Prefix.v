@@ -20,33 +20,33 @@ Hint Constructors prefix : core.
 Derive Show for prefix.
 Derive Arbitrary for prefix.
 
-Inductive Maximal : prefix -> Prop :=
+Inductive MaximalPfx : prefix -> Prop :=
   | MaxEpsEmp :
-      Maximal PfxEpsEmp
+      MaximalPfx PfxEpsEmp
   | MaxOneFull :
-      Maximal PfxOneFull
+      MaximalPfx PfxOneFull
   | MaxParPair : forall p1 p2,
-      Maximal p1 ->
-      Maximal p2 ->
-      Maximal (PfxParPair p1 p2)
+      MaximalPfx p1 ->
+      MaximalPfx p2 ->
+      MaximalPfx (PfxParPair p1 p2)
   | MaxCatBoth : forall p1 p2,
-      Maximal p1 ->
-      Maximal p2 ->
-      Maximal (PfxCatBoth p1 p2)
+      MaximalPfx p1 ->
+      MaximalPfx p2 ->
+      MaximalPfx (PfxCatBoth p1 p2)
   | MaxSumInl : forall p,
-      Maximal p ->
-      Maximal (PfxSumInl p)
+      MaximalPfx p ->
+      MaximalPfx (PfxSumInl p)
   | MaxSumInr : forall p,
-      Maximal p ->
-      Maximal (PfxSumInr p)
+      MaximalPfx p ->
+      MaximalPfx (PfxSumInr p)
   | MaxStarDone :
-      Maximal PfxStarDone
+      MaximalPfx PfxStarDone
   | MaxStarRest : forall p p',
-      Maximal p ->
-      Maximal p' ->
-      Maximal (PfxStarRest p p')
+      MaximalPfx p ->
+      MaximalPfx p' ->
+      MaximalPfx (PfxStarRest p p')
   .
-Hint Constructors Maximal : core.
+Hint Constructors MaximalPfx : core.
 
 Inductive PfxTyped : prefix -> type -> Prop :=
   | PfxTyEpsEmp :
@@ -64,7 +64,7 @@ Inductive PfxTyped : prefix -> type -> Prop :=
       PfxTyped (PfxCatFst p) (TyDot s t)
   | PfxTyCatBoth : forall p1 p2 s t,
       PfxTyped p1 s ->
-      Maximal p1 ->
+      MaximalPfx p1 ->
       PfxTyped p2 t ->
       PfxTyped (PfxCatBoth p1 p2) (TyDot s t)
   | PfxTySumEmp : forall s t,
@@ -84,7 +84,7 @@ Inductive PfxTyped : prefix -> type -> Prop :=
       PfxTyped (PfxStarFirst p) (TyStar s)
   | PfxTyStarRest : forall p p' s,
       PfxTyped p s ->
-      Maximal p ->
+      MaximalPfx p ->
       PfxTyped p' (TyStar s) ->
       PfxTyped (PfxStarRest p p') (TyStar s)
   .
@@ -104,24 +104,24 @@ Theorem emp_well_typed : forall s, PfxTyped (emp s) s.
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve emp_well_typed : core.
 
-Inductive Empty : prefix -> Prop :=
-  | EmptyEpsEmp :
-      Empty PfxEpsEmp
-  | EmptyOneEmp :
-      Empty PfxOneEmp
-  | EmptyParPair : forall p1 p2,
-      Empty p1 ->
-      Empty p2 ->
-      Empty (PfxParPair p1 p2)
-  | EmptyCatFst : forall p,
-      Empty p ->
-      Empty (PfxCatFst p)
-  | EmptySumEmp :
-      Empty PfxSumEmp
+Inductive EmptyPfx : prefix -> Prop :=
+  | EmptyPfxEpsEmp :
+      EmptyPfx PfxEpsEmp
+  | EmptyPfxOneEmp :
+      EmptyPfx PfxOneEmp
+  | EmptyPfxParPair : forall p1 p2,
+      EmptyPfx p1 ->
+      EmptyPfx p2 ->
+      EmptyPfx (PfxParPair p1 p2)
+  | EmptyPfxCatFst : forall p,
+      EmptyPfx p ->
+      EmptyPfx (PfxCatFst p)
+  | EmptyPfxSumEmp :
+      EmptyPfx PfxSumEmp
   .
-Hint Constructors Empty : core.
+Hint Constructors EmptyPfx : core.
 
-Definition EmptyOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in Empty p.
-Hint Unfold EmptyOn : core.
-Definition MaximalOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in Maximal p.
-Hint Unfold MaximalOn : core.
+Definition EmptyOnSet (s : Set) (n : s -> prefix) : Prop := forall x, EmptyPfx (n x).
+Hint Unfold EmptyOnSet : core.
+Definition MaximalOnSet (s : Set) (n : s -> prefix) : Prop := forall x, MaximalPfx (n x).
+Hint Unfold MaximalOnSet : core.
