@@ -1,9 +1,8 @@
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Derivative
   Prefix
   Types.
-From Hammer Require Import
-  Tactics.
 
 (* Definition B.20 *)
 Inductive PfxCat : prefix -> prefix -> prefix -> Prop :=

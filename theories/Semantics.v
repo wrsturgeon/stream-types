@@ -35,4 +35,6 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step n (TmLetCat x y z e) (TmLetCat x y z e') p'
   .
 Hint Constructors Step : core.
+Derive Show for Step.
+Derive Arbitrary for Step.
 *)
