@@ -13,7 +13,7 @@ Inductive term : Set :=
   | TmSemic (lhs rhs : term)
   | TmLet (bind : string) (bound body : term)
   | TmLetPar (lhs rhs bound : string) (body : term) (* Note that the bound term is NOT really a term, but we can w.l.o.g. surround it with another `let` *)
-  | TmLetCat (lhs rhs bound : string) (body : term) 
+  | TmLetCat (lhs rhs bound : string) (body : term)
   .
 Hint Constructors term : core.
 Derive Show for term.
