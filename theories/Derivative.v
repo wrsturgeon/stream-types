@@ -131,7 +131,7 @@ Hint Resolve derivative_when_env_well_typed : core.
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
   Derivative p s s' ->
-  Maximal p ->
+  MaximalPfx p ->
   Nullable s'.
 Proof.
   intros p s s' Hd Hm. generalize dependent s. generalize dependent s'.

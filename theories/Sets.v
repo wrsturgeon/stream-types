@@ -33,6 +33,11 @@ Definition SubsetOf {T} (big little : set T) : Prop := forall x,
 Arguments SubsetOf {T} big little.
 Hint Unfold SubsetOf : core.
 
+Definition SetEq {T} (a b : set T) : Prop := forall x,
+  a x <-> b x.
+Arguments SetEq {T} a b/.
+Hint Unfold SetEq : core.
+
 Definition SetProp {T} (P : T -> Prop) (s : set T) : Prop := forall x, s x -> P x.
 Arguments SetProp {T} P s/.
 Hint Unfold SetProp : core.

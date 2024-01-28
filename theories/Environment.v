@@ -14,7 +14,7 @@ From Hammer Require Import Tactics.
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
 
-Definition env_subst : string -> prefix -> env -> env := fun id p n x => if eq_id id x then Some p else n x.
+Definition env_subst : string -> prefix -> env -> env := fun id p n x => if eqb id x then Some p else n x.
 Arguments env_subst p n x/.
 Hint Unfold env_subst : core.
 
@@ -102,10 +102,18 @@ Theorem maps_to_has_type : forall n G x s,
 Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
 Hint Resolve maps_to_has_type : core.
 
-Lemma prop_on_item_weakening : forall P n n' vs,
-  PropOnItem P n' vs ->
-  PropOnItem P (env_union n n') vs.
-Proof. intros P n n' vs [p [Hn' Hp]]. exists p. split; [| assumption]. cbn. rewrite Hn'. reflexivity. Qed.
+Definition NoConflict (n n' : env) := forall x p,
+  n x = Some p ->
+  forall p',
+  n' x = Some p' ->
+  p = p'.
+Arguments NoConflict/ n n'.
+Hint Unfold NoConflict : core.
+
+Lemma prop_on_item_weakening : forall P nr nl vs,
+  PropOnItem P nr vs ->
+  PropOnItem P (env_union nl nr) vs.
+Proof. intros P nl nr vs [p [Hn' Hp]]. exists p. split; [| assumption]. cbn. rewrite Hn'. reflexivity. Qed.
 Hint Resolve prop_on_item_weakening : core.
 
 Lemma prop_on_weakening : forall P nr nl ctx,
@@ -138,13 +146,36 @@ Proof.
 Qed.
 Hint Resolve env_typed_weakening : core.
 
-Definition NoConflict (n n' : env) := forall x p,
-  n x = Some p ->
-  forall p',
-  n' x = Some p' ->
-  p = p'.
-Arguments NoConflict/ n n'.
-Hint Unfold NoConflict : core.
+Theorem prop_on_item_weakening_alt : forall P nl nr vs,
+  NoConflict nl nr ->
+  PropOnItem P nl vs ->
+  PropOnItem P (env_union nl nr) vs.
+Proof.
+  cbn. intros P nl nr vs H [p [H1 H2]]. rewrite H1.
+  destruct (nr vs) eqn:E; eexists; (split; [reflexivity | hauto l: on]).
+Qed.
+Hint Resolve prop_on_item_weakening_alt : core.
+
+Lemma prop_on_weakening_alt : forall P nl nr ctx,
+  NoConflict nl nr ->
+  PropOn P ctx nl ->
+  PropOn P ctx (env_union nl nr).
+Proof. sfirstorder use: prop_on_item_weakening_alt. Qed.
+Hint Resolve prop_on_weakening_alt : core.
+
+Lemma empty_on_weakening_alt : forall nl nr ctx,
+  NoConflict nl nr ->
+  EmptyOn ctx nl ->
+  EmptyOn ctx (env_union nl nr).
+Proof. apply prop_on_weakening_alt. Qed.
+Hint Resolve empty_on_weakening_alt : core.
+
+Lemma maximal_on_weakening_alt : forall nl nr ctx,
+  NoConflict nl nr ->
+  MaximalOn ctx nl ->
+  MaximalOn ctx (env_union nl nr).
+Proof. apply prop_on_weakening_alt. Qed.
+Hint Resolve maximal_on_weakening_alt : core.
 
 Lemma env_typed_weakening_alt : forall n n' G,
   NoConflict n n' ->
@@ -159,47 +190,4 @@ Proof.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
 
-Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
-  NoConflict n n' ->
-  (PropOn P D n <-> PropOn P D' n') ->
-  FillWith D  lhs lhs'  ->
-  FillWith D' lhs lhs'' ->
-  PropOn P lhs' n ->
-  PropOn P lhs'' (env_union n n').
-Proof.
-  intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
-  generalize dependent D'. generalize dependent lhs''. induction Hf; intros; sinvert Hf'; cbn in *; [
-    apply Hp in H; eapply Forall_impl; [| eassumption]; intros a [p [Ha Hm]];
-    eexists; split; [| eassumption]; cbn; rewrite Ha; reflexivity | | | |];
-  apply Forall_app in H as [Hl Hr]; apply Forall_app; split; try (eapply IHHf; eassumption);
-  (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
-  cbn; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
-Qed.
-Hint Resolve agree_union : core.
-
-(* Theorem B.11 *)
-Theorem agree_typed : forall n n' G D D',
-  NoConflict n n' ->
-  EnvTyped n (fill G D) ->
-  EnvTyped n' D' ->
-  Agree n n' D D' ->
-  EnvTyped (union n n') (fill G D').
-Proof.
-  intros n n' G D D' Hn Ht Ht' [Hm He]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  remember (fill G D') as GD' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
-  generalize dependent D'. generalize dependent GD'. induction E; intros; cbn in *.
-  - sinvert E'. apply env_typed_weakening. assumption.
-  - sinvert E'. sinvert Ht. econstructor. { eapply IHE; eassumption. }
-    (* NOTE: this is where the extra assumption becomes necessary, since the wrong side of `union` is weakened *)
-    apply env_typed_weakening_alt; assumption.
-  - sinvert E'. sinvert Ht. constructor. { apply env_typed_weakening_alt; assumption. } eapply IHE; eassumption.
-  - sinvert E'. sinvert Ht. constructor; [eapply IHE | apply env_typed_weakening_alt |]; try eassumption. destruct H5.
-    + left. eapply Forall_impl; [| eassumption]. intros a [p [Ha Hp]]. cbn in *. eexists. split; [| eassumption].
-      specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity].
-    + right. clear IHE. eapply agree_union; eassumption.
-  - sinvert E'. sinvert Ht. constructor. { apply env_typed_weakening_alt; assumption. } { eapply IHE; eassumption. }
-    clear IHE. destruct H5; [left | right]. { eapply agree_union; eassumption. } eapply Forall_impl; [| eassumption].
-    intros a [p [Ha Hp]]. eexists. split; [| eassumption]. cbn.
-    specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity].
-Qed.
-Hint Resolve agree_typed : core.
+(* TODO: B.11 *)
