@@ -63,6 +63,13 @@ Theorem prop_on_restrict : forall P s s' n,
   PropOn P s n.
 Proof. sfirstorder. Qed.
 
+Theorem prop_on_union: forall P s s' n,
+  PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
+Proof.
+sfirstorder.
+Qed.
+
+
 Definition Agree n n' (D : context) (D' : context) : Prop :=
   (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\ (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
 Arguments Agree/ n n' D D'.
@@ -168,9 +175,12 @@ Proof.
 Qed.  *)
   intros P n n' d d' h hd hd' Hc Ha Hf Hf' Hp. generalize dependent P. generalize dependent n.
   generalize dependent n'. generalize dependent d'. generalize dependent hd'.
-  induction Hf; intros; sinvert Hf'; simpl in *; intros.
+  induction Hf; intros; sinvert Hf'; intros.
   - sauto lq: on.
-  - eapply IHHf; clear IHHf. { sfirstorder. } { hauto lq: on rew: off. } { sfirstorder. } { qauto l: on. }
+  - apply prop_on_union. split.
+    + hauto l: on.
+    + 
+  eapply IHHf; clear IHHf. { sfirstorder. } { hauto lq: on rew: off. } { sfirstorder. } { qauto l: on. }
     destruct H. { assumption. }
 Admitted.
 

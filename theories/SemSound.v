@@ -9,7 +9,7 @@ From LambdaST Require Import
   Terms
   Typing.
 From Coq Require Import
-  Program.Equality.
+    Program.Equality.
 From Hammer Require Import
   Tactics.
 
