@@ -1,6 +1,5 @@
 From QuickChick Require Import QuickChick.
-From LambdaST Require Import
-  Context.
+From LambdaST Require Import Context.
 
 Inductive hole : Set :=
   | HoleHere

@@ -3,13 +3,13 @@ From Coq Require Import
   String.
 From LambdaST Require Import
   Context
+  FV
   Hole
   Prefix
   Sets
   Terms
   Types.
-From Hammer Require Import
-  Tactics.
+From Hammer Require Import Tactics.
 
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
@@ -45,7 +45,7 @@ Arguments PropOnItem P n x/.
 Hint Unfold PropOnItem : core.
 
 Definition PropOn (P : prefix -> Prop) (ctx : context) (n : env) : Prop :=
-  SetProp (PropOnItem P n) (vars_in ctx).
+  SetProp (PropOnItem P n) (fv ctx).
 Arguments PropOn/ P ctx n.
 Hint Unfold PropOn : core.
 

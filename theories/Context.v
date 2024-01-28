@@ -1,6 +1,7 @@
 From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Sets
+  FV
   Terms
   Types.
 From Coq Require Import
@@ -17,9 +18,11 @@ Hint Constructors context : core.
 Derive Show for context.
 Derive Arbitrary for context.
 
-Fixpoint vars_in ctx : set string :=
+Fixpoint fv_ctx ctx : set string :=
   match ctx with
   | CtxEmpty => empty_set
   | CtxHasTy x _ => singleton_set x
-  | CtxComma lhs rhs | CtxSemic lhs rhs => set_union (vars_in lhs) (vars_in rhs)
+  | CtxComma lhs rhs | CtxSemic lhs rhs => set_union (fv_ctx lhs) (fv_ctx rhs)
   end.
+
+Instance fv_context : FV context := { fv := fv_ctx; }.
