@@ -3,6 +3,7 @@ From Coq Require Import
   String.
 From LambdaST Require Import
   Context
+  FV
   Hole
   Prefix
   Terms
@@ -43,7 +44,7 @@ Definition prop_on_item : (prefix -> Prop) -> env -> string -> Prop :=
 Arguments prop_on_item P n x/.
 Hint Unfold prop_on_item : core.
 
-Definition PropOn : (prefix -> Prop) -> context -> env -> Prop := fun P s n => Forall (prop_on_item P n) (vars_in s).
+Definition PropOn : (prefix -> Prop) -> context -> env -> Prop := fun P s n => Forall (prop_on_item P n) (fv s).
 Arguments PropOn/ P s n.
 Hint Unfold PropOn : core.
 
