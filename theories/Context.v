@@ -1,21 +1,23 @@
-From Coq Require Import
-  List
-  String.
+From QuickChick Require Import QuickChick.
 From LambdaST Require Import
-  Ident
   Sets
   Terms
   Types.
+From Coq Require Import
+  List
+  String.
 
 Inductive context : Set :=
   | CtxEmpty
-  | CtxHasTy (id : ident) (ty : type)
+  | CtxHasTy (id : string) (ty : type)
   | CtxComma (lhs rhs : context)
   | CtxSemic (lhs rhs : context)
   .
 Hint Constructors context : core.
+Derive Show for context.
+Derive Arbitrary for context.
 
-Fixpoint vars_in ctx : set ident :=
+Fixpoint vars_in ctx : set string :=
   match ctx with
   | CtxEmpty => empty_set
   | CtxHasTy x _ => singleton_set x

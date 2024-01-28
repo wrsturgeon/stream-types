@@ -1,3 +1,5 @@
+From QuickChick Require Import QuickChick.
+
 Declare Scope stream_type_scope.
 
 Inductive type : Set :=
@@ -9,6 +11,8 @@ Inductive type : Set :=
   | TyStar (starred : type)
   .
 Hint Constructors type : core.
+Derive Show for type.
+Derive Arbitrary for type.
 
 Bind Scope stream_type_scope with type.
 
