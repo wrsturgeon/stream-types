@@ -3,6 +3,7 @@ From LambdaST Require Import
   FV
   Ident.
 From Hammer Require Import
+  Hammer
   Tactics.
 
 Inductive hole : Set :=
@@ -12,6 +13,7 @@ Inductive hole : Set :=
   | HoleSemicL (h : hole) (g : context)
   | HoleSemicR (g : context) (h : hole)
   .
+Hint Constructors hole : core.
 
 Fixpoint fill h D :=
   match h with
@@ -38,6 +40,7 @@ Inductive FillWith d : hole -> context -> Prop :=
       FillWith d h g' ->
       FillWith d (HoleSemicR g h) (CtxSemic g g')
   .
+Hint Constructors FillWith : core.
 
 Theorem reflect_fill : forall h d g,
   g = fill h d <-> FillWith d h g.
@@ -46,6 +49,7 @@ Proof.
   - subst. generalize dependent d. induction h; intros; simpl in *; constructor; apply IHh.
   - induction H; simpl; try rewrite IHFillWith; reflexivity.
 Qed.
+Hint Resolve reflect_fill : core.
 
 Fixpoint fv_hole (h : hole) : set ident :=
   match h with
@@ -62,14 +66,16 @@ Theorem fv_fill_reflect: forall H D G,
   FillWith H D G ->
   forall x, fv G x <-> fv H x \/ fv D x.
 Proof. intros H D G Hfill. induction Hfill; sfirstorder. Qed.
+Hint Resolve fv_fill_reflect.
 
 Theorem fv_fill : forall H D,
   forall x, fv (fill H D) x <-> fv H x \/ fv D x.
 Proof.
-  intros H D.
-  remember (fill H D).
-  hauto lq: on use:fv_fill_reflect, reflect_fill.
+  simpl in *. split; intros.
+  - hauto q: on use: fv_fill_reflect, reflect_fill.
+  - hauto lq: on rew: off use: fv_fill_reflect, reflect_fill.
 Qed.
+Hint Resolve fv_fill : core.
 
 Inductive wf_hole : hole -> Prop :=
 | wf_HoleHere : wf_hole HoleHere
@@ -94,14 +100,16 @@ Inductive wf_hole : hole -> Prop :=
   Disjoint (fv h) (fv g) ->
   wf_hole (HoleSemicR g h)
 .
+Hint Constructors wf_hole : core.
 
 Theorem wf_fill_reflect : forall h d g,
   FillWith d h g ->
   WFContext g <-> wf_hole h /\ WFContext d /\ Disjoint (fv h) (fv d).
 Proof.
   intros h d g H. induction H; cbn in *; intros; [sfirstorder | | | |];
-  (split; [sauto lq: on use:fv_fill_reflect | sauto l: on use:fv_fill_reflect]).
+  repeat (split; intros); sauto lq: on use: fv_fill_reflect.
 Qed.
+Hint Resolve wf_fill_reflect : core.
 
 Theorem wf_fill : forall h d,
   WFContext (fill h d) <-> (wf_hole h /\ WFContext d /\ Disjoint (fv h) (fv d)).
@@ -111,3 +119,4 @@ Proof.
   apply reflect_fill in Heqg.
   hauto l: on use: wf_fill_reflect.
 Qed.
+Hint Resolve wf_fill : core.

@@ -12,9 +12,12 @@ From Hammer Require Import
   Tactics.
 
 Definition env : Set := ident -> option prefix.
+Hint Unfold env : core.
 
 Definition dom (n : env) : set ident :=
   fun x => exists p, n x = Some p.
+Arguments dom n x/.
+Hint Unfold dom : core.
 
 Definition env_union (n n' : env) : env := fun x =>
   match n' x with
@@ -22,42 +25,51 @@ Definition env_union (n n' : env) : env := fun x =>
   | Some y => Some y
   end.
 Arguments env_union n n' x/.
+Hint Unfold env_union : core.
 
 Definition singleton_env (id : ident) (p : prefix) : env := fun x =>
   if eq_id id x then Some p else None.
 Arguments singleton_env id p x/.
+Hint Unfold singleton_env : core.
 
 Definition subst (x : ident) (p : prefix) (rho : env) : env :=
   env_union rho (singleton_env x p).
 Arguments subst x p rho x/.
+Hint Unfold subst : core.
 
 (* Theorem B.10, part I *)
 Theorem maps_to_unique_literal : forall p x (n : env),
   n x = Some p ->
   ~exists q, p <> q /\ n x = Some q.
 Proof. sfirstorder. Qed.
+Hint Resolve maps_to_unique_literal : core.
 
 Theorem maps_to_unique : forall p1 p2 x (n : env),
   n x = Some p1 ->
   n x = Some p2 ->
   p1 = p2.
 Proof. sfirstorder. Qed.
+Hint Resolve maps_to_unique : core.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
 Definition PropOnItem (P : prefix -> Prop) (n : env) (x : ident) : Prop :=
   exists p, n x = Some p /\ P p.
 Arguments PropOnItem P n x/.
+Hint Unfold PropOnItem : core.
 
 Definition PropOn (P : prefix -> Prop) (s : set ident) (n : env) : Prop := forall x, s x -> PropOnItem P n x.
 Arguments PropOn/ P s n.
+Hint Unfold PropOn : core.
 
 Definition EmptyOn := PropOn EmptyPrefix.
 Arguments EmptyOn/ s n.
+Hint Unfold EmptyOn : core.
 
 Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ s n.
+Hint Unfold MaximalOn : core.
 
-Theorem prop_on_restrict : forall P s s' n,
+Theorem prop_on_contains : forall P s s' n,
   Contains s s' ->
   PropOn P s' n ->
   PropOn P s n.
@@ -73,6 +85,7 @@ Qed.
 Definition Agree n n' (D : context) (D' : context) : Prop :=
   (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\ (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
 Arguments Agree/ n n' D D'.
+Hint Unfold Agree : core.
 
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
@@ -91,6 +104,7 @@ Inductive EnvTyped : env -> context -> Prop :=
       (EmptyOn (fv D) n \/ MaximalOn (fv G) n) ->
       EnvTyped n (CtxSemic G D)
   .
+Hint Constructors EnvTyped : core.
 
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
@@ -98,20 +112,23 @@ Theorem maps_to_hole : forall n G D,
   EnvTyped n D.
 Proof.
   intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  generalize dependent G. generalize dependent D. induction H; intros; subst; simpl in *;
+  generalize dependent G. generalize dependent D. induction H; intros; subst; cbn in *;
   sinvert E; try econstructor; try eassumption; try (eapply IHEnvTyped1; eassumption); eapply IHEnvTyped2; eassumption.
 Qed.
+Hint Resolve maps_to_hole : core.
 
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,
   EnvTyped n (fill G (CtxHasTy x s)) ->
   exists p, (n x = Some p /\ PfxTyped p s).
 Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
+Hint Resolve maps_to_has_type : core.
 
 Lemma prop_on_item_weakening : forall P n n' vs,
   PropOnItem P n' vs ->
   PropOnItem P (env_union n n') vs.
-Proof. intros P n n' vs [p [Hn' Hp]]. exists p. split; [| assumption]. simpl. rewrite Hn'. reflexivity. Qed.
+Proof. intros P n n' vs [p [Hn' Hp]]. exists p. split; [| assumption]. cbn. rewrite Hn'. reflexivity. Qed.
+Hint Resolve prop_on_item_weakening : core.
 
 Lemma env_typed_weakening : forall n n' G,
   EnvTyped n' G ->
@@ -120,12 +137,14 @@ Proof.
   intros n n' G H. generalize dependent n.
   induction H; intros; econstructor; hauto lq: on.
 Qed.
+Hint Resolve env_typed_weakening : core.
 
 Definition NoConflictOn (s : set ident) (n n' : env) := forall x p,
   s x -> n x = Some p -> (n' x = None \/ n' x = Some p).
 Arguments NoConflictOn/ s n n'.
+Hint Unfold NoConflictOn : core.
 
-Theorem no_conflict_restrict : forall s s' n n',
+Theorem no_conflict_contains : forall s s' n n',
   Contains s s' ->
   NoConflictOn s' n n' ->
   NoConflictOn s n n'.
@@ -139,13 +158,12 @@ Proof.
   - hauto drew: off.
   - sfirstorder.
 Qed.
+Hint Resolve env_typed_weakening_alt : core.
 
-Theorem disjoint_noconflict : forall s n n',
+Theorem disjoint_no_conflict : forall s n n',
   Disjoint (set_intersection s (dom n)) (set_intersection s (dom n')) ->
   NoConflictOn s n n'.
-Proof.
-  unfold NoConflictOn in *; intros s n n' H x. remember (n' x) as n'x; destruct n'x. sfirstorder. sfirstorder.
-Qed.
+Proof. simpl. intros. destruct (n' x) eqn:E; sfirstorder. Qed.
 
 Lemma env_typed_weakening_alt : forall n n' G,
   NoConflictOn (fv G (* fun _ => True *)) n n' ->
@@ -213,14 +231,18 @@ Proof.
   - admit.
 Admitted.
 
-(* Theorem B.11
+(* Theorem B.11 *)
 Theorem agree_typed : forall n n' G D D',
-  NoConflictOn n n' ->
   EnvTyped n (fill G D) ->
   EnvTyped n' D' ->
   Agree n n' D D' ->
-  EnvTyped (union n n') (fill G D').
+  EnvTyped (env_union n n') (fill G D').
 Proof.
+  cbn. intros n n' G D D' Ht Ht' [Ham Hae]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
+  generalize dependent n. generalize dependent n'. generalize dependent D'. induction E; intros; cbn in *.
+  - (* We have an assumption that this holds for the right side of the union, so weaken away the left. *)
+    apply env_typed_weakening. assumption.
+(*
   intros n n' G D D' Hn Ht Ht' [Hm He]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
   remember (fill G D') as GD' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
   generalize dependent D'. generalize dependent GD'. induction E; intros; simpl in *.
@@ -235,8 +257,10 @@ Proof.
       * right. qauto l: on use: prop_on_union.
   - sinvert E'. sinvert Ht. constructor; [hauto l: on use:env_typed_weakening_alt | qauto l: on use:env_typed_weakening_alt|].
     clear IHE.
-    destruct H5; [left | right]. qauto l: on use: prop_on_union. hauto qb: on drew: off. 
-Qed. *)
+    destruct H5; [left | right]. qauto l: on use: prop_on_union. hauto qb: on drew: off.
+Qed.
+*)
+Admitted.
 
 (* environment typing smart constructors *)
 Theorem env_typed_singleton : forall x s p,
@@ -256,7 +280,7 @@ Theorem env_typed_comma: forall n n' g g',
 Proof.
   intros.
   constructor.
-  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_noconflict. 
+  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict.
   + sfirstorder use: env_typed_weakening.
 Qed.
 
@@ -269,7 +293,8 @@ Theorem env_typed_semic : forall n n' g g',
 Proof.
   intros.
   constructor.
-  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_noconflict. 
+  + eapply env_typed_weakening_alt; [|eauto]. sauto lq: on rew: off use: disjoint_no_conflict.
   + sfirstorder use: env_typed_weakening.
   + destruct H2; [left | right]; hfcrush.
 Qed.
+Hint Resolve agree_typed : core.

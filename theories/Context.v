@@ -13,6 +13,7 @@ Inductive context : Set :=
   | CtxComma (lhs rhs : context)
   | CtxSemic (lhs rhs : context)
   .
+Hint Constructors context : core.
 
 Fixpoint fv_ctx (G : context) : set ident :=
   match G with

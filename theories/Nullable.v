@@ -10,6 +10,7 @@ Inductive Nullable : type -> Prop :=
       Nullable t ->
       Nullable (TyPar s t)
   .
+Hint Constructors Nullable : core.
 
 Inductive NullableCtx : context -> Prop :=
   | NullableCtxEmpty : NullableCtx CtxEmpty
@@ -18,3 +19,4 @@ Inductive NullableCtx : context -> Prop :=
       NullableCtx G' ->
       NullableCtx (CtxComma G G')
   .
+Hint Constructors NullableCtx : core.

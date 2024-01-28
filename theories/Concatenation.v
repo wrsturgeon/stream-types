@@ -49,6 +49,7 @@ Inductive PfxCat : prefix -> prefix -> prefix -> Prop :=
       PfxCat p' p'' p''' ->
       PfxCat (PfxStarRest p p') p'' (PfxStarRest p p''')
   .
+Hint Constructors PfxCat : core.
 
 (* TODO: Either something is wrong with the definition of concatenation for inl or this is just difficult *)
 Lemma pfx_cat_inl_unsure : forall p' p''1 p''2,

@@ -26,7 +26,7 @@ Proof.
   - qauto l: on.
   - sauto l: on.
   - sauto l: on.
-  - sauto l: on.  
+  - sauto l: on.
   - intros. eapply IHStep.
     simpl in H1.
     edestruct (H1 z) as [p [A B]]; [sfirstorder|].
@@ -34,9 +34,7 @@ Proof.
     subst.
     sinvert B.
     unfold MaximalOn. unfold PropOn. intros.
-    unfold prop_on_item.
-    unfold MapsTo.
-    
+    unfold PropOnItem.
 Admitted.
 
 Theorem soundout : forall G e e' s eta p,
@@ -68,12 +66,12 @@ Proof.
         split; try split. sfirstorder. sauto l: on. cbn in *. sfirstorder use:fv_fill.
       + eapply fill_replace; [|eauto| |]. admit.
         * eapply env_typed_comma; [| eapply env_typed_singleton; eauto | eapply env_typed_singleton; eauto]. admit.
-        * admit. 
+        * admit.
     - sinvert Hwfe; sinvert HwfG; sinvert Heta. sinvert Hstep; admit.
     - sinvert Hwfe. admit.
     - sinvert Hwfe. admit.
     - sinvert Hwfe. admit.
-    - sinvert Hwfe. apply wf_fill in HwfG. 
+    - sinvert Hwfe. apply wf_fill in HwfG.
       destruct HwfG as [U []]. sinvert H. apply fv_fill in H1.
       sauto use: maps_to_has_type.
     - sfirstorder.
