@@ -1,7 +1,10 @@
-{ coq, coq-pkgs, ocaml, os-pkgs, ml-pkgs, src }:
+{ os-pkgs, coq-pkgs, src }:
 let
   pname = "hammer";
   version = "none";
+  coq = coq-pkgs.coq;
+  ml-pkgs = coq.ocamlPackages;
+  ocaml = ml-pkgs.ocaml;
   propagatedBuildInputs = [ coq ocaml ml-pkgs.findlib ];
   mlPlugin = true;
   ml-suffix =
@@ -15,29 +18,16 @@ let
   tactics = coq-pkgs.mkCoqDerivation {
     inherit propagatedBuildInputs mlPlugin src version COQLIBINSTALL
       COQDOCINSTALL COQPLUGININSTALL COQTOPINSTALL;
-    pname = "${pname}-tactics";
+    pname = "${pname}";
     buildPhase = "make tactics";
     installPhase = "make install-tactics";
   };
-  plugin = coq-pkgs.mkCoqDerivation {
-    inherit mlPlugin src version COQLIBINSTALL COQDOCINSTALL COQPLUGININSTALL
-      COQTOPINSTALL;
-    pname = "${pname}-plugin";
-    # buildPhase = "make DESTDIR=$out plugin";
+  whole-enchilada = coq-pkgs.mkCoqDerivation {
+    inherit mlPlugin pname src version COQLIBINSTALL COQDOCINSTALL
+      COQPLUGININSTALL COQTOPINSTALL;
     buildPhase = "make plugin";
     installPhase = "make DESTDIR=$out install-plugin";
-    propagatedBuildInputs = [ tactics ] ++ propagatedBuildInputs;
+    propagatedBuildInputs = [ tactics ] ++ propagatedBuildInputs
+      ++ (with os-pkgs; [ cvc4 eprover vampire z3 ]);
   };
-  tptp = import ./tptp.nix { inherit (os-pkgs) cmake stdenv z3; };
-in os-pkgs.stdenv.mkDerivation {
-  inherit pname src version;
-  buildPhase = ":"; # just in case
-  installPhase = ''
-    mkdir -p $out/bin
-    cp ${
-      builtins.trace "${os-pkgs.z3-tptp}" os-pkgs.z3-tptp
-    }/bin/z3-tptp $out/bin/z3_tptp
-  '';
-  propagatedBuildInputs = [ plugin tactics ]
-    ++ (with os-pkgs; [ cvc4 eprover vampire z3 tptp ]);
-}
+in { inherit tactics whole-enchilada; }
