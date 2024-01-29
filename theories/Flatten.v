@@ -4,6 +4,7 @@ From LambdaST Require Import
   Prefix
   Types.
 
+(* Definition B.32 *)
 Inductive stlc_type : Set :=
   | STLCUnit
   | STLCProd (lhs rhs : stlc_type)
@@ -29,6 +30,7 @@ Fixpoint flatten_type t :=
       STLCList (flatten_type t)
   end.
 
+(* Definition B.31 implicit in return type *)
 Fixpoint flatten_ctx (c : context) : string -> option stlc_type :=
   match c with
   | CtxEmpty =>
@@ -43,7 +45,8 @@ Fixpoint flatten_ctx (c : context) : string -> option stlc_type :=
       (* NOTE: right precedence *)
   end.
 
-(* TODO: *)
-(* TODO: or should it be a `Fixpoint`? *)
+(* TODO: or should this be a `Fixpoint`? *)
 Inductive ToPrefix : type (* lambda-st type! *) -> stlc_type (* term? value? *) -> prefix -> Prop :=
   .
+
+(* TODO: Definition B.33 *)
