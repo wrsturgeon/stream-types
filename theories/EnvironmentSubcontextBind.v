@@ -1,11 +1,14 @@
 (* This file covers Theorems B.11 and 12. *)
 
+From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   Environment
+  FV
   Hole
-  Prefix.
+  Prefix
+  Sets.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
 Theorem environment_subcontext_bind_equal : forall hole plug n n',
@@ -21,6 +24,12 @@ Proof.
 Qed.
 Hint Resolve environment_subcontext_bind_equal : core.
 
+Lemma or_hyp : forall P Q R,
+  ((P \/ Q) -> R) ->
+  ((P -> R) /\ (Q -> R)).
+Proof. sfirstorder. Qed.
+Hint Resolve or_hyp : core.
+
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
   (PropOn P D n <-> PropOn P D' n') ->
@@ -31,8 +40,39 @@ Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
 Proof.
   intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n.
   generalize dependent n'. generalize dependent D'. generalize dependent lhs''.
-  induction Hf; cbn in *; intros; sinvert Hf'.
-Admitted.
+  induction Hf; intros; sinvert Hf'. (* (sinvert Hf') inverts hole-filling *)
+  - apply Hp in H. (* Use agreement to convert (PropOn P D n) to (PropOn P lhs'' n') *)
+    cbn in *. (* Convert (PropOn P lhs'' (union n n')) to (Forall (prop_on_item P (union n n')) (fv_ctx lhs'')) *)
+    intros. (* Instead of `Forall_impl`, since we're not working with lists, intro the in-this-set hypothesis *)
+    apply H in H0 as [p [Hn' HP]]. (* From (fv_ctx lhs'' x), infer (exists p, n' x = Some p /\ P p) *)
+    exists p. (* From what we just found: (n' x = Some p) *)
+    rewrite Hn'. (* Drop it into the match scrutinee *)
+    split. { reflexivity. } assumption. (* easy *)
+  - cbn. intros x Hfv. (* Obtain the arbitrary `x` that tests membership and make it specific *)
+    destruct Hfv as [Hfv | Hfv]. (* x is in the free variables of *either* lhs'0 *or* rhs *)
+    + eapply IHHf; clear IHHf; [| assumption | eassumption | | eassumption]; [assumption |]. (* Order matters! *)
+      cbn. cbn in H. intros. apply H. left. assumption. (* Easy to show (PropOn P lhs' n) *)
+    + clear IHHf. cbn in *. assert (A := H _ (or_intror Hfv)). destruct A as [p [Hnx HP]]. exists p. (* find (n x) *)
+      destruct (n' x) eqn:E; split; [f_equal; symmetry; eapply Hn | | |]; eassumption. (* no conflict *)
+  - cbn. intros x Hfv. (* Obtain the arbitrary `x` that tests membership and make it specific *)
+    destruct Hfv as [Hfv | Hfv]. (* x is in the free variables of *either* lhs'0 *or* rhs *)
+    + clear IHHf. cbn in *. assert (A := H _ (or_introl Hfv)). destruct A as [p [Hnx HP]]. exists p. (* find (n x) *)
+      destruct (n' x) eqn:E; split; [f_equal; symmetry; eapply Hn | | |]; eassumption. (* use no-conflict *)
+    + eapply IHHf; clear IHHf; [| assumption | eassumption | | eassumption]; [assumption |]. (* Order matters! *)
+      cbn. cbn in H. intros. apply H. right. assumption. (* Easy to show (PropOn P rhs' n) *)
+  - cbn. intros x Hfv. (* Obtain the arbitrary `x` that tests membership and make it specific *)
+    destruct Hfv as [Hfv | Hfv]. (* x is in the free variables of *either* lhs'0 *or* rhs *)
+    + eapply IHHf; clear IHHf; [| assumption | eassumption | | eassumption]; [assumption |]. (* Order matters! *)
+      cbn. cbn in H. intros. apply H. left. assumption. (* Easy to show (PropOn P lhs' n) *)
+    + clear IHHf. cbn in *. assert (A := H _ (or_intror Hfv)). destruct A as [p [Hnx HP]]. exists p. (* find (n x) *)
+      destruct (n' x) eqn:E; split; [f_equal; symmetry; eapply Hn | | |]; eassumption. (* no conflict *)
+  - cbn. intros x Hfv. (* Obtain the arbitrary `x` that tests membership and make it specific *)
+    destruct Hfv as [Hfv | Hfv]. (* x is in the free variables of *either* lhs'0 *or* rhs *)
+    + clear IHHf. cbn in *. assert (A := H _ (or_introl Hfv)). destruct A as [p [Hnx HP]]. exists p. (* find (n x) *)
+      destruct (n' x) eqn:E; split; [f_equal; symmetry; eapply Hn | | |]; eassumption. (* use no-conflict *)
+    + eapply IHHf; clear IHHf; [| assumption | eassumption | | eassumption]; [assumption |]. (* Order matters! *)
+      cbn. cbn in H. intros. apply H. right. assumption. (* Easy to show (PropOn P rhs' n) *)
+Qed.
 Hint Resolve agree_union : core.
 
 (* Theorem B.11 *)
