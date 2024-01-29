@@ -50,7 +50,8 @@ Proof.
   generalize dependent n. induction g; cbn in *; intros;
   sinvert Hf'; sinvert Hf; [apply IH; assumption | | | |]; sinvert He; constructor; try assumption;
   try (eapply IHg; [| eassumption | eassumption | |]; assumption);
-  destruct H6; [left; assumption | right | left | right; assumption]. ;
+  destruct H6; [left; assumption | right | left | right; assumption]. Abort.
+(*
   (* TODO: we have to have something to do with `Agree`--maybe Subtype -> Agree? *)
   (eapply prop_on_fill; [eassumption | eassumption | | assumption]).
   admit.
@@ -59,6 +60,7 @@ Proof.
   (eapply prop_on_fill; [| | | eassumption]); eassumption.
 Qed.
 Hint Resolve fill_preserves_env : core.
+*)
 
 (* Theorem B.35 *)
 Theorem sub_preserves_env : forall n G D,
@@ -67,7 +69,7 @@ Theorem sub_preserves_env : forall n G D,
   EnvTyped n D.
 Proof.
   intros n G D He Hs. generalize dependent n. induction Hs; cbn in *; intros.
-  - eapply fill_preserves_env; [apply H | | | |]; eassumption.
+  - shelve. (* eapply fill_preserves_env; [apply H | | | |]; eassumption. *)
   - assumption.
   - sinvert He. constructor; assumption.
   - sinvert He. assumption.
@@ -76,5 +78,8 @@ Proof.
   - constructor. { assumption. } constructor.
   - constructor. { assumption. } { constructor. } left. cbn. (* no free variables: holds vacuously *) intros _ [].
   - constructor. { constructor. } { assumption. } right. cbn. (* ditto *) intros _ [].
+  Unshelve. Abort.
+(*
 Qed.
 Hint Resolve sub_preserves_env : core.
+*)
