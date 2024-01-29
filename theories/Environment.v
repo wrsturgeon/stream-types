@@ -1,5 +1,7 @@
 From Coq Require Import
   List.
+From Hammer Require Import
+  Tactics.
 From LambdaST Require Import
   Context
   FV
@@ -8,8 +10,6 @@ From LambdaST Require Import
   Prefix
   Terms
   Types.
-From Hammer Require Import
-  Tactics.
 
 Definition env : Set := ident -> option prefix.
 Hint Unfold env : core.
@@ -26,6 +26,9 @@ Definition env_union (n n' : env) : env := fun x =>
   end.
 Arguments env_union n n' x/.
 Hint Unfold env_union : core.
+
+Definition env_drop (n : env) (x : ident) : env := fun y =>
+  if eq_id x y then None else n x.
 
 Definition singleton_env (id : ident) (p : prefix) : env := fun x =>
   if eq_id id x then Some p else None.
@@ -106,6 +109,9 @@ Inductive EnvTyped : env -> context -> Prop :=
   .
 Hint Constructors EnvTyped : core.
 
+Hint Constructors EnvTyped : core.
+
+
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
   EnvTyped n (fill G D) ->
@@ -158,7 +164,6 @@ Proof.
   - hauto drew: off.
   - sfirstorder.
 Qed.
-Hint Resolve env_typed_weakening_alt : core.
 
 Theorem disjoint_no_conflict : forall s n n',
   Disjoint (set_intersection s (dom n)) (set_intersection s (dom n')) ->
@@ -175,6 +180,7 @@ Proof.
   - sauto lq: on.
   - constructor. { hauto l: on. } { hauto l: on. } destruct H; simpl in *. { hauto lq: on. } qauto l: on.
 Qed.
+Hint Resolve env_typed_weakening_alt : core.
 
 Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
   NoConflictOn (fv h) n n' ->
@@ -197,9 +203,7 @@ Qed.  *)
   - sauto lq: on.
   - apply prop_on_union. split.
     + hauto l: on.
-    + 
-  eapply IHHf; clear IHHf. { sfirstorder. } { hauto lq: on rew: off. } { sfirstorder. } { qauto l: on. }
-    destruct H. { assumption. }
+    + admit.
 Admitted.
 
 Theorem fill_replace : forall h d d' n n',
@@ -216,51 +220,22 @@ Proof.
   induction E; intros.
   - sauto lq: on use: env_typed_weakening.
   - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
   - sinvert E'. constructor. 
     + sauto q: on use:env_typed_weakening_alt.
-    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
   - sinvert E'. constructor.
-    + eapply IHE. eauto. eauto. eapply no_conflict_restrict; [|eauto]; sfirstorder.
+    + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
     + sinvert Ht. destruct H5; [left | right]; admit.
   - admit.
 Admitted.
 
-(* Theorem B.11 *)
-Theorem agree_typed : forall n n' G D D',
-  EnvTyped n (fill G D) ->
-  EnvTyped n' D' ->
-  Agree n n' D D' ->
-  EnvTyped (env_union n n') (fill G D').
-Proof.
-  cbn. intros n n' G D D' Ht Ht' [Ham Hae]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  generalize dependent n. generalize dependent n'. generalize dependent D'. induction E; intros; cbn in *.
-  - (* We have an assumption that this holds for the right side of the union, so weaken away the left. *)
-    apply env_typed_weakening. assumption.
-(*
-  intros n n' G D D' Hn Ht Ht' [Hm He]. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  remember (fill G D') as GD' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
-  generalize dependent D'. generalize dependent GD'. induction E; intros; simpl in *.
-  - sauto lq: on use:env_typed_weakening.
-  - sauto lq: on use:env_typed_weakening_alt.
-  - sauto use: env_typed_weakening_alt.
-  - sinvert E'. sinvert Ht. constructor.
-    + hauto lq: on.
-    + hauto l: on use:env_typed_weakening_alt.
-    + destruct H5.
-      * left. hauto qb: on drew: off.
-      * right. qauto l: on use: prop_on_union.
-  - sinvert E'. sinvert Ht. constructor; [hauto l: on use:env_typed_weakening_alt | qauto l: on use:env_typed_weakening_alt|].
-    clear IHE.
-    destruct H5; [left | right]. qauto l: on use: prop_on_union. hauto qb: on drew: off.
-Qed.
-*)
-Admitted.
+
 
 (* environment typing smart constructors *)
 Theorem env_typed_singleton : forall x s p,
@@ -297,4 +272,66 @@ Proof.
   + sfirstorder use: env_typed_weakening.
   + destruct H2; [left | right]; hfcrush.
 Qed.
-Hint Resolve agree_typed : core.
+
+(* specialized environment substitution theorems. These are the downstream facts we really need. *)
+Theorem catlenvtyped :  forall G x y z p1 p2 s t r eta,
+  x <> y ->
+  eta z = Some (PfxParPair p1 p2) ->
+  PfxTyped p1 s ->
+  PfxTyped p2 t ->
+  EnvTyped eta (fill G (CtxHasTy z r)) ->
+  EnvTyped
+  (env_union eta
+     (env_union (singleton_env x p1) (singleton_env y p2)))
+  (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
+Proof.
+  intros.
+  assert ((x =i y) = false) by sfirstorder.
+  assert ((y =i x) = false) by sfirstorder.
+  assert ((x =i x) = true) by sfirstorder.
+  assert ((y =i y) = true) by sfirstorder.
+  eapply fill_replace; [|eauto| |].
+  - admit.
+  - eapply env_typed_comma; [| eapply env_typed_singleton; eauto | eapply env_typed_singleton; eauto]. admit.
+  - unfold Agree. split; split; intros HPo; cbn in *; edestruct (HPo z); eauto; admit.
+Admitted.
+
+Theorem catrenvtyped1 :  forall G x y z p1 s t r eta,
+  x <> y ->
+  eta z = Some (PfxCatFst p1) ->
+  PfxTyped p1 s ->
+  EnvTyped eta (fill G (CtxHasTy z r)) ->
+  EnvTyped
+  (env_union eta
+     (env_union (singleton_env x p1) (singleton_env y (emp t))))
+  (fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t))).
+Proof.
+Admitted.
+
+Theorem catrenvtyped2 :  forall G x y z p1 p2 s t r eta,
+  x <> y ->
+  eta z = Some (PfxCatBoth p1 p2) ->
+  PfxTyped p1 s ->
+  PfxTyped p2 t ->
+  MaximalPrefix p1 ->
+  EnvTyped eta (fill G (CtxHasTy z r)) ->
+  EnvTyped
+  (env_union eta
+     (env_union (singleton_env x p1) (singleton_env y p2)))
+  (fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t))).
+Proof.
+Admitted.
+
+(* i think this one needs stronger premises... *)
+Theorem letenvtyped :  forall G D x p s eta,
+  PfxTyped p s ->
+  EnvTyped eta (fill G D) ->
+  EnvTyped (subst x p eta) (fill G (CtxHasTy x s)).
+Proof.
+Admitted.
+
+Theorem dropenvtyped :  forall G x s eta,
+  EnvTyped eta (fill G (CtxHasTy x s)) ->
+  EnvTyped (env_drop eta x) (fill G CtxEmpty).
+Proof.
+Admitted.

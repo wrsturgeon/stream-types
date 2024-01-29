@@ -3,13 +3,14 @@ From LambdaST Require Import
   FV
   Ident
   Prefix
+  SinkTm
   Terms.
 
 Inductive Step : env -> term -> term -> prefix -> Prop :=
   | S_Eps_R : forall n,
-      Step n sink sink PfxEpsEmp
+      Step n TmSink TmSink PfxEpsEmp
   | S_One_R : forall n,
-      Step n unit sink PfxOneFull
+      Step n TmUnit TmSink PfxOneFull
   | S_Var : forall n x p,
       n x = Some p ->
       Step n (TmVar x) (TmVar x) p
@@ -32,8 +33,19 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step n (TmLetPar x y z e) (TmLetPar x y z e') p'
   | S_Cat_L_1 : forall t n x y z e e' p p',
       n z = Some (PfxCatFst p) ->
-      Step (subst x p (subst y (emp t) n)) e e' p' ->
+      Step (env_union n (env_union (singleton_env x p) (singleton_env y (emp t)))) e e' p' ->
       Step n (TmLetCat t x y z e) (TmLetCat t x y z e') p'
+  | S_Cat_L_2 : forall t n x y z e e' p1 p2 p',
+      n z = Some (PfxCatBoth p1 p2) ->
+      Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
+      Step n (TmLetCat t x y z e) (TmLet x (sinkTm p1) (substVar e z y)) p'
+  | S_Let : forall eta x e1 e2 e1' e2' p p',
+      Step eta e1 e1' p ->
+      Step (subst x p eta) e2 e2' p' ->
+      Step eta (TmLet x e1 e2) (TmLet x e1' e2') p'
+  | S_Drop : forall eta x e e' p,
+      Step (env_drop eta x) e e' p ->
+      Step eta (TmDrop x e) (TmDrop x e') p
   .
 (* TODO: FINISH DEFINITION *)
 Hint Constructors Step : core.

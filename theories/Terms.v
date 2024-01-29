@@ -18,9 +18,10 @@ Inductive term : Set :=
   | TmVar (id : ident)
   | TmComma (lhs rhs : term)
   | TmSemic (lhs rhs : term)
-  | TmLet (bind : ident) (bound body : term)
   | TmLetPar (lhs rhs bound : ident) (body : term)
   | TmLetCat (t : type) (lhs rhs bound : ident) (body : term)
+  | TmLet (bind : ident) (bound body : term)
+  | TmDrop (x : ident) (e : term)
   .
 Hint Constructors term : core.
 
@@ -43,16 +44,20 @@ Fixpoint fv_term e : FV.set ident :=
   | TmSink | TmUnit => empty_set
   | TmVar x => singleton_set x
   | TmComma e1 e2 | TmSemic e1 e2 => set_union (fv_term e1) (fv_term e2)
-  | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
   | TmLetPar x y z e | TmLetCat _ x y z e => set_union (singleton_set z) (
       set_minus (set_minus (fv_term e) (singleton_set x)) (singleton_set y))
+  | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
+  | TmDrop x e => set_minus (fv_term e) (singleton_set x)
   end.
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 
+Fixpoint substVar (e : term) (x : ident) (y : ident) : term :=
+  e.
+
 (* term is well-formed under a set of free variables. this ensures there's no shadowing,
 and all bindings are coherent. *)
-Inductive WFTerm : set ident -> term -> Prop :=
+(* Inductive WFTerm : set ident -> term -> Prop :=
   | WFTmSink : forall s,
       WFTerm s TmSink
   | WFTmUnit : forall s,
@@ -98,4 +103,4 @@ Proof.
   intros.
   generalize dependent s'.
   induction H0; sauto.
-Qed.
+Qed. *)

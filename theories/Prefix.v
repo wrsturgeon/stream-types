@@ -44,7 +44,7 @@ Inductive MaximalPrefix : prefix -> Prop :=
       MaximalPrefix p' ->
       MaximalPrefix (PfxStarRest p p')
   .
-Hint Constructors Maximal : core.
+Hint Constructors MaximalPrefix : core.
 
 Inductive PfxTyped : prefix -> type -> Prop :=
   | PfxTyEpsEmp :
@@ -117,9 +117,9 @@ Inductive EmptyPrefix : prefix -> Prop :=
   | EmptyPrefixSumEmp :
       EmptyPrefix PfxSumEmp
   .
-Hint Constructors Empty : core.
+Hint Constructors EmptyPrefix : core.
 
 Definition EmptyPrefixOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in EmptyPrefix p.
-Hint Unfold EmptyOn : core.
+Hint Unfold EmptyPrefixOn : core.
 Definition MaximalPrefixOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in MaximalPrefix p.
-Hint Unfold MaximalOn : core.
+Hint Unfold MaximalPrefixOn : core.

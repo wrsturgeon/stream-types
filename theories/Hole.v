@@ -3,7 +3,6 @@ From LambdaST Require Import
   FV
   Ident.
 From Hammer Require Import
-  Hammer
   Tactics.
 
 Inductive hole : Set :=
@@ -120,3 +119,40 @@ Proof.
   hauto l: on use: wf_fill_reflect.
 Qed.
 Hint Resolve wf_fill : core.
+
+Theorem hmm : forall G x y z s t r ctr,
+(ctr = CtxComma \/ ctr = CtxSemic) ->
+~fv G z ->
+SetEq
+  (set_union
+     (set_minus (fv (fill G (CtxHasTy z r))) (singleton_set z))
+     (set_union (singleton_set x) (singleton_set y)))
+  (fv (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))))
+.
+Proof.
+  intros.
+  unfold SetEq.
+  cbn in *.
+  intro. split; intro.
+  - cbn in *. apply fv_fill. cbn in *. hauto q: on use:fv_fill.
+  - destruct H; rewrite H in *; apply fv_fill in H1; destruct H1.
+    + left. sfirstorder use:fv_fill.
+    + right. scongruence.
+    + left. sfirstorder use:fv_fill.
+    + right. scongruence.
+Qed.
+
+Theorem hmm' : forall G x y z s t r ctr,
+(ctr = CtxComma \/ ctr = CtxSemic) ->
+~(fv G x) ->
+~(fv G y) ->
+x <> y ->
+WFContext (fill G (CtxHasTy z r)) ->
+WFContext
+  (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))).
+Proof.
+  intros G x y z s t r ctr Hctr Hx Hy Hxy H.
+  apply wf_fill in H. destruct H as [A [B C]].
+  sinvert B.
+  apply wf_fill. split. eauto. split. destruct Hctr; sauto lq: on. destruct Hctr; sfirstorder.
+Qed.
