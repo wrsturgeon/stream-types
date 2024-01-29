@@ -190,4 +190,18 @@ Proof.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
 
+Lemma prop_on_fill : forall P n d d' g lhs lhs',
+  FillWith d g lhs ->
+  FillWith d' g lhs' ->
+  PropOn P d' n ->
+  PropOn P lhs n ->
+  PropOn P lhs' n.
+Proof.
+  cbn in *. intros P n d d' g lhs lhs' Hf Hf' Hp' Hp x Hfv.
+  assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
+  assert (A : SetEq (fv lhs) (set_union (fv d) (fv g))). { apply fv_fill. assumption. } cbn in *.
+  destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
+Qed.
+Hint Resolve prop_on_fill : core.
+
 (* TODO: B.11 *)
