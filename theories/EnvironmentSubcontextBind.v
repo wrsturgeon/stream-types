@@ -4,14 +4,16 @@ From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
+  Derivative
   Environment
   FV
   Hole
   Prefix
-  Sets.
+  Sets
+  Types.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
-Theorem environment_subcontext_bind_equal : forall hole plug n n',
+Theorem env_subctx_bind_equal : forall hole plug n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug ->
@@ -22,7 +24,7 @@ Proof.
   generalize dependent n. generalize dependent n'. generalize dependent Ef.
   induction Hf; sfirstorder.
 Qed.
-Hint Resolve environment_subcontext_bind_equal : core.
+Hint Resolve env_subctx_bind_equal : core.
 
 Lemma or_hyp : forall P Q R,
   ((P \/ Q) -> R) ->
@@ -51,7 +53,7 @@ Hint Resolve agree_union : core.
 (* Theorem B.11 *)
 (* The only reason this is difficult is the extra disjunction in the environment-typing rule for semicolon contexts,
  * and that's why we need the `agree_union` lemma. *)
-Theorem environment_subcontext_bind : forall hole plug plug' n n',
+Theorem env_subctx_bind : forall hole plug plug' n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug' ->
@@ -67,4 +69,6 @@ Proof.
   try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
   (destruct H5; [left | right]); try (apply prop_on_weakening_alt; assumption); eapply agree_union; eassumption.
 Qed.
-Hint Resolve environment_subcontext_bind : core.
+Hint Resolve env_subctx_bind : core.
+
+(* TODO: what's the notation in Theorem B.12? *)
