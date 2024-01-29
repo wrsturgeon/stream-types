@@ -21,7 +21,7 @@ Arguments TyPar lhs%stream_type_scope rhs%stream_type_scope.
 
 Notation "'eps'" := TyEps : stream_type_scope.
 Notation "'1'" := TyOne : stream_type_scope.
-Notation "( lhs . rhs )" := (TyDot lhs rhs) : stream_type_scope.
-Notation "( lhs || rhs )" := (TyPar lhs rhs) : stream_type_scope.
-Notation "( lhs + rhs )" := (TySum lhs rhs) : stream_type_scope.
-Notation "a *" := (TyStar a) (at level 1, left associativity) : stream_type_scope.
+Notation "'(' lhs '.' rhs ')'" := (TyDot lhs rhs) : stream_type_scope.
+Notation "'(' lhs '||' rhs ')'" := (TyPar lhs rhs) : stream_type_scope.
+Notation "'(' lhs '+' rhs ')'" := (TySum lhs rhs) : stream_type_scope.
+Notation "a '*'" := (TyStar a) (at level 1, left associativity) : stream_type_scope.
