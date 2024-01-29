@@ -37,6 +37,8 @@ Notation "'let' '(' lhs ',' rhs ')' '=' both 'in' body" :=
   (TmLetPar lhs rhs both body) (at level 97, right associativity) : term_scope.
 Notation "'let' '(' lhs ';' rhs ')' '=' both 'in' body" :=
   (TmLetCat lhs rhs both body) (at level 97, right associativity) : term_scope.
+Notation "'drop' x ';' body" :=
+  (TmDrop x body) (at level 97, right associativity) : term_scope.
 
 (* Can't believe I just found out you can do this: *)
 Scheme Equality for term. (* <-- no fucking way *)
