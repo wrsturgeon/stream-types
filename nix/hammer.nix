@@ -15,18 +15,24 @@ let
   COQDOCINSTALL = "\${out}/doc";
   COQPLUGININSTALL = "\${out}${ml-suffix}";
   COQTOPINSTALL = "\${out}/top";
+  DESTDIR = "\${out}/";
+  BINDIR = "bin/";
   tactics = coq-pkgs.mkCoqDerivation {
     inherit propagatedBuildInputs mlPlugin src version COQLIBINSTALL
-      COQDOCINSTALL COQPLUGININSTALL COQTOPINSTALL;
+      COQDOCINSTALL COQPLUGININSTALL COQTOPINSTALL DESTDIR BINDIR;
     pname = "${pname}";
     buildPhase = "make tactics";
     installPhase = "make install-tactics";
   };
   whole-enchilada = coq-pkgs.mkCoqDerivation {
     inherit mlPlugin pname src version COQLIBINSTALL COQDOCINSTALL
-      COQPLUGININSTALL COQTOPINSTALL;
+      COQPLUGININSTALL COQTOPINSTALL DESTDIR BINDIR;
     buildPhase = "make plugin";
-    installPhase = "make DESTDIR=$out install-plugin";
+    installPhase = ''
+      mkdir -p ${DESTDIR}${BINDIR}
+      make install-plugin
+      make install-extra
+    '';
     propagatedBuildInputs = [ tactics ] ++ propagatedBuildInputs
       ++ (with os-pkgs; [ cvc4 eprover vampire z3 ]);
   };
