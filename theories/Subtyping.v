@@ -2,7 +2,11 @@ From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   Environment
-  Hole.
+  EnvironmentSubcontextBind
+  FV
+  Hole
+  Prefix
+  Sets.
 
 (* Definition B.34 *)
 (* Argument order designed for notation: (Subtype A B) === (A <: B) *)
@@ -32,7 +36,7 @@ Inductive Subtype : context -> context -> Prop :=
   .
 Hint Constructors Subtype : core.
 
-Conjecture fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
+Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
   FillWith d g gd ->
   FillWith d' g gd' ->
   Subtype d d' ->
@@ -40,17 +44,20 @@ Conjecture fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : con
   forall n : env,
   EnvTyped n gd ->
   EnvTyped n gd'.
-(*
 Proof.
-  generalize dependent d. generalize dependent gd. generalize dependent n.
-  induction H0; cbn in *; intros; sinvert H.
-  - sfirstorder.
-  - sinvert He. sfirstorder.
-  - sinvert He. constructor; [| eapply IHFillWith]; eassumption.
-  - sinvert He. constructor; [sfirstorder | sfirstorder |]. destruct H6. { left. assumption. } right. admit.
-  - sinvert He. constructor; [sfirstorder | sfirstorder |]. destruct H6. 2: { right. assumption. } left. admit.
+  intros d d' g gd gd' Hf Hf' Hs IH n He.
+  generalize dependent d. generalize dependent d'. generalize dependent gd. generalize dependent gd'.
+  generalize dependent n. induction g; cbn in *; intros;
+  sinvert Hf'; sinvert Hf; [apply IH; assumption | | | |]; sinvert He; constructor; try assumption;
+  try (eapply IHg; [| eassumption | eassumption | |]; assumption);
+  destruct H6; [left; assumption | right | left | right; assumption]. ;
+  (* TODO: we have to have something to do with `Agree`--maybe Subtype -> Agree? *)
+  (eapply prop_on_fill; [eassumption | eassumption | | assumption]).
+  admit.
+  cbn in *; intros; apply H.
+
+  (eapply prop_on_fill; [| | | eassumption]); eassumption.
 Qed.
-*)
 Hint Resolve fill_preserves_env : core.
 
 (* Theorem B.35 *)
