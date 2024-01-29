@@ -16,6 +16,7 @@ Inductive term : Set :=
   | TmLet (bind : string) (bound body : term)
   | TmLetPar (lhs rhs bound : string) (body : term) (* Note that the bound term is NOT really a term, but we can w.l.o.g. surround it with another `let` *)
   | TmLetCat (t : type) (lhs rhs bound : string) (body : term)
+  | TmDrop (x : string) (e : term)
   .
 Hint Constructors term : core.
 Derive Show for term.

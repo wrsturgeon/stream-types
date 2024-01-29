@@ -65,6 +65,7 @@ Proof.
 Qed.
 Hint Resolve prefix_concat_unique : core.
 
+(*
 (* Theorem B.21, part II *)
 Theorem prefix_concat_exists_when_typed : forall p p' s dps dp'dps,
   Derivative p s dps -> (* i.e., d_p(s) = `dps`. difficult to write in ASCII *)
@@ -86,3 +87,4 @@ Proof.
     destruct (IHHt2 _ _ H5 _ H9 H3) as [P2 [Hpc2 [Hpt2 Hd2]]]; clear IHHt2.
     eexists. repeat constructor; eassumption.
   - sinvert Hd'. { sauto lq: on. } sinvert Ht'. Fail best. Abort.
+*)
