@@ -67,3 +67,4 @@ Proof.
   try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
   (destruct H5; [left | right]); try (apply prop_on_weakening_alt; assumption); eapply agree_union; eassumption.
 Qed.
+Hint Resolve environment_subcontext_bind : core.
