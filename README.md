@@ -24,3 +24,15 @@ Install Coq ([here](https://coq.inria.fr/download)) and CoqHammer ([here](https:
 ## Building
 
 Open a terminal in this folder and run `make`.
+
+## Theorems
+
+To locate the proof of a named theorem from Appendix B (e.g. "B.11"), search the source code in `theories/`.
+Directly above each proof of a named theorem is a comment naming it: e.g., `(* Theorem B.11 *)`.
+
+Currently, we have proven up to **B.21**.
+
+## Issues
+
+- Theorem B.19 (notation unclear)
+- Theorem B.22 (clarify that the original `Inl` rule was a typo)
