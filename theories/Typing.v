@@ -2,6 +2,7 @@ From LambdaST Require Import
   Context
   FV
   Hole
+  Sets
   Terms
   Types.
 From Coq Require Import
@@ -97,18 +98,21 @@ Proof.
   intros G e s Ht x Hfv. generalize dependent x. (* just for naming *)
   induction Ht; try rename x into x' (* hands off my `x`! *); intros x H'; cbn in *.
   - destruct H'; [apply IHHt1 | apply IHHt2]; assumption.
-  - apply fv_fill_fn. cbn. destruct H' as [| [[H2 H3] H4]]; [left | right]. { assumption. } specialize (IHHt _ H2).
-    apply fv_fill_fn in IHHt. cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
+  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
+    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
+    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
   - destruct H'; [left; apply IHHt1 | right; apply IHHt2]; assumption.
-  - apply fv_fill_fn. cbn. destruct H' as [| [[H2 H3] H4]]; [left | right]. { assumption. } specialize (IHHt _ H2).
-    apply fv_fill_fn in IHHt. cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
+  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
+    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
+    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
   - destruct H' as [].
   - destruct H' as [].
-  - apply fv_fill_fn. cbn. left. assumption.
+  - eapply fv_fill. { eassumption. } cbn. left. assumption.
   - cbn in *. specialize (IHHt _ H'). invert H. (* TODO: SubCtx hasn't been defined yet, so holds vacuously *)
-  - apply fv_fill_fn. cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
-    specialize (IHHt2 _ H'). apply fv_fill_fn in IHHt2. cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
-  - apply fv_fill_fn. cbn. destruct H'. specialize (IHHt _ H).
-    apply fv_fill_fn in IHHt as [[] | IH]. right. assumption.
+  - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
+    specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
+    cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
+  - eapply fv_fill. { eassumption. } cbn. destruct H'. specialize (IHHt _ H1).
+    eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH. } right. assumption.
 Qed.
 Hint Resolve typing_fv : core.

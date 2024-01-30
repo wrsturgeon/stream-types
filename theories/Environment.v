@@ -141,8 +141,8 @@ Arguments NoConflict/ n n'.
 Hint Unfold NoConflict : core.
 
 Lemma prop_on_fill : forall P n d d' g lhs lhs',
-  FillWith d g lhs ->
-  FillWith d' g lhs' ->
+  Fill g d lhs ->
+  Fill g d' lhs' ->
   PropOn P (fv d') n ->
   PropOn P (fv lhs) n ->
   PropOn P (fv lhs') n.

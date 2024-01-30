@@ -109,7 +109,7 @@ Inductive WFHole : hole -> Prop :=
 Hint Constructors WFHole : core.
 
 Theorem wf_fill_reflect : forall h d g,
-  FillWith d h g -> (
+  Fill h d g -> (
     WFContext g <-> (
       WFHole h /\
       WFContext d /\

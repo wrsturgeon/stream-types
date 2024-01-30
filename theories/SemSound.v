@@ -45,7 +45,10 @@ Proof.
     induction Ht; cbn in *; intros.
     - sinvert Hs. constructor; [eapply IHHt1 | eapply IHHt2]; eassumption.
     - sinvert Hs. eapply IHHt; clear IHHt; [| | eassumption].
-      + eapply hmm'; [left; reflexivity | | | |]; eassumption.
+      + (* need a condition s.t. if a filled hole is WF, then filling it with something else WF is also WF *)
+Abort.
+(*
+        eapply hmm'; [left; reflexivity | | | |]; eassumption.
       + assert (A := maps_to_has_type _ _ _ _ He). destruct A as [p' [Hp1 Hp2]]. sinvert Hp2.
         rewrite Hp1 in H9. sinvert H9. eapply catlenvtyped; try eassumption.
         shelve. (* <-- TODO *)
@@ -68,7 +71,8 @@ Proof.
     - sinvert Hs. apply wf_fill in Hwf as [Hwfh [Hwfc Hd]]. eapply IHHt; [| | eassumption].
       + apply wf_fill. repeat split; [assumption | constructor | |]; scongruence.
       + eapply dropenvtyped. eassumption.
-    Unshelve. (* shit *) Abort.
+  Unshelve. (* shit *) Abort.
+*)
 
 (*
 (x : s, y : s) |- fix(x:s,y:s). rec(x+1,x) : s
