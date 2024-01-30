@@ -87,8 +87,8 @@ Qed.
 
 
 Definition Agree (n n' : env) (D D' : context) : Prop :=
-  (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\
-  (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
+  (MaximalOn (fv D) n -> MaximalOn (fv D') n') /\
+  (EmptyOn (fv D) n -> EmptyOn (fv D') n').
 Arguments Agree/ n n' D D'.
 Hint Unfold Agree : core.
 
@@ -294,7 +294,7 @@ Hint Resolve or_hyp : core.
 
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
-  (PropOn P (fv D) n <-> PropOn P (fv D') n') ->
+  (PropOn P (fv D) n -> PropOn P (fv D') n') ->
   Fill lhs D  lhs'  ->
   Fill lhs D' lhs'' ->
   PropOn P (fv lhs') n ->
