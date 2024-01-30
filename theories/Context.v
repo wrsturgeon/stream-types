@@ -26,3 +26,9 @@ Fixpoint fv_ctx ctx : set string :=
   end.
 
 Instance fv_context : FV context := { fv := fv_ctx; }.
+
+(* Argument order matches notation: (CtxLEq G G') === (G <= G') *)
+Inductive CtxLEq (G G' : context) : Prop :=
+  (* TODO *)
+  .
+Hint Constructors CtxLEq : core.
