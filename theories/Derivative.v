@@ -1,10 +1,11 @@
+From Hammer Require Import Tactics.
+From LibTactics Require Import LibTactics.
 From LambdaST Require Import
   Context
   Environment
   Nullable
   Prefix
   Types.
-From Hammer Require Import Tactics.
 
 Inductive Derivative : prefix -> type -> type -> Prop :=
   | DrvEpsEmp :
@@ -69,7 +70,7 @@ Theorem derivative_unique : forall p s s'1 s'2,
   Derivative p s s'2 ->
   s'1 = s'2.
 Proof.
-  intros p s s'1 s'2 H1 H2. generalize dependent s'2. induction H1; intros;
+  introv H1 H2. gen s'2. induction H1; intros;
   sinvert H2; try reflexivity; auto.
   - apply IHDerivative1 in H5. apply IHDerivative2 in H6. subst. reflexivity.
   - apply IHDerivative in H5. subst. reflexivity.
@@ -82,7 +83,7 @@ Theorem derivative_when_well_typed : forall p s,
   PrefixTyped p s ->
   exists s', Derivative p s s'.
 Proof.
-  intros p s H. induction H; try solve [eexists; constructor];
+  introv H. induction H; try solve [eexists; constructor];
   try destruct IHPrefixTyped as [s' Hd];
   try destruct IHPrefixTyped1 as [s' Hd1];
   try destruct IHPrefixTyped2 as [t' Hd2].
@@ -108,7 +109,7 @@ Theorem context_derivative_unique : forall n G G'1 G'2,
   ContextDerivative n G G'2 ->
   G'1 = G'2.
 Proof.
-  intros n G G'1 G'2 H1 H2. generalize dependent G'2. induction H1; intros;
+  introv H1 H2. gen G'2. induction H1; intros;
   sinvert H2; try (apply IHContextDerivative1 in H3; apply IHContextDerivative2 in H5; subst); try reflexivity.
   remember (maps_to_unique _ _ _ _ H H5) as U eqn:E. clear E. subst.
   remember (derivative_unique _ _ _ _ H0 H7) as U eqn:E. clear E. subst.
@@ -121,7 +122,7 @@ Theorem derivative_when_env_well_typed : forall n G,
   EnvTyped n G ->
   exists G', ContextDerivative n G G'.
 Proof.
-  intros n G H. induction H;
+  introv H. induction H;
   try (destruct IHEnvTyped1 as [G' HG]; destruct IHEnvTyped2 as [D' HD]);
   try (remember (derivative_when_well_typed p s H0) as D eqn:E; clear E; destruct D as [s' D]);
   eexists; econstructor; try apply H; try apply HG; try apply HD; apply D.
@@ -133,10 +134,7 @@ Theorem maximal_derivative_nullable : forall p s s',
   Derivative p s s' ->
   MaximalPrefix p ->
   Nullable s'.
-Proof.
-  intros p s s' Hd Hm. generalize dependent s. generalize dependent s'.
-  induction Hm; intros; sinvert Hd; try constructor; eauto.
-Qed.
+Proof. introv Hd Hm. gen s' s. induction Hm; intros; sinvert Hd; try constructor; eauto. Qed.
 Hint Resolve maximal_derivative_nullable : core.
 
 (* Theorem B.19 *)
@@ -145,7 +143,7 @@ Theorem nullable_prefix_empty : forall p s,
   Nullable s ->
   p = emp s.
 Proof.
-  intros p s Ht Hn. generalize dependent p. induction Hn; intros; sinvert Ht. { reflexivity. }
+  introv Ht Hn. gen p. induction Hn; intros; sinvert Ht. { reflexivity. }
   apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
 Qed.
 Hint Resolve nullable_prefix_empty : core.
@@ -181,7 +179,7 @@ Proof.
     try rewrite IHDerivative2;
     try rewrite IHDerivative;
     reflexivity.
-  - generalize dependent s. generalize dependent s'. induction p; intros;
+  - gen s' s. induction p; intros;
     try solve [destruct s; sinvert H; constructor];
     destruct s; try discriminate H;
     cbn in *.
@@ -204,7 +202,7 @@ Theorem reflect_no_derivative : forall p s,
   maybe_derivative p s = None ->
   ~exists s', Derivative p s s'.
 Proof.
-  intros p s H [s' C]. generalize dependent H. induction C; cbn; intros;
+  introv H [s' C]. gen H. induction C; cbn; intros;
   try destruct (maybe_derivative p s);
   try destruct (maybe_derivative p1 s);
   try destruct (maybe_derivative p2 t);
@@ -217,7 +215,7 @@ Hint Resolve reflect_no_derivative : core.
 
 Definition derivative : forall p s, PrefixTyped p s -> type.
 Proof.
-  intros p s H. destruct (maybe_derivative p s) as [d |] eqn:E. { apply d. }
+  introv H. destruct (maybe_derivative p s) as [d |] eqn:E. { apply d. }
   apply derivative_when_well_typed in H.
   apply reflect_no_derivative in E.
   apply E in H. destruct H.

@@ -1,4 +1,5 @@
 From Hammer Require Import Tactics.
+From LibTactics Require Import LibTactics.
 From LambdaST Require Import
   Context
   Environment
@@ -44,9 +45,7 @@ Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context)
   EnvTyped n gd ->
   EnvTyped n gd'.
 Proof.
-  intros d d' g gd gd' Hf Hf' Hs IH n He.
-  generalize dependent d. generalize dependent d'. generalize dependent gd. generalize dependent gd'.
-  generalize dependent n. induction g; cbn in *; intros;
+  introv Hf Hf' Hs IH He. gen n gd' gd d' d. induction g; cbn in *; intros;
   sinvert Hf'; sinvert Hf; [apply IH; assumption | | | |]; sinvert He; constructor; try assumption;
   try (eapply IHg; [| eassumption | eassumption | |]; assumption);
   destruct H6; [left; assumption | right | left | right; assumption]. Abort.
@@ -67,7 +66,7 @@ Theorem sub_preserves_env : forall n G D,
   Subtype G D ->
   EnvTyped n D.
 Proof.
-  intros n G D He Hs. generalize dependent n. induction Hs; cbn in *; intros.
+  introv He Hs. gen n. induction Hs; cbn in *; intros.
   - shelve. (* eapply fill_preserves_env; [apply H | | | |]; eassumption. *)
   - assumption.
   - sinvert He. constructor; assumption.

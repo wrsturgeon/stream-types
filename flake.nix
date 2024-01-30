@@ -6,13 +6,17 @@
       url = "github:lukaszcz/coqhammer";
       flake = false;
     };
+    libtactics-src = {
+      url = "github:charguer/tlc";
+      flake = false;
+    };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     qc-src = {
       url = "github:quickchick/quickchick";
       flake = false;
     };
   };
-  outputs = { flake-utils, hammer-src, nixpkgs, qc-src, self }:
+  outputs = { flake-utils, hammer-src, libtactics-src, nixpkgs, qc-src, self }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pname = "lambda-st";
@@ -23,6 +27,10 @@
           inherit coq-pkgs os-pkgs;
           src = hammer-src;
         }).tactics;
+        libtactics = import nix/libtactics.nix {
+          inherit coq-pkgs;
+          src = libtactics-src;
+        };
         quickchick = import nix/quickchick.nix {
           inherit coq-pkgs;
           src = qc-src;
@@ -31,7 +39,8 @@
         packages.default = coq-pkgs.mkCoqDerivation {
           inherit pname version;
           src = ./.;
-          buildInputs = [ hammer quickchick ];
+          buildInputs = builtins.trace "${libtactics}"
+            (builtins.trace "${quickchick}" [ hammer libtactics quickchick ]);
         };
       });
 }

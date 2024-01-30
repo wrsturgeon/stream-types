@@ -1,5 +1,6 @@
 From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
+From LibTactics Require Import LibTactics.
 From LambdaST Require Import
   Context
   FV
@@ -48,7 +49,7 @@ Theorem reflect_fill : forall h y c,
   c = fill h y <-> Fill h y c.
 Proof.
   split; intros.
-  - subst. generalize dependent y. induction h; intros; cbn in *; constructor; apply IHh.
+  - subst. gen y. induction h; intros; cbn in *; constructor; apply IHh.
   - induction H; cbn; try rewrite IHFill; reflexivity.
 Qed.
 Hint Resolve reflect_fill : core.

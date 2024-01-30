@@ -1,4 +1,5 @@
 From Hammer Require Import Tactics.
+From LibTactics Require Import LibTactics.
 From LambdaST Require Import
   Derivative
   Prefix
@@ -56,7 +57,7 @@ Theorem prefix_concat_unique : forall p p' p1'' p2'',
   PrefixConcat p p' p2'' ->
   p1'' = p2''.
 Proof.
-  intros p p' p1'' p2'' H1 H2. generalize dependent p2''. induction H1; intros; sinvert H2;
+  introv H1 H2. gen p2''. induction H1; intros; sinvert H2;
   try apply IHPrefixConcat in H3;
   try apply IHPrefixConcat in H5;
   try apply IHPrefixConcat in H0;
@@ -77,8 +78,8 @@ Theorem prefix_concat_exists_when_typed : forall p p' s dps dp'dps,
   PrefixTyped p'' s /\
   Derivative p'' s dp'dps.
 Proof.
-  intros p p' s dps dp'dps Hd Hd' Ht Ht'. generalize dependent p'. generalize dependent dps.
-  generalize dependent dp'dps. induction Ht; cbn in *; intros; sinvert Hd.
+  introv Hd Hd' Ht Ht'. gen dp'dps dps p'.
+  induction Ht; cbn in *; intros; sinvert Hd.
   - eexists. repeat split; [| eassumption | assumption]. invert Ht'. constructor.
   - sfirstorder.
   - sauto lq: on.

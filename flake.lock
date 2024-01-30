@@ -34,6 +34,22 @@
         "type": "github"
       }
     },
+    "libtactics-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1701425331,
+        "narHash": "sha256-CEkQWLdfJG9ts9vJcIkdtPPEy/J26D+Rfjrta9KN+2Q=",
+        "owner": "charguer",
+        "repo": "tlc",
+        "rev": "f1cddf654e9e09141dec16f2726485801182df8b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "charguer",
+        "repo": "tlc",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1706371002,
@@ -70,6 +86,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "hammer-src": "hammer-src",
+        "libtactics-src": "libtactics-src",
         "nixpkgs": "nixpkgs",
         "qc-src": "qc-src"
       }

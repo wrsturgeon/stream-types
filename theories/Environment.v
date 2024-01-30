@@ -1,6 +1,8 @@
 From Coq Require Import
   List
   String.
+From Hammer Require Import Tactics.
+From LibTactics Require Import LibTactics.
 From LambdaST Require Import
   Context
   FV
@@ -9,7 +11,6 @@ From LambdaST Require Import
   Sets
   Terms
   Types.
-From Hammer Require Import Tactics.
 
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
@@ -41,7 +42,7 @@ Theorem maps_to_unique_literal : forall p x (n : env),
   n x = Some p ->
   ~exists q, p <> q /\ n x = Some q.
 Proof.
-  intros p x n Hp [q [Hpq Hq]]. rewrite Hp in Hq. sinvert Hq. apply Hpq. reflexivity.
+  introv Hp [q [Hpq Hq]]. rewrite Hp in Hq. sinvert Hq. apply Hpq. reflexivity.
 Qed.
 Hint Resolve maps_to_unique_literal : core.
 
@@ -49,7 +50,7 @@ Theorem maps_to_unique : forall p1 p2 x (n : env),
   n x = Some p1 ->
   n x = Some p2 ->
   p1 = p2.
-Proof. intros p1 p2 x n H1 H2. cbn in *. rewrite H1 in H2. sinvert H2. reflexivity. Qed.
+Proof. introv H1 H2. cbn in *. rewrite H1 in H2. sinvert H2. reflexivity. Qed.
 Hint Resolve maps_to_unique : core.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
@@ -103,7 +104,7 @@ Theorem maps_to_hole : forall n G D,
   EnvTyped n D.
 Proof.
   intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  generalize dependent G. generalize dependent D. induction H; intros; subst; cbn in *;
+  gen G D. induction H; intros; subst; cbn in *;
   sinvert E; try econstructor; try eassumption; try (eapply IHEnvTyped1; eassumption); eapply IHEnvTyped2; eassumption.
 Qed.
 Hint Resolve maps_to_hole : core.
@@ -126,7 +127,7 @@ Hint Unfold NoConflict : core.
 Lemma prop_on_item_weakening : forall P nr nl vs,
   PropOnItem P nr vs ->
   PropOnItem P (env_union nl nr) vs.
-Proof. intros P nl nr vs [p [Hn' Hp]]. exists p. split; [| assumption]. cbn. rewrite Hn'. reflexivity. Qed.
+Proof. introv [p [Hn' Hp]]. exists p. split; [| assumption]. cbn. rewrite Hn'. reflexivity. Qed.
 Hint Resolve prop_on_item_weakening : core.
 
 Lemma prop_on_weakening : forall P nr nl ctx,
@@ -151,8 +152,7 @@ Lemma env_typed_weakening : forall n n' G,
   EnvTyped n' G ->
   EnvTyped (env_union n n') G.
 Proof.
-  intros n n' G H. generalize dependent n.
-  induction H; intros; econstructor;
+  introv H. gen n. induction H; intros; econstructor;
   try apply IHEnvTyped1; try apply IHEnvTyped2;
   [cbn; rewrite H; reflexivity | assumption |].
   destruct H1; [left | right]; apply prop_on_weakening; assumption.
@@ -164,7 +164,7 @@ Theorem prop_on_item_weakening_alt : forall P nl nr vs,
   PropOnItem P nl vs ->
   PropOnItem P (env_union nl nr) vs.
 Proof.
-  cbn. intros P nl nr vs H [p [H1 H2]]. rewrite H1.
+  cbn. introv H [p [H1 H2]]. rewrite H1.
   destruct (nr vs) eqn:E; eexists; (split; [reflexivity | hauto l: on]).
 Qed.
 Hint Resolve prop_on_item_weakening_alt : core.
@@ -195,11 +195,11 @@ Lemma env_typed_weakening_alt : forall n n' G,
   EnvTyped n G ->
   EnvTyped (env_union n n') G.
 Proof.
-  intros n n' G Hm Ht. generalize dependent n'.
+  introv Hm Ht. gen n'.
   induction Ht; intros; cbn in *; econstructor; try apply IHHt1; try apply IHHt2; try eassumption.
   - cbn. specialize (Hm _ _ H). destruct (n' x) as [p' |] eqn:E. 2: { assumption. }
     f_equal. symmetry. apply Hm. reflexivity.
-  - destruct H; hauto q: on db: core. (* TODO: speed this up *)
+  - destruct H; hauto q: on. (* TODO: speed this up *)
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
 
@@ -210,7 +210,7 @@ Lemma prop_on_fill : forall P n d d' g lhs lhs',
   PropOn P (fv lhs) n ->
   PropOn P (fv lhs') n.
 Proof.
-  cbn in *. intros P n d d' g lhs lhs' Hf Hf' Hp' Hp x Hfv.
+  cbn in *. introv Hf Hf' Hp' Hp Hfv.
   assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
   assert (A : SetEq (fv lhs) (set_union (fv d) (fv g))). { apply fv_fill. assumption. } cbn in *.
   destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
@@ -224,10 +224,9 @@ Theorem env_subctx_bind_equal : forall hole plug n n',
   EnvTyped n' plug ->
   EnvTyped (env_union n n') (fill hole plug).
 Proof.
-  intros hole plug n n' Hc Hn Hn'.
+  introv Hc Hn Hn'.
   remember (fill hole plug) as ctx eqn:Ef. assert (Hf := Ef). apply reflect_fill in Hf.
-  generalize dependent n. generalize dependent n'. generalize dependent Ef.
-  induction Hf; sfirstorder.
+  gen Ef n' n. induction Hf; sfirstorder.
 Qed.
 Hint Resolve env_subctx_bind_equal : core.
 
@@ -245,8 +244,7 @@ Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   PropOn P (fv lhs') n ->
   PropOn P (fv lhs'') (env_union n n').
 Proof.
-  intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n.
-  generalize dependent n'. generalize dependent D'. generalize dependent lhs''.
+  introv Hn Hp Hf Hf' H. gen lhs'' D' n' n P.
   induction Hf; intros; sinvert Hf'; [hauto l: on | | | |];
   intros x [Hfv | Hfv]; try (eapply IHHf; clear IHHf; [| assumption | eassumption | | eassumption];
     [assumption |]; intros x' H'; apply H; try (left; assumption); right; assumption); clear IHHf;
@@ -265,10 +263,10 @@ Theorem env_subctx_bind : forall hole plug plug' n n',
   Agree n n' plug plug' ->
   EnvTyped (env_union n n') (fill hole plug').
 Proof.
-  intros hole plug plug' n n' Hc Hn Hn' [Ham Hae].
+  introv Hc Hn Hn' [Ham Hae].
   remember (fill hole plug) as ctx eqn:Hf. apply reflect_fill in Hf.
   remember (fill hole plug') as ctx' eqn:Hf'. apply reflect_fill in Hf'.
-  generalize dependent plug'. generalize dependent n. generalize dependent n'. generalize dependent ctx'.
+  gen ctx' n' n plug'.
   induction Hf; cbn in *; intros; [sinvert Hf'; apply env_typed_weakening; assumption | | | |];
   sinvert Hf'; sinvert Hn; constructor; try (eapply IHHf; eassumption); clear IHHf;
   try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
@@ -285,7 +283,7 @@ Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
     PropOn P (singleton_set z) n <->
     PropOn P (set_union (singleton_set x) (singleton_set y)) (env_union (singleton_env x p1) (singleton_env y p2))).
 Proof.
-  simpl fv. intros P x y z n p1 p2 HP Hxy Hnz. split; cbn in *; intros.
+  simpl fv. introv HP Hxy Hnz. split; cbn in *; intros.
   - specialize (H _ eq_refl) as [p [Hnzp Hmp]]. rewrite Hnz in Hnzp. sinvert Hnzp. destruct HP; (subst; sinvert Hmp;
     destruct H0; subst; [apply eqb_neq in Hxy; rewrite eqb_sym in Hxy; rewrite Hxy |]; rewrite eqb_refl; sfirstorder).
   - subst. eexists. split. { eassumption. } destruct HP; (subst;
@@ -306,7 +304,7 @@ Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
     (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
     (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
 Proof.
-  intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
+  introv Hxy Hn Hnz Hp1 Hp2 He.
   eapply env_subctx_bind; [eassumption | eassumption | |].
   - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
     destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
