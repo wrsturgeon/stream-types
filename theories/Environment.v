@@ -332,9 +332,28 @@ Hint Resolve env_subctx_bind : core.
 
 (* TODO: what's the notation in Theorem B.12? *)
 
-(* specialized environment substitution theorems. These are the downstream facts we really need. *)
+Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
+  (P = EmptyPrefix \/ P = MaximalPrefix) ->
+  x <> y ->
+  n z = Some (PfxParPair p1 p2) -> (
+    PropOn P (singleton_set z) n <->
+    PropOn P (set_union (singleton_set x) (singleton_set y)) (env_union (singleton_env x p1) (singleton_env y p2))).
+Proof.
+  simpl fv. intros P x y z n p1 p2 HP Hxy Hnz. split; cbn in *; intros.
+  - specialize (H _ eq_refl) as [p [Hnzp Hmp]]. rewrite Hnz in Hnzp. sinvert Hnzp. destruct HP; (subst; sinvert Hmp;
+    destruct H0; subst; [apply eqb_neq in Hxy; rewrite eqb_sym in Hxy; rewrite Hxy |]; rewrite eqb_refl; sfirstorder).
+  - subst. eexists. split. { eassumption. } destruct HP; (subst;
+    constructor; [specialize (H _ (or_introl eq_refl)) | specialize (H _ (or_intror eq_refl))];
+    [apply eqb_neq in Hxy; rewrite eqb_sym in Hxy; rewrite Hxy in H |];
+    rewrite eqb_refl in H; destruct H as [p [Ep Hp]]; sinvert Ep; assumption).
+Qed.
+Hint Resolve empty_or_maximal_pfx_par_pair : core.
+
+(* NOTE: Here on out: specialized environment substitution theorems.
+ * These are the downstream facts we really need. *)
 Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
   x <> y ->
+  NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
   n z = Some (PfxParPair p1 p2) ->
   PfxTyped p1 s ->
   PfxTyped p2 t ->
@@ -343,26 +362,12 @@ Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
     (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
     (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
 Proof.
-(*
-  best use: env_subctx_bind time: 10.
-
-  intros G x y z p1 p2 s t r n Hxy Hnz Hp1 Hp2 He.
-  remember (fill G (CtxHasTy z r)) as Gzr eqn:Ezr. apply reflect_fill in Ezr.
-  remember (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))) as Gxsyt eqn:Exsyt. apply reflect_fill in Exsyt.
-  generalize dependent x. generalize dependent y. generalize dependent z. generalize dependent p1.
-  generalize dependent p2. generalize dependent s. generalize dependent t. generalize dependent r.
-  generalize dependent n. generalize dependent Gzr. generalize dependent Gxsyt.
-  induction G; cbn in *; intros; sinvert Ezr; sinvert Exsyt.
-  - sinvert He. rewrite Hnz in H2. invert H2. constructor. best.
-
-
-  generalize dependent x. generalize dependent y.
-  generalize dependent p1. generalize dependent p2. generalize dependent s. generalize dependent t.
-  (* induction He; cbn in *; intros. *)
-  generalize dependent z. generalize dependent r. generalize dependent n. induction G; cbn in *; intros.
+  intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
+  eapply env_subctx_bind; [eassumption | eassumption | |].
+  - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
+    destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
+  - split; apply empty_or_maximal_pfx_par_pair; try assumption; [right | left]; reflexivity.
 Qed.
-*)
-Admitted.
 
 Theorem catrenvtyped1 :  forall G x y z p1 s t r eta,
   x <> y ->
