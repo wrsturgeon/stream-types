@@ -146,35 +146,43 @@ Proof.
 Qed.
 Hint Resolve wf_ctx_hole : core.
 
+Lemma wf_fill : forall G D GD,
+  Fill G D GD ->
+  WFHole G ->
+  WFContext D ->
+  DisjointSets (fv G) (fv D) ->
+  WFContext GD.
+Proof.
+  intros G D GD Hf HG HD Hd. generalize dependent D. generalize dependent GD.
+  induction HG; cbn in *; intros; sinvert Hf; [assumption | | | |];
+  constructor; try assumption (* 1/3 *); try eapply IHHG; clear IHHG; try eassumption;
+  apply fv_fill in H5; (* <-- this is the crucial move! *) sfirstorder.
+Qed.
+Hint Resolve wf_fill : core.
+
+Lemma fill_wf_disjoint : forall G D GD,
+  Fill G D GD ->
+  WFContext GD ->
+  DisjointSets (fv G) (fv D).
+Proof.
+  intros G D GD Hf Hwf.
+  cbn in *. intro x. assert (Hiff := fv_fill _ _ _ Hf x). cbn in Hiff.
+  generalize dependent D. generalize dependent GD. induction G; cbn in *; intros; [sfirstorder | | | |];
+  sinvert Hf; sinvert Hwf; cbn in *; specialize (H4 x) as [Hlr Hrl].
+  - specialize (IHG _ H1 _ H3).
+  (* TODO: we should totally be able to prove this, right? *)
+Admitted.
+Hint Resolve fill_wf_disjoint : core.
+
 (* NOTE: that we might still be adding shadowed terms in `D`, which we by definition can't inspect from the hole! *)
 Theorem wf_hole_iff : forall G D GD,
-  Fill G D GD ->
-  (WFHole G <-> (WFContext GD <-> (WFContext D /\ DisjointSets (fv G) (fv D)))).
+  Fill G D GD -> (
+    WFContext GD <-> (
+      WFHole G /\
+      WFContext D /\
+      DisjointSets (fv G) (fv D))). (* <-- this should fix the above comment *)
 Proof.
-  split; intros.
-  - generalize dependent H0. induction H; cbn in *; intros.
-    + sfirstorder.
-    + sinvert H0. specialize (IHFill H3). split; intros.
-      * sinvert H0. split. { apply IHFill. assumption. }
-        cbn in *. intros. specialize (H5 x) as [H5l H5r]. specialize (H8 x) as [H8l H8r].
-        split. { intros H' C. destruct H'; [| sfirstorder]. Abort. (* TODO *)
-
-Theorem wf_ctx_fill : forall G D D' GD GD',
-  Fill G D GD ->
-  Fill G D' GD' ->
-  WFContext GD ->
-  WFContext D' ->
-  WFContext GD'.
-Proof.
-  intros. assert (Ap := wf_ctx_plug _ H1 _ _ H). assert (Ah := wf_ctx_hole _ H1 _ _ H).
-  generalize dependent D. generalize dependent D'. generalize dependent GD. generalize dependent GD'.
-  induction Ah; cbn in *; intros.
-  - sinvert H0. assumption.
-  - sinvert H2. sinvert H4. sinvert H1. constructor. { eapply IHAh; [| eassumption | | apply H8 |]; assumption. }
-    { assumption. }
-    best use: wf_ctx_hole, fill_disjoint_l, fill_disjoint_r, wf_ctx_plug. constructor; [| | best].
-    + eapply IHAh; [| eassumption | | apply H7 |]; assumption.
-    + assumption.
-    +  eassumption. best. eapply IHAh; clear IHAh; best.
+  intros G D GD Hf. split; [intro Hwf | intros [HG [HD Hd]]].
+  - split; [| split]; [eapply wf_ctx_hole | eapply wf_ctx_plug | eapply fill_wf_disjoint]; eassumption.
+  - eapply wf_fill; eassumption.
 Qed.
-Hint Resolve wf_ctx_fill : core.
