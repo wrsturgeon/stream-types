@@ -295,8 +295,8 @@ Hint Resolve or_hyp : core.
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
   (PropOn P (fv D) n <-> PropOn P (fv D') n') ->
-  FillWith D  lhs lhs'  ->
-  FillWith D' lhs lhs'' ->
+  Fill lhs D  lhs'  ->
+  Fill lhs D' lhs'' ->
   PropOn P (fv lhs') n ->
   PropOn P (fv lhs'') (env_union n n').
 Proof.

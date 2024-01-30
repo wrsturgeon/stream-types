@@ -25,30 +25,31 @@ Fixpoint fill h D :=
   | HoleSemicR lhs rhs => CtxSemic lhs (fill rhs D)
   end.
 
-Inductive FillWith d : hole -> context -> Prop :=
-  | FillHere :
-      FillWith d HoleHere d
-  | FillCommaL : forall h g' g,
-      FillWith d h g ->
-      FillWith d (HoleCommaL h g') (CtxComma g g')
-  | FillCommaR : forall g h g',
-      FillWith d h g' ->
-      FillWith d (HoleCommaR g h) (CtxComma g g')
-  | FillSemicL : forall h g' g,
-      FillWith d h g ->
-      FillWith d (HoleSemicL h g') (CtxSemic g g')
-  | FillSemicR : forall g h g',
-      FillWith d h g' ->
-      FillWith d (HoleSemicR g h) (CtxSemic g g')
+Inductive Fill : hole -> context -> context -> Prop :=
+  | FillHere : forall y,
+      Fill HoleHere y y
+  | FillCommaL : forall y lhs rhs lhs',
+      Fill lhs y lhs' ->
+      Fill (HoleCommaL lhs rhs) y (CtxComma lhs' rhs)
+  | FillCommaR : forall y lhs rhs rhs',
+      Fill rhs y rhs' ->
+      Fill (HoleCommaR lhs rhs) y (CtxComma lhs rhs')
+  | FillSemicL : forall y lhs rhs lhs',
+      Fill lhs y lhs' ->
+      Fill (HoleSemicL lhs rhs) y (CtxSemic lhs' rhs)
+  | FillSemicR : forall y lhs rhs rhs',
+      Fill rhs y rhs' ->
+      Fill (HoleSemicR lhs rhs) y (CtxSemic lhs rhs')
   .
-Hint Constructors FillWith : core.
+Hint Constructors Fill : core.
+(* Notation "G '(' D ')' 'is' GD" := (Fill G D GD) (at level 97, no associativity). *) (* Coq prints this oddly; better off without *)
 
-Theorem reflect_fill : forall h d g,
-  g = fill h d <-> FillWith d h g.
+Theorem reflect_fill : forall h y c,
+  c = fill h y <-> Fill h y c.
 Proof.
   split; intros.
-  - subst. generalize dependent d. induction h; intros; simpl in *; constructor; apply IHh.
-  - induction H; simpl; try rewrite IHFillWith; reflexivity.
+  - subst. generalize dependent y. induction h; intros; cbn in *; constructor; apply IHh.
+  - induction H; cbn; try rewrite IHFill; reflexivity.
 Qed.
 Hint Resolve reflect_fill : core.
 
@@ -71,8 +72,8 @@ Proof. induction h; intros; split; sfirstorder. Qed.
 Instance fv_hole_inst : FV hole := { fv := fv_hole }.
 
 Lemma fv_fill : forall h plug ctx,
-  FillWith plug h ctx ->
-  SetEq (fv_ctx ctx) (set_union (fv plug) (fv h)).
+  Fill h plug ctx ->
+  SetEq (fv ctx) (set_union (fv plug) (fv h)).
 Proof. intros. induction H; sfirstorder. Qed.
 Hint Resolve fv_fill : core.
 

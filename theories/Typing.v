@@ -27,8 +27,8 @@ Inductive Typed : context -> term -> type -> Prop :=
       fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
       fill G (CtxHasTy z (TyPar s t)) |- (TmLetPar x y z e) \in r
       *)
-      FillWith (CtxComma (CtxHasTy x s) (CtxHasTy y t)) G Gxsyt ->
-      FillWith (CtxHasTy z (TyPar s t)) G Gzst ->
+      Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
+      Fill G (CtxHasTy z (TyPar s t)) Gzst ->
       Gxsyt |- e \in r ->
       Gzst |- TmLetPar x y z e \in r
   | TCatR : forall G D e1 e2 s t,
@@ -43,8 +43,8 @@ Inductive Typed : context -> term -> type -> Prop :=
       fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
       fill G (CtxHasTy z (TyDot s t)) |- (TmLetCat t x y z e) \in r
       *)
-      FillWith (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) G Gxsyt ->
-      FillWith (CtxHasTy z (TyDot s t)) G Gzst ->
+      Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
+      Fill G (CtxHasTy z (TyDot s t)) Gzst ->
       Gxsyt |- e \in r ->
       Gzst |- TmLetCat t x y z e \in r
   | TEpsR : forall G,
@@ -53,7 +53,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       G |- unit \in 1
   | TVar : forall G x s Gxs,
       (* fill G (CtxHasTy x s) |- (TmVar x) \in s *)
-      FillWith (CtxHasTy x s) G Gxs ->
+      Fill G (CtxHasTy x s) Gxs ->
       Gxs |- TmVar x \in s
   | TSubCtx : forall G G' e s,
       CtxLEq G G' ->
@@ -66,8 +66,8 @@ Inductive Typed : context -> term -> type -> Prop :=
       fill G (CtxHasTy x s) |- e' \in t ->
       fill G D |- TmLet x e e' \in t
       *)
-      FillWith (CtxHasTy x s) G Gxs ->
-      FillWith D G GD ->
+      Fill G (CtxHasTy x s) Gxs ->
+      Fill G D GD ->
       Gxs |- e' \in t ->
       GD |- TmLet x e e' \in t
   | TDrop : forall G x s t e Ge Gxs,
@@ -75,8 +75,8 @@ Inductive Typed : context -> term -> type -> Prop :=
       fill G CtxEmpty |- e \in t ->
       fill G (CtxHasTy x s) |- TmDrop x e \in t
       *)
-      FillWith CtxEmpty G Ge ->
-      FillWith (CtxHasTy x s) G Gxs ->
+      Fill G CtxEmpty Ge ->
+      Fill G (CtxHasTy x s) Gxs ->
       Ge |- e \in t ->
       Gxs |- drop x; e \in t
 where "G '|-' x '\in' T" := (Typed G x T).
