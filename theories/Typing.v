@@ -46,6 +46,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       G |- e \in s
   | T_Let : forall G D x e e' s t,
       ~(fv G x) ->
+      reactive e ->
       D |- e \in s ->
       fill G (CtxHasTy x s) |- e' \in t ->
       fill G D |- TmLet x e e' \in t

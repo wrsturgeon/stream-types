@@ -6,6 +6,7 @@ From LambdaST Require Import
   Ident
   Prefix
   Semantics
+  SinkTm
   Terms
   Typing.
 From Coq Require Import
@@ -35,7 +36,66 @@ Proof.
     sinvert B.
     unfold MaximalOn. unfold PropOn. intros.
     unfold PropOnItem.
+    admit.
 Admitted.
+
+(* NOT CLEAR ABOUT RECURSION. when you unfold a fixpoint, you might get a thing that's not reactive at toplevel.
+1, ::, (;) are not reactive.
+*)
+
+(* terms need to be primed. The output of EVERY STEP is inert. it won't produce
+anything with the empty prefix, because otherwise it would have earlier. This problem *can only happen* when you're kicking off a function (and on recursive calls).*)
+
+Theorem empty_push_reactive : forall e e' eta p,
+  reactive e ->
+  Step eta e e' p ->
+  EmptyOn (fv e) eta ->
+  EmptyPrefix p.
+Proof.
+  intros.
+  induction H0; sinvert H.
+  - sauto lq: on.
+  - qauto l: on.
+  - sauto lq: on rew: off.
+  - eapply IHStep. eauto. admit. (* correct. *)
+  - eapply IHStep. eauto. admit. (* corrrect *) 
+  - admit.
+  - hauto drew: off.
+  - admit.
+Admitted.
+
+
+Theorem agree_step : forall e e' eta p G x s,
+  (forall x0, fv e x0 -> fv G x0) ->
+  Step eta e e' p ->
+  PfxTyped p s ->
+  Agree eta (singleton_env x p) G (CtxHasTy x s)
+.
+Proof.
+  intros.
+  unfold Agree. split; split; intros; unfold MaximalOn in *; unfold EmptyOn in *; unfold PropOn in *; unfold PropOnItem in *; intros.
+  - assert (MaximalPrefix p) by sfirstorder use:maximal_push.
+    exists p. sinvert H3. unfold singleton_env. sauto lq: on use:eq_id_refl.
+  -
+
+
+Theorem step_reactive : forall e e' eta p,
+  reactive e ->
+  Step eta e e' p ->
+  reactive e'.
+Proof.
+  intros.
+  induction H0; sinvert H.
+  - sfirstorder.
+  - sfirstorder.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on rew: off use:sink_reactive.
+  - sauto lq: on.
+  - sauto lq: on.
+Qed.
+
 
 
 Theorem soundout : forall G e e' s eta p,
@@ -75,10 +135,12 @@ Proof.
     - sfirstorder.
     - sinvert Hstep. eapply IHHty2; [ | | eauto].
       + sauto l: on use:wf_fill.
-      + eapply letenvtyped; [| eauto].
+      + eapply letenvtyped; [ | | eauto].
         eapply IHHty1; [| | eauto]. sfirstorder use:wf_fill. sfirstorder use:maps_to_hole.
     - sinvert Hstep. eapply IHHty; [ | | eauto]. hauto lq: on rew: off use: wf_fill.
 Admitted.
+
+(* let x = e in e' | *)
 
 (*
 
@@ -88,4 +150,10 @@ cut x = x+1 in y = x in rec(x+1,x)
 WRONG!!
 
 We need a real multicut for unfolding recursive calls.
+
+
+y : bool |- 3 : int             x : int ; u : int |= (x;u)
+----------------------------------------------------
+x : int ; y : bool |- let u = 3 in (x;u) : int . int
+
 *)

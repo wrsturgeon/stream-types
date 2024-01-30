@@ -39,6 +39,7 @@ Notation "'let' ( lhs , rhs ) = both 'in' body" :=
 Notation "'let' t ( lhs ; rhs ) = both 'in' body" :=
   (TmLetCat t lhs rhs both body) (at level 98, right associativity) : term_scope.
 
+
 Fixpoint fv_term e : FV.set ident :=
   match e with
   | TmSink | TmUnit => empty_set

@@ -3,6 +3,7 @@ From LambdaST Require Import
   Environment
   Nullable
   Prefix
+  Hole
   Types.
 From Hammer Require Import
   Tactics.
@@ -65,7 +66,7 @@ Inductive ContextDerivative : env -> context -> context -> Prop :=
 Hint Constructors ContextDerivative : core.
 
 (* Theorem B.15, part I *)
-Theorem derivative_unique : forall p s s'1 s'2,
+Theorem derivative_det : forall p s s'1 s'2,
   Derivative p s s'1 ->
   Derivative p s s'2 ->
   s'1 = s'2.
@@ -76,10 +77,10 @@ Proof.
   - apply IHDerivative in H5. subst. reflexivity.
   - apply IHDerivative in H3. subst. reflexivity.
 Qed.
-Hint Resolve derivative_unique : core.
+Hint Resolve derivative_det : core.
 
 (* Theorem B.15, part II *)
-Theorem derivative_when_well_typed : forall p s,
+Theorem derivative_fun : forall p s,
   PfxTyped p s ->
   exists s', Derivative p s s'.
 Proof.
@@ -95,7 +96,7 @@ Proof.
   - exists (TyDot s' (TyStar s)). constructor. assumption.
   - exists t'. constructor. assumption.
 Qed.
-Hint Resolve derivative_when_well_typed : core.
+Hint Resolve derivative_fun : core.
 
 (* Theorem B.16 *)
 Theorem derivative_emp : forall s,
@@ -104,7 +105,7 @@ Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve derivative_emp : core.
 
 (* Theorem B.17, part I *)
-Theorem context_derivative_unique : forall n G G'1 G'2,
+Theorem context_derivative_det : forall n G G'1 G'2,
   ContextDerivative n G G'1 ->
   ContextDerivative n G G'2 ->
   G'1 = G'2.
@@ -112,22 +113,23 @@ Proof.
   intros n G G'1 G'2 H1 H2. generalize dependent G'2. induction H1; intros;
   sinvert H2; try (apply IHContextDerivative1 in H3; apply IHContextDerivative2 in H5; subst); try reflexivity.
   remember (maps_to_unique _ _ _ _ H H5) as U eqn:E. clear E. subst.
-  remember (derivative_unique _ _ _ _ H0 H7) as U eqn:E. clear E. subst.
+  remember (derivative_det _ _ _ _ H0 H7) as U eqn:E. clear E. subst.
   reflexivity.
 Qed.
-Hint Resolve context_derivative_unique : core.
+Hint Resolve context_derivative_det : core.
 
 (* Theorem B.17, part II *)
-Theorem derivative_when_env_well_typed : forall n G,
+Theorem context_derivative_fun : forall n G,
   EnvTyped n G ->
   exists G', ContextDerivative n G G'.
 Proof.
   intros n G H. induction H;
   try (destruct IHEnvTyped1 as [G' HG]; destruct IHEnvTyped2 as [D' HD]);
-  try (remember (derivative_when_well_typed p s H0) as D eqn:E; clear E; destruct D as [s' D]);
+  try (remember (derivative_fun p s H0) as D eqn:E; clear E; destruct D as [s' D]);
   eexists; econstructor; try apply H; try apply HG; try apply HD; apply D.
 Qed.
-Hint Resolve derivative_when_env_well_typed : core.
+Hint Resolve context_derivative_fun : core.
+
 
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
@@ -219,7 +221,7 @@ Hint Resolve reflect_no_derivative : core.
 Definition derivative : forall p s, PfxTyped p s -> type.
 Proof.
   intros p s H. destruct (maybe_derivative p s) as [d |] eqn:E. { apply d. }
-  apply derivative_when_well_typed in H.
+  apply derivative_fun in H.
   apply reflect_no_derivative in E.
   apply E in H. destruct H.
 Qed.

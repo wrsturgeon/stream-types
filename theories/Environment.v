@@ -184,7 +184,7 @@ Hint Resolve env_typed_weakening_alt : core.
 
 Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
   NoConflictOn (fv h) n n' ->
-  (PropOn P (fv d) n <-> PropOn P (fv d') n') ->
+  (PropOn P (fv d) n -> PropOn P (fv d') n') ->
   FillWith d  h hd  ->
   FillWith d' h hd' ->
   PropOn P (fv hd) n ->
@@ -231,7 +231,7 @@ Proof.
     + eapply IHE. eauto. eauto. eapply no_conflict_contains; [|eauto]; sfirstorder.
       sauto lq: on. sfirstorder. sfirstorder.
     + sauto q: on use:env_typed_weakening_alt.
-    + sinvert Ht. destruct H5; [left | right]; admit.
+    + sinvert Ht. destruct H5; [left | right].
   - admit.
 Admitted.
 
@@ -324,6 +324,7 @@ Admitted.
 
 (* i think this one needs stronger premises... *)
 Theorem letenvtyped :  forall G D x p s eta,
+  Agree eta (singleton_env x p) D (CtxHasTy x s) ->
   PfxTyped p s ->
   EnvTyped eta (fill G D) ->
   EnvTyped (subst x p eta) (fill G (CtxHasTy x s)).
