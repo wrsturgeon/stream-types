@@ -14,13 +14,27 @@ From Hammer Require Import Tactics.
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
 
-Definition env_subst : string -> prefix -> env -> env := fun id p n x => if eqb id x then Some p else n x.
-Arguments env_subst p n x/.
-Hint Unfold env_subst : core.
+Definition singleton_env (id : string) (p : prefix) : env := fun x =>
+  if eqb id x then Some p else None.
+Arguments singleton_env id p x/.
+Hint Unfold singleton_env : core.
 
-Definition env_union : env -> env -> env := fun n n' x => match n' x with None => n x | Some y => Some y end.
+Definition env_union (n n' : env) : env := fun x =>
+  match n' x with
+  | None => n x
+  | Some y => Some y
+  end.
 Arguments env_union n n' x/.
 Hint Unfold env_union : core.
+
+Definition env_subst (x : string) (p : prefix) (rho : env) : env :=
+  env_union rho (singleton_env x p).
+Arguments env_subst x p rho x/.
+Hint Unfold env_subst : core.
+
+Definition env_drop (n : env) (x : string) : env := fun y =>
+  if eqb x y then None else n x.
+Hint Unfold env_drop : core.
 
 (* Theorem B.10, part I *)
 Theorem maps_to_unique_literal : forall p x (n : env),
@@ -39,29 +53,28 @@ Proof. intros p1 p2 x n H1 H2. cbn in *. rewrite H1 in H2. sinvert H2. reflexivi
 Hint Resolve maps_to_unique : core.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
-Definition PropOnItem : (prefix -> Prop) -> env -> string -> Prop :=
-  fun P n x => exists p, n x = Some p /\ P p.
+Definition PropOnItem (P : prefix -> Prop) (n : env) (x : string) : Prop :=
+  exists p, n x = Some p /\ P p.
 Arguments PropOnItem P n x/.
 Hint Unfold PropOnItem : core.
 
-Definition PropOn (P : prefix -> Prop) (ctx : context) (n : env) : Prop :=
-  SetProp (PropOnItem P n) (fv ctx).
-Arguments PropOn/ P ctx n.
+Definition PropOn (P : prefix -> Prop) (s : set string) (n : env) : Prop := forall x, s x -> PropOnItem P n x.
+Arguments PropOn/ P s n.
 Hint Unfold PropOn : core.
 
 Definition EmptyOn := PropOn EmptyPrefix.
-Arguments EmptyOn/ ctx n.
+Arguments EmptyOn/ s n.
 Hint Unfold EmptyOn : core.
 
 Definition MaximalOn := PropOn MaximalPrefix.
-Arguments MaximalOn/ ctx n.
+Arguments MaximalOn/ s n.
 Hint Unfold MaximalOn : core.
 
 (* TODO: empty/maximal on (free variables in) terms *)
 
 Definition Agree (n n' : env) (D D' : context) : Prop :=
-  (MaximalOn D n <-> MaximalOn D' n') /\
-  (EmptyOn D n <-> EmptyOn D' n').
+  (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\
+  (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
 Arguments Agree/ n n' D D'.
 Hint Unfold Agree : core.
 
@@ -79,7 +92,7 @@ Inductive EnvTyped : env -> context -> Prop :=
   | EnvTySemic : forall n G D,
       EnvTyped n G ->
       EnvTyped n D ->
-      (EmptyOn D n \/ MaximalOn G n) ->
+      (EmptyOn (fv D) n \/ MaximalOn (fv G) n) ->
       EnvTyped n (CtxSemic G D)
   .
 Hint Constructors EnvTyped : core.
@@ -193,9 +206,9 @@ Hint Resolve env_typed_weakening_alt : core.
 Lemma prop_on_fill : forall P n d d' g lhs lhs',
   FillWith d g lhs ->
   FillWith d' g lhs' ->
-  PropOn P d' n ->
-  PropOn P lhs n ->
-  PropOn P lhs' n.
+  PropOn P (fv d') n ->
+  PropOn P (fv lhs) n ->
+  PropOn P (fv lhs') n.
 Proof.
   cbn in *. intros P n d d' g lhs lhs' Hf Hf' Hp' Hp x Hfv.
   assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
@@ -226,11 +239,11 @@ Hint Resolve or_hyp : core.
 
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
-  (PropOn P D n <-> PropOn P D' n') ->
+  (PropOn P (fv D) n <-> PropOn P (fv D') n') ->
   FillWith D  lhs lhs'  ->
   FillWith D' lhs lhs'' ->
-  PropOn P lhs' n ->
-  PropOn P lhs'' (env_union n n').
+  PropOn P (fv lhs') n ->
+  PropOn P (fv lhs'') (env_union n n').
 Proof.
   intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n.
   generalize dependent n'. generalize dependent D'. generalize dependent lhs''.
@@ -264,3 +277,38 @@ Qed.
 Hint Resolve env_subctx_bind : core.
 
 (* TODO: what's the notation in Theorem B.12? *)
+
+Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
+  (P = EmptyPrefix \/ P = MaximalPrefix) ->
+  x <> y ->
+  n z = Some (PfxParPair p1 p2) -> (
+    PropOn P (singleton_set z) n <->
+    PropOn P (set_union (singleton_set x) (singleton_set y)) (env_union (singleton_env x p1) (singleton_env y p2))).
+Proof.
+  simpl fv. intros P x y z n p1 p2 HP Hxy Hnz. split; cbn in *; intros.
+  - specialize (H _ eq_refl) as [p [Hnzp Hmp]]. rewrite Hnz in Hnzp. sinvert Hnzp. destruct HP; (subst; sinvert Hmp;
+    destruct H0; subst; [apply eqb_neq in Hxy; rewrite eqb_sym in Hxy; rewrite Hxy |]; rewrite eqb_refl; sfirstorder).
+  - subst. eexists. split. { eassumption. } destruct HP; (subst;
+    constructor; [specialize (H _ (or_introl eq_refl)) | specialize (H _ (or_intror eq_refl))];
+    [apply eqb_neq in Hxy; rewrite eqb_sym in Hxy; rewrite Hxy in H |];
+    rewrite eqb_refl in H; destruct H as [p [Ep Hp]]; sinvert Ep; assumption).
+Qed.
+Hint Resolve empty_or_maximal_pfx_par_pair : core.
+
+Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
+  x <> y ->
+  NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
+  n z = Some (PfxParPair p1 p2) ->
+  PrefixTyped p1 s ->
+  PrefixTyped p2 t ->
+  EnvTyped n (fill G (CtxHasTy z r)) ->
+  EnvTyped
+    (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
+    (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
+Proof.
+  intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
+  eapply env_subctx_bind; [eassumption | eassumption | |].
+  - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
+    destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
+  - split; apply empty_or_maximal_pfx_par_pair; try assumption; [right | left]; reflexivity.
+Qed.
