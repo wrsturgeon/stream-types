@@ -24,6 +24,7 @@ let
     buildPhase = "make tactics";
     installPhase = "make install-tactics";
   };
+  tptp = import ./tptp.nix { inherit (os-pkgs) cmake stdenv z3; };
   whole-enchilada = coq-pkgs.mkCoqDerivation {
     inherit mlPlugin pname src version COQLIBINSTALL COQDOCINSTALL
       COQPLUGININSTALL COQTOPINSTALL DESTDIR BINDIR;
@@ -33,7 +34,7 @@ let
       make install-plugin
       make install-extra
     '';
-    propagatedBuildInputs = [ tactics ] ++ propagatedBuildInputs
+    propagatedBuildInputs = [ tactics tptp ] ++ propagatedBuildInputs
       ++ (with os-pkgs; [ cvc4 eprover vampire z3 ]);
   };
 in { inherit tactics whole-enchilada; }

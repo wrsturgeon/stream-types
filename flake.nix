@@ -22,18 +22,16 @@
         hammer = (import nix/hammer.nix {
           inherit coq-pkgs os-pkgs;
           src = hammer-src;
-          # }).tactics;
-        }).whole-enchilada;
+        }).tactics;
         quickchick = import nix/quickchick.nix {
           inherit coq-pkgs;
           src = qc-src;
         };
-        tptp = import nix/tptp.nix { inherit (os-pkgs) cmake stdenv z3; };
       in {
         packages.default = coq-pkgs.mkCoqDerivation {
           inherit pname version;
           src = ./.;
-          buildInputs = [ hammer quickchick tptp ];
+          buildInputs = [ hammer quickchick ];
         };
       });
 }
