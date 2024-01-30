@@ -21,74 +21,74 @@ Derive Show for prefix.
 Derive Arbitrary for prefix.
 
 Inductive MaximalPrefix : prefix -> Prop :=
-  | PfxMaxEpsEmp :
+  | MaxPfxEpsEmp :
       MaximalPrefix PfxEpsEmp
-  | PfxMaxOneFull :
+  | MaxPfxOneFull :
       MaximalPrefix PfxOneFull
-  | PfxMaxParPair : forall p1 p2,
+  | MaxPfxParPair : forall p1 p2,
       MaximalPrefix p1 ->
       MaximalPrefix p2 ->
       MaximalPrefix (PfxParPair p1 p2)
-  | PfxMaxCatBoth : forall p1 p2,
+  | MaxPfxCatBoth : forall p1 p2,
       MaximalPrefix p1 ->
       MaximalPrefix p2 ->
       MaximalPrefix (PfxCatBoth p1 p2)
-  | PfxMaxSumInl : forall p,
+  | MaxPfxSumInl : forall p,
       MaximalPrefix p ->
       MaximalPrefix (PfxSumInl p)
-  | PfxMaxSumInr : forall p,
+  | MaxPfxSumInr : forall p,
       MaximalPrefix p ->
       MaximalPrefix (PfxSumInr p)
-  | PfxMaxStarDone :
+  | MaxPfxStarDone :
       MaximalPrefix PfxStarDone
-  | PfxMaxStarRest : forall p p',
+  | MaxPfxStarRest : forall p p',
       MaximalPrefix p ->
       MaximalPrefix p' ->
       MaximalPrefix (PfxStarRest p p')
   .
 Hint Constructors MaximalPrefix : core.
 
-Inductive PfxTyped : prefix -> type -> Prop :=
+Inductive PrefixTyped : prefix -> type -> Prop :=
   | PfxTyEpsEmp :
-      PfxTyped PfxEpsEmp eps
+      PrefixTyped PfxEpsEmp eps
   | PfxTyOneEmp :
-      PfxTyped PfxOneEmp 1
+      PrefixTyped PfxOneEmp 1
   | PfxTyOneFull :
-      PfxTyped PfxOneFull 1
+      PrefixTyped PfxOneFull 1
   | PfxTyParPair : forall p1 p2 s t,
-      PfxTyped p1 s ->
-      PfxTyped p2 t ->
-      PfxTyped (PfxParPair p1 p2) (TyPar s t)
+      PrefixTyped p1 s ->
+      PrefixTyped p2 t ->
+      PrefixTyped (PfxParPair p1 p2) (TyPar s t)
   | PfxTyCatFst : forall p s t,
-      PfxTyped p s ->
-      PfxTyped (PfxCatFst p) (TyDot s t)
+      PrefixTyped p s ->
+      PrefixTyped (PfxCatFst p) (TyDot s t)
   | PfxTyCatBoth : forall p1 p2 s t,
-      PfxTyped p1 s ->
+      PrefixTyped p1 s ->
       MaximalPrefix p1 ->
-      PfxTyped p2 t ->
-      PfxTyped (PfxCatBoth p1 p2) (TyDot s t)
+      PrefixTyped p2 t ->
+      PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)
   | PfxTySumEmp : forall s t,
-      PfxTyped PfxSumEmp (TySum s t)
+      PrefixTyped PfxSumEmp (TySum s t)
   | PfxTySumInl : forall p s t,
-      PfxTyped p s ->
-      PfxTyped (PfxSumInl p) (TySum s t)
+      PrefixTyped p s ->
+      PrefixTyped (PfxSumInl p) (TySum s t)
   | PfxTySumInr : forall p s t,
-      PfxTyped p t ->
-      PfxTyped (PfxSumInr p) (TySum s t)
+      PrefixTyped p t ->
+      PrefixTyped (PfxSumInr p) (TySum s t)
   | PfxTyStarEmp : forall s,
-      PfxTyped PfxStarEmp (TyStar s)
+      PrefixTyped PfxStarEmp (TyStar s)
   | PfxTyStarDone : forall s,
-      PfxTyped PfxStarDone (TyStar s)
+      PrefixTyped PfxStarDone (TyStar s)
   | PfxTyStarFirst : forall p s,
-      PfxTyped p s ->
-      PfxTyped (PfxStarFirst p) (TyStar s)
+      PrefixTyped p s ->
+      PrefixTyped (PfxStarFirst p) (TyStar s)
   | PfxTyStarRest : forall p p' s,
-      PfxTyped p s ->
+      PrefixTyped p s ->
       MaximalPrefix p ->
-      PfxTyped p' (TyStar s) ->
-      PfxTyped (PfxStarRest p p') (TyStar s)
+      PrefixTyped p' (TyStar s) ->
+      PrefixTyped (PfxStarRest p p') (TyStar s)
   .
-Hint Constructors PfxTyped : core.
+Hint Constructors PrefixTyped : core.
 
 Fixpoint emp ty :=
   match ty with
@@ -100,28 +100,23 @@ Fixpoint emp ty :=
   | TyStar _ => PfxStarEmp
   end.
 
-Theorem emp_well_typed : forall s, PfxTyped (emp s) s.
+Theorem emp_well_typed : forall s, PrefixTyped (emp s) s.
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve emp_well_typed : core.
 
 Inductive EmptyPrefix : prefix -> Prop :=
-  | EmptyPrefixEpsEmp :
+  | EmptyPfxEpsEmp :
       EmptyPrefix PfxEpsEmp
-  | EmptyPrefixOneEmp :
+  | EmptyPfxOneEmp :
       EmptyPrefix PfxOneEmp
-  | EmptyPrefixParPair : forall p1 p2,
+  | EmptyPfxParPair : forall p1 p2,
       EmptyPrefix p1 ->
       EmptyPrefix p2 ->
       EmptyPrefix (PfxParPair p1 p2)
-  | EmptyPrefixCatFst : forall p,
+  | EmptyPfxCatFst : forall p,
       EmptyPrefix p ->
       EmptyPrefix (PfxCatFst p)
-  | EmptyPrefixSumEmp :
+  | EmptyPfxSumEmp :
       EmptyPrefix PfxSumEmp
   .
 Hint Constructors EmptyPrefix : core.
-
-Definition EmptyPrefixOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in EmptyPrefix p.
-Hint Unfold EmptyPrefixOn : core.
-Definition MaximalPrefixOn (s : Set) : (s -> prefix) -> Prop := fun n => forall (x : s), let p := n x in MaximalPrefix p.
-Hint Unfold MaximalPrefixOn : core.

@@ -27,18 +27,14 @@ Definition env_union (n n' : env) : env := fun x =>
 Arguments env_union n n' x/.
 Hint Unfold env_union : core.
 
-Definition env_drop (n : env) (x : string) : env := fun y =>
-  if eqb x y then None else n x.
-
-Definition singleton_env (id : string) (p : prefix) : env := fun x =>
-  if eqb id x then Some p else None.
-Arguments singleton_env id p x/.
-Hint Unfold singleton_env : core.
-
 Definition env_subst (x : string) (p : prefix) (rho : env) : env :=
   env_union rho (singleton_env x p).
 Arguments env_subst x p rho x/.
 Hint Unfold env_subst : core.
+
+Definition env_drop (n : env) (x : string) : env := fun y =>
+  if eqb x y then None else n x.
+Hint Unfold env_drop : core.
 
 (* Theorem B.10, part I *)
 Theorem maps_to_unique_literal : forall p x (n : env),
@@ -96,7 +92,7 @@ Inductive EnvTyped : env -> context -> Prop :=
       EnvTyped n CtxEmpty
   | EnvTyHasTy : forall n p x s,
       n x = Some p ->
-      PfxTyped p s ->
+      PrefixTyped p s ->
       EnvTyped n (CtxHasTy x s)
   | EnvTyComma : forall n G D,
       EnvTyped n G ->
@@ -127,7 +123,7 @@ Hint Resolve maps_to_hole : core.
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,
   EnvTyped n (fill G (CtxHasTy x s)) ->
-  exists p, (n x = Some p /\ PfxTyped p s).
+  exists p, (n x = Some p /\ PrefixTyped p s).
 Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
 Hint Resolve maps_to_has_type : core.
 
@@ -244,6 +240,18 @@ Proof.
   hauto lq: on use: eqb_refl.
 Qed.
 
+Lemma prop_on_fill : forall P n d d' g lhs lhs',
+  FillWith d g lhs ->
+  FillWith d' g lhs' ->
+  PropOn P (fv d') n ->
+  PropOn P (fv lhs) n ->
+  PropOn P (fv lhs') n.
+Proof.
+  intros; econstructor; [| eauto]; cbn.
+  unfold singleton_env.
+  hauto lq: on use: eqb_refl.
+Qed.
+
 Theorem env_typed_comma: forall n n' g g',
   DisjointSets (dom n) (dom n') ->
   EnvTyped n g ->
@@ -353,8 +361,8 @@ Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
   x <> y ->
   NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
   n z = Some (PfxParPair p1 p2) ->
-  PfxTyped p1 s ->
-  PfxTyped p2 t ->
+  PrefixTyped p1 s ->
+  PrefixTyped p2 t ->
   EnvTyped n (fill G (CtxHasTy z r)) ->
   EnvTyped
     (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
