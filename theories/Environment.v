@@ -204,8 +204,8 @@ Qed.
 Hint Resolve env_typed_weakening_alt : core.
 
 Lemma prop_on_fill : forall P n d d' g lhs lhs',
-  FillWith d g lhs ->
-  FillWith d' g lhs' ->
+  Fill g d lhs ->
+  Fill g d' lhs' ->
   PropOn P (fv d') n ->
   PropOn P (fv lhs) n ->
   PropOn P (fv lhs') n.
@@ -240,8 +240,8 @@ Hint Resolve or_hyp : core.
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
   (PropOn P (fv D) n <-> PropOn P (fv D') n') ->
-  FillWith D  lhs lhs'  ->
-  FillWith D' lhs lhs'' ->
+  Fill lhs D  lhs'  ->
+  Fill lhs D' lhs'' ->
   PropOn P (fv lhs') n ->
   PropOn P (fv lhs'') (env_union n n').
 Proof.
