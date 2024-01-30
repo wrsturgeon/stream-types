@@ -50,11 +50,28 @@
         "type": "github"
       }
     },
+    "qc-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1704462720,
+        "narHash": "sha256-xxKkwDRjB8nUiXNhein1Ppn0DP5FZ13J90xUPAnQBbs=",
+        "owner": "quickchick",
+        "repo": "quickchick",
+        "rev": "235f6f2156b06239d10e971b7f229f18b73fb67c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "quickchick",
+        "repo": "quickchick",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
         "hammer-src": "hammer-src",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "qc-src": "qc-src"
       }
     },
     "systems": {

@@ -7,13 +7,12 @@
       flake = false;
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    # qc-src = {
-    #   url = "github:quickchick/quickchick";
-    #   flake = false;
-    # };
+    qc-src = {
+      url = "github:quickchick/quickchick";
+      flake = false;
+    };
   };
-  # outputs = { flake-utils, hammer-src, nixpkgs, qc-src, self }:
-  outputs = { flake-utils, hammer-src, nixpkgs, self }:
+  outputs = { flake-utils, hammer-src, nixpkgs, qc-src, self }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pname = "lambda-st";
@@ -24,17 +23,15 @@
           inherit coq-pkgs os-pkgs;
           src = hammer-src;
         }).tactics;
-        # quickchick = import nix/quickchick.nix {
-        #   inherit coq-pkgs;
-        #   src = qc-src;
-        # };
+        quickchick = import nix/quickchick.nix {
+          inherit coq-pkgs;
+          src = qc-src;
+        };
       in {
         packages.default = coq-pkgs.mkCoqDerivation {
           inherit pname version;
           src = ./.;
-          buildInputs = [
-            hammer # quickchick
-          ];
+          buildInputs = [ hammer quickchick ];
         };
       });
 }
