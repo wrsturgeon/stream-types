@@ -59,15 +59,16 @@ Admitted.
 
 
 Theorem agree_step : forall e e' eta p G x s,
-  (forall x0, fv e x0 -> fv G x0) ->
+  SubsetOf (fv e) (fv G) ->
   Step eta e e' p ->
   PrefixTyped p s ->
   Agree eta (singleton_env x p) G (CtxHasTy x s)
 .
 Proof.
   intros.
-  unfold Agree. split; split; intros; unfold MaximalOn in *; unfold EmptyOn in *; unfold PropOn in *; unfold PropOnItem in *; intros.
-  - assert (MaximalPrefix p) by sfirstorder use:maximal_push.
+  unfold Agree. split; intros.
+  - assert (MaximalOn (fv e) eta). eapply prop_on_contains. eauto.
+  assert (MaximalPrefix p) by sfirstorder use:maximal_push.
     exists p. sinvert H3. unfold singleton_env. admit.
 Admitted.
 

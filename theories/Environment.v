@@ -75,8 +75,8 @@ Hint Unfold MaximalOn : core.
 
 Theorem prop_on_contains : forall P s s' n,
   SubsetOf s' s ->
-  PropOn P s' n ->
-  PropOn P s n.
+  PropOn P s n ->
+  PropOn P s' n.
 Proof. sfirstorder. Qed.
 
 Theorem prop_on_union: forall P s s' n,
