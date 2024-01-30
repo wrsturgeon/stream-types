@@ -1,17 +1,19 @@
 From LambdaST Require Import
   Context
-  Terms
-  Types
   FV
-  Hole.
+  Hole
+  Sets
+  Terms
+  Types.
 From Coq Require Import
-  List.
+  List
+  String.
 
 From Hammer Require Import Tactics.
 
 Declare Scope typing_scope.
 
-Reserved Notation "G '|-' x '\in' T" (at level 98).
+Reserved Notation "G '|-' x '\in' T" (at level 97).
 
 Inductive Typed : context -> term -> type -> Prop :=
   | T_Par_R : forall G e1 e2 s t,
@@ -61,17 +63,21 @@ Theorem typing_fv : forall G e s,
     fv e x ->
     fv G x.
 Proof.
-    intros G e s H.
-    induction H; intros x0 Hfv; cbn in *.
-    - sfirstorder.
-    - destruct Hfv; hauto q: on use: fv_fill.
-    - sfirstorder.
-    - destruct Hfv; hauto q: on use: fv_fill.
-    - sfirstorder.
-    - sfirstorder.
-    - sfirstorder use: fv_fill.
-    - sfirstorder.
-    - destruct Hfv; hauto q: on use: fv_fill.
-    - hauto q: on use:fv_fill.
+  intros G e s Ht x Hfv. generalize dependent x. (* just for naming *)
+  induction Ht; try rename x into x' (* hands off my `x`! *); intros x H'; cbn in *.
+  - destruct H'; [apply IHHt1 | apply IHHt2]; assumption.
+  - apply fv_fill_fn. cbn. destruct H' as [| [[H2 H3] H4]]; [left | right]. { assumption. } specialize (IHHt _ H2).
+    apply fv_fill_fn in IHHt. cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
+  - destruct H'; [left; apply IHHt1 | right; apply IHHt2]; assumption.
+  - apply fv_fill_fn. cbn. destruct H' as [| [[H2 H3] H4]]; [left | right]. { assumption. } specialize (IHHt _ H2).
+    apply fv_fill_fn in IHHt. cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
+  - destruct H' as [].
+  - destruct H' as [].
+  - apply fv_fill_fn. cbn. left. assumption.
+  - cbn in *. specialize (IHHt _ H'). invert H. (* TODO: SubCtx hasn't been defined yet, so holds vacuously *)
+  - apply fv_fill_fn. cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
+    specialize (IHHt2 _ H'). apply fv_fill_fn in IHHt2. cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
+  - apply fv_fill_fn. cbn. destruct H'. specialize (IHHt _ H).
+    apply fv_fill_fn in IHHt as [[] | IH]. right. assumption.
 Qed.
 Hint Resolve typing_fv : core.

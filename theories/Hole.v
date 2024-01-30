@@ -1,9 +1,9 @@
+From Hammer Require Import Tactics.
+From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Context
   FV
-  Ident.
-From Hammer Require Import
-  Tactics.
+  Sets.
 
 Inductive hole : Set :=
   | HoleHere
@@ -13,6 +13,8 @@ Inductive hole : Set :=
   | HoleSemicR (g : context) (h : hole)
   .
 Hint Constructors hole : core.
+Derive Show for hole.
+Derive Arbitrary for hole.
 
 Fixpoint fill h D :=
   match h with
@@ -50,68 +52,75 @@ Proof.
 Qed.
 Hint Resolve reflect_fill : core.
 
-Fixpoint fv_hole (h : hole) : set ident :=
+Fixpoint fv_hole h :=
   match h with
-  | HoleHere => empty_set
-  | HoleCommaL h g
-  | HoleCommaR g h
-  | HoleSemicL h g
-  | HoleSemicR g h => set_union (fv_hole h) (fv g)
+  | HoleHere =>
+      empty_set
+  | HoleCommaL h c
+  | HoleCommaR c h
+  | HoleSemicL h c
+  | HoleSemicR c h =>
+      set_union (fv c) (fv_hole h)
   end.
+
+(* Sanity check: *)
+Theorem fv_hole_plug : forall h,
+  SetEq (fv_hole h) (fv (fill h CtxEmpty)).
+Proof. induction h; intros; split; sfirstorder. Qed.
 
 Instance fv_hole_inst : FV hole := { fv := fv_hole }.
 
-Theorem fv_fill_reflect: forall H D G,
-  FillWith H D G ->
-  forall x, fv G x <-> fv H x \/ fv D x.
-Proof. intros H D G Hfill. induction Hfill; sfirstorder. Qed.
-Hint Resolve fv_fill_reflect.
-
-Theorem fv_fill : forall H D,
-  forall x, fv (fill H D) x <-> fv H x \/ fv D x.
-Proof.
-  simpl in *. split; intros.
-  - hauto q: on use: fv_fill_reflect, reflect_fill.
-  - hauto lq: on rew: off use: fv_fill_reflect, reflect_fill.
-Qed.
+Lemma fv_fill : forall h plug ctx,
+  FillWith plug h ctx ->
+  SetEq (fv_ctx ctx) (set_union (fv plug) (fv h)).
+Proof. intros. induction H; sfirstorder. Qed.
 Hint Resolve fv_fill : core.
 
-Inductive wf_hole : hole -> Prop :=
-| wf_HoleHere : wf_hole HoleHere
-| wf_HoleCommaL : forall h g,
-  wf_hole h ->
-  WFContext g ->
-  Disjoint (fv h) (fv g) ->
-  wf_hole (HoleCommaL h g)
-| wf_HoleCommaR : forall h g,
-  wf_hole h ->
-  WFContext g ->
-  Disjoint (fv h) (fv g) ->
-  wf_hole (HoleCommaR g h)
-| wf_HoleSemicL : forall h g,
-  wf_hole h ->
-  WFContext g ->
-  Disjoint (fv h) (fv g) ->
-  wf_hole (HoleSemicL h g)
-| wf_HoleSemicR : forall h g,
-  wf_hole h ->
-  WFContext g ->
-  Disjoint (fv h) (fv g) ->
-  wf_hole (HoleSemicR g h)
-.
-Hint Constructors wf_hole : core.
+Lemma fv_fill_fn : forall h plug,
+  SetEq (fv_ctx (fill h plug)) (set_union (fv plug) (fv h)).
+Proof. intros. remember (fill h plug) as ctx eqn:E. apply reflect_fill in E. apply fv_fill. assumption. Qed.
+Hint Resolve fv_fill_fn : core.
+
+Inductive WFHole : hole -> Prop :=
+  | WFHoleHere :
+      WFHole HoleHere
+  | WFHoleCommaL : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleCommaL h g)
+  | WFHoleCommaR : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleCommaR g h)
+  | WFHoleSemicL : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleSemicL h g)
+  | WFHoleSemicR : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleSemicR g h)
+  .
+Hint Constructors WFHole : core.
 
 Theorem wf_fill_reflect : forall h d g,
-  FillWith d h g ->
-  WFContext g <-> wf_hole h /\ WFContext d /\ Disjoint (fv h) (fv d).
+  FillWith d h g -> (
+    WFContext g <-> (
+      WFHole h /\
+      WFContext d /\
+      DisjointSets (fv h) (fv d))).
 Proof.
   intros h d g H. induction H; cbn in *; intros; [sfirstorder | | | |];
-  repeat (split; intros); sauto lq: on use: fv_fill_reflect.
+  split; intros; sinvert H0; apply fv_fill in H; sauto.
 Qed.
 Hint Resolve wf_fill_reflect : core.
 
 Theorem wf_fill : forall h d,
-  WFContext (fill h d) <-> (wf_hole h /\ WFContext d /\ Disjoint (fv h) (fv d)).
+  WFContext (fill h d) <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
 Proof.
   intros h d.
   remember (fill h d) as g.
@@ -121,38 +130,30 @@ Qed.
 Hint Resolve wf_fill : core.
 
 Theorem hmm : forall G x y z s t r ctr,
-(ctr = CtxComma \/ ctr = CtxSemic) ->
-~fv G z ->
-SetEq
-  (set_union
-     (set_minus (fv (fill G (CtxHasTy z r))) (singleton_set z))
-     (set_union (singleton_set x) (singleton_set y)))
-  (fv (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))))
-.
+  (ctr = CtxComma \/ ctr = CtxSemic) ->
+  ~fv G z ->
+  SetEq
+    (set_union
+       (set_minus (fv (fill G (CtxHasTy z r))) (singleton_set z))
+       (set_union (singleton_set x) (singleton_set y)))
+    (fv (fill G (ctr (CtxHasTy x s) (CtxHasTy y t)))).
 Proof.
-  intros.
-  unfold SetEq.
-  cbn in *.
-  intro. split; intro.
-  - cbn in *. apply fv_fill. cbn in *. hauto q: on use:fv_fill.
-  - destruct H; rewrite H in *; apply fv_fill in H1; destruct H1.
-    + left. sfirstorder use:fv_fill.
-    + right. scongruence.
-    + left. sfirstorder use:fv_fill.
-    + right. scongruence.
+  cbn. intros. remember (fill G (CtxHasTy z r)) as Gz eqn:Ehz.
+  remember (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))) as Gxy eqn:Ehxy.
+  apply reflect_fill in Ehz. apply reflect_fill in Ehxy.
+  apply fv_fill in Ehz. apply fv_fill in Ehxy.
+  hauto q: on.
 Qed.
 
 Theorem hmm' : forall G x y z s t r ctr,
-(ctr = CtxComma \/ ctr = CtxSemic) ->
-~(fv G x) ->
-~(fv G y) ->
-x <> y ->
-WFContext (fill G (CtxHasTy z r)) ->
-WFContext
-  (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))).
+  (ctr = CtxComma \/ ctr = CtxSemic) ->
+  ~(fv G x) ->
+  ~(fv G y) ->
+  x <> y ->
+  WFContext (fill G (CtxHasTy z r)) ->
+  WFContext
+    (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))).
 Proof.
-  intros G x y z s t r ctr Hctr Hx Hy Hxy H.
-  apply wf_fill in H. destruct H as [A [B C]].
-  sinvert B.
-  apply wf_fill. split. eauto. split. destruct Hctr; sauto lq: on. destruct Hctr; sfirstorder.
+  intros G x y z s t r ctr Hctr Hx Hy Hxy H. apply wf_fill in H as [H1 [H2 H3]]. sinvert H2. apply wf_fill.
+  repeat split; intros; [eassumption | sauto | |]; destruct Hctr; sfirstorder.
 Qed.

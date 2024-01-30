@@ -1,42 +1,33 @@
+From Coq Require Import
+    Program.Equality
+    String.
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   Environment
   FV
   Hole
-  Ident
   Prefix
   Semantics
+  Sets
   Terms
+  Types
   Typing.
-From Coq Require Import
-    Program.Equality.
-From Hammer Require Import
-  Tactics.
 
 Theorem maximal_push : forall e e' eta p,
   Step eta e e' p ->
   MaximalOn (fv e) eta ->
   MaximalPrefix p.
 Proof.
-  intros.
-  generalize dependent H0.
-  induction H.
-  - hauto l: on.
-  - hauto l: on.
-  - qauto l: on.
-  - sauto l: on.
-  - sauto l: on.
-  - sauto l: on.
-  - intros. eapply IHStep.
-    simpl in H1.
-    edestruct (H1 z) as [p [A B]]; [sfirstorder|].
-    assert (p = PfxParPair p1 p2) by scongruence.
-    subst.
-    sinvert B.
-    unfold MaximalOn. unfold PropOn. intros.
-    unfold PropOnItem.
-Admitted.
-
+  cbn. intros e e' eta p Hs Hm. generalize dependent Hm. induction Hs; cbn in *; intros.
+  - constructor.
+  - constructor.
+  - destruct (Hm _ eq_refl) as [p' [Hn Hp]]. rewrite H in Hn. sinvert Hn. assumption.
+  - constructor; [apply IHHs1 | apply IHHs2]; intros; apply Hm; [left | right]; assumption.
+  - apply H in IHHs as []. intros. apply Hm. left. assumption.
+  - constructor. { assumption. } apply IHHs2. intros. apply Hm. right. assumption.
+  - apply IHHs; clear IHHs. intros. destruct (eqb_spec y x0).
+    + subst. exists p2. split. { reflexivity. } Abort.
 
 Theorem soundout : forall G e e' s eta p,
     Typed G e s ->
@@ -47,41 +38,39 @@ Theorem soundout : forall G e e' s eta p,
     PfxTyped p s
 .
 Proof.
-    intros G e e' s eta p Hty HwfG.
+    intros G e e' s eta p Ht Hwf He Hs.
     generalize dependent e'.
     generalize dependent eta.
     generalize dependent p.
-    induction Hty; intros p eta e0' Heta Hstep.
-    - cbn in *. sauto q: on.
-    - sinvert Hstep.
-      assert (~fv G z) by hauto q: on use:wf_fill.
-      eapply IHHty; [| | eauto].
-      + qauto l: on use: hmm'.
-      + eapply catlenvtyped; eauto; sauto l: on use: maps_to_has_type.
-    - sinvert HwfG; sinvert Heta. sinvert Hstep.
-      + constructor. eapply IHHty1; eauto.
-      + constructor. eapply IHHty1; eauto. eauto. eauto.
-    - sinvert Hstep; eapply IHHty; [| | eauto | | | eauto].
-      + eapply hmm'; eauto.
-      + eapply catrenvtyped1; eauto. sauto l: on use: maps_to_has_type.
-      + eapply hmm'; eauto.
-      + assert (PfxTyped (PfxCatBoth p1 p2) (Types.TyDot s t)) by sauto l: on use: maps_to_has_type.
-        sinvert H2.
-        eapply catrenvtyped2; eauto. 
-    - sauto lq: on.
-    - sauto lq: on.
-    - sinvert Hstep. 
-      sauto use: maps_to_has_type.
-    - sfirstorder.
-    - sinvert Hstep. eapply IHHty2; [ | | eauto].
-      + sauto l: on use:wf_fill.
-      + eapply letenvtyped; [| eauto].
-        eapply IHHty1; [| | eauto]. sfirstorder use:wf_fill. sfirstorder use:maps_to_hole.
-    - sinvert Hstep. eapply IHHty; [ | | eauto]. hauto lq: on rew: off use: wf_fill.
-Admitted.
+    generalize dependent Hwf.
+    induction Ht; cbn in *; intros.
+    - sinvert Hs. constructor; [eapply IHHt1 | eapply IHHt2]; eassumption.
+    - sinvert Hs. eapply IHHt; clear IHHt; [| | eassumption].
+      + eapply hmm'; [left; reflexivity | | | |]; eassumption.
+      + assert (A := maps_to_has_type _ _ _ _ He). destruct A as [p' [Hp1 Hp2]]. sinvert Hp2.
+        rewrite Hp1 in H9. sinvert H9. eapply catlenvtyped; eassumption.
+    - sinvert Hwf. sinvert He. sinvert Hs; constructor; [eapply IHHt1 | eapply IHHt1 | | eapply IHHt2]; eassumption.
+    - sinvert Hs; eapply IHHt; [| | eassumption | | | eassumption].
+      + eapply hmm'; [right; reflexivity | | | |]; eassumption.
+      + eapply catrenvtyped1; try eassumption. apply maps_to_has_type in He as [p' [Hp1 Hp2]].
+        rewrite Hp1 in H10. sinvert H10. sinvert Hp2. assumption.
+      + eapply hmm'; [right; reflexivity | | | |]; eassumption.
+      + assert (A := maps_to_has_type _ _ _ _ He). destruct A as [p' [Hp1 Hp2]].
+        rewrite Hp1 in H10. sinvert H10. sinvert Hp2. eapply catrenvtyped2; eassumption.
+    - sinvert Hs. constructor.
+    - sinvert Hs. constructor.
+    - sinvert Hs. assert (A := maps_to_has_type _ _ _ _ He). destruct A as [p' [Hp1 Hp2]].
+      rewrite H1 in Hp1. sinvert Hp1. assumption.
+    - sinvert H.
+    - sinvert Hs. apply wf_fill in Hwf as [Hwfh [Hwfc Hd]]. eapply IHHt2; [| | eassumption].
+      + apply wf_fill. repeat split; [assumption | constructor | |]; scongruence.
+      + eapply letenvtyped; [| eassumption]. eapply IHHt1; [| eapply maps_to_hole |]; eassumption.
+    - sinvert Hs. apply wf_fill in Hwf as [Hwfh [Hwfc Hd]]. eapply IHHt; [| | eassumption].
+      + apply wf_fill. repeat split; [assumption | constructor | |]; scongruence.
+      + eapply dropenvtyped. eassumption.
+Qed.
 
 (*
-
 (x : s, y : s) |- fix(x:s,y:s). rec(x+1,x) : s
 |->
 cut x = x+1 in y = x in rec(x+1,x)

@@ -1,6 +1,6 @@
 # NOTE: copied (with a few edits) from <https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/science/logic/z3/tptp.nix>
 
-{ cmake, stdenv, z3, }:
+{ cmake, stdenv, z3 }:
 let inherit (z3) src version;
 in stdenv.mkDerivation {
   inherit src version;

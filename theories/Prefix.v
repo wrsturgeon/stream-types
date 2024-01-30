@@ -1,5 +1,5 @@
-From LambdaST Require Import
-  Types.
+From QuickChick Require Import QuickChick.
+From LambdaST Require Import Types.
 
 Inductive prefix : Set :=
   | PfxOneEmp
@@ -17,6 +17,8 @@ Inductive prefix : Set :=
   | PfxStarRest (b p : prefix)
   .
 Hint Constructors prefix : core.
+Derive Show for prefix.
+Derive Arbitrary for prefix.
 
 Inductive MaximalPrefix : prefix -> Prop :=
   | PfxMaxEpsEmp :

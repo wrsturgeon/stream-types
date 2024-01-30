@@ -4,8 +4,7 @@ From LambdaST Require Import
   Nullable
   Prefix
   Types.
-From Hammer Require Import
-  Tactics.
+From Hammer Require Import Tactics.
 
 Inductive Derivative : prefix -> type -> type -> Prop :=
   | DrvEpsEmp :

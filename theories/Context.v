@@ -1,25 +1,36 @@
+From QuickChick Require Import QuickChick.
+From LambdaST Require Import
+  Sets
+  FV
+  Terms
+  Types.
 From Coq Require Import
   List
   String.
 From LambdaST Require Import
   FV
-  Ident
   Terms
   Types.
 
 Inductive context : Set :=
   | CtxEmpty
-  | CtxHasTy (id : ident) (ty : type)
+  | CtxHasTy (id : string) (ty : type)
   | CtxComma (lhs rhs : context)
   | CtxSemic (lhs rhs : context)
   .
 Hint Constructors context : core.
+Derive Show for context.
+Derive Arbitrary for context.
 
-Fixpoint fv_ctx (G : context) : set ident :=
-  match G with
-  | CtxEmpty => empty_set
-  | CtxHasTy x _ => singleton_set x
-  | CtxComma g g' | CtxSemic g g' => set_union (fv_ctx g) (fv_ctx g')
+Fixpoint fv_ctx ctx : set string :=
+  match ctx with
+  | CtxEmpty =>
+      empty_set
+  | CtxHasTy x _ =>
+      singleton_set x
+  | CtxComma lhs rhs
+  | CtxSemic lhs rhs =>
+      set_union (fv_ctx lhs) (fv_ctx rhs)
   end.
 
 Instance fv_ctx_inst : FV context := { fv := fv_ctx }.
@@ -32,15 +43,17 @@ Inductive WFContext : context -> Prop :=
   | WFCtxComma : forall g g',
       WFContext g ->
       WFContext g' ->
-      Disjoint (fv g) (fv g') ->
+      DisjointSets (fv g) (fv g') ->
       WFContext (CtxComma g g')
   | WFCtxSemic : forall g g',
       WFContext g ->
       WFContext g' ->
-      Disjoint (fv g) (fv g') ->
+      DisjointSets (fv g) (fv g') ->
       WFContext (CtxSemic g g')
   .
+Hint Constructors WFContext : core.
 
 Inductive SubCtx : context -> context -> Prop := . (* TODO: Huh? *)
+Hint Constructors SubCtx : core.
 
 (* will need to prove that context derivatives preserve this... *)
