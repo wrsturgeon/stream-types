@@ -2,7 +2,6 @@ From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   Environment
-  EnvironmentSubcontextBind
   FV
   Hole
   Prefix
