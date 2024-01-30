@@ -11,8 +11,8 @@ From LambdaST Require Import
 (* Argument order designed for notation: (Subtype A B) === (A <: B) *)
 Inductive Subtype : context -> context -> Prop :=
   | SubCong : forall d d' g gd gd',
-      FillWith d g gd ->
-      FillWith d' g gd' ->
+      Fill g d gd ->
+      Fill g d' gd' ->
       Subtype d d' ->
       Subtype gd gd'
   | SubRefl : forall g,
@@ -36,8 +36,8 @@ Inductive Subtype : context -> context -> Prop :=
 Hint Constructors Subtype : core.
 
 Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
-  FillWith d g gd ->
-  FillWith d' g gd' ->
+  Fill g d gd ->
+  Fill g d' gd' ->
   Subtype d d' ->
   (forall n : env, EnvTyped n d -> EnvTyped n d') ->
   forall n : env,
