@@ -33,7 +33,7 @@ Fixpoint fv_ctx ctx : set string :=
       set_union (fv_ctx lhs) (fv_ctx rhs)
   end.
 
-Instance fv_ctx_inst : FV context := { fv := fv_ctx }.
+Instance fv_context : FV context := { fv := fv_ctx; }.
 
 Inductive WFContext : context -> Prop :=
   | WFCtxEmpty :
@@ -53,7 +53,10 @@ Inductive WFContext : context -> Prop :=
   .
 Hint Constructors WFContext : core.
 
-Inductive SubCtx : context -> context -> Prop := . (* TODO: Huh? *)
-Hint Constructors SubCtx : core.
-
 (* will need to prove that context derivatives preserve this... *)
+
+(* Argument order matches notation: (CtxLEq G G') === (G <= G') *)
+Inductive CtxLEq (G G' : context) : Prop :=
+  (* TODO *)
+  .
+Hint Constructors CtxLEq : core.
