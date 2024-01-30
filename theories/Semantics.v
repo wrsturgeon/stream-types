@@ -1,7 +1,6 @@
 From LambdaST Require Import
   Environment
   FV
-  Ident
   Prefix
   SinkTm
   Terms.
@@ -38,10 +37,10 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
   | S_Cat_L_2 : forall t n x y z e e' p1 p2 p',
       n z = Some (PfxCatBoth p1 p2) ->
       Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
-      Step n (TmLetCat t x y z e) (TmLet x (sinkTm p1) (substVar e z y)) p'
+      Step n (TmLetCat t x y z e) (TmLet x (sink_tm p1) (subst_var e z y)) p'
   | S_Let : forall eta x e1 e2 e1' e2' p p',
       Step eta e1 e1' p ->
-      Step (subst x p eta) e2 e2' p' ->
+      Step (env_subst x p eta) e2 e2' p' ->
       Step eta (TmLet x e1 e2) (TmLet x e1' e2') p'
   | S_Drop : forall eta x e e' p,
       Step (env_drop eta x) e e' p ->

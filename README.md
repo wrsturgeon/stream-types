@@ -25,12 +25,15 @@ Install Coq ([here](https://coq.inria.fr/download)) and CoqHammer ([here](https:
 
 Open a terminal in this folder and run `make`.
 
-## Style?
+## Theorems
 
-Not set in stone. My mind could easily be changed on any of these. At the moment, though, just for my own memory:
-- Anything that's a `Prop` or usually ends up fully saturated as a `Prop`: uppercase.
-- Constructors for inductive/variant types: uppercase.
-- Everything else: lowercase.
-- Two-space indentation.
-- Inductive/variant types have all their constructors (e.g. `| Nil`) on separate lines, each indented.
-    - Also, unless everything fits on one line, `forall`s go on the same line as the constructor, and everything else goes after, indented again.
+To locate the proof of a named theorem from Appendix B (e.g. "B.11"), search the source code in `theories/`.
+Directly above each proof of a named theorem is a comment naming it: e.g., `(* Theorem B.11 *)`.
+
+Currently, we have proven up to **B.33**, except those mentioned below.
+
+## Issues
+
+- Theorem B.19 (notation unclear)
+- Theorems B.21-30 on prefix concatenation (clarify that the original `Inl` rule was a typo)
+- Definition B.33 (not sure how to read it)

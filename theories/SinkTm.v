@@ -1,12 +1,9 @@
 From LambdaST Require Import
-  Ident
-  Types
   Terms
   Prefix.
-From Hammer Require Import
-  Tactics.
 
 (* TODO: fix with definintion. *)
+<<<<<<< HEAD
 Fixpoint sinkTm (p : prefix) : term :=
     match p with
         PfxOneEmp => TmSink
@@ -29,3 +26,8 @@ Theorem sink_reactive : forall p, reactive (sinkTm p).
 Proof.
 induction p; sauto lq: on.
 Qed.
+=======
+Definition sink_tm (p : prefix) : term := TmSink.
+Arguments sink_tm/ p.
+Hint Unfold sink_tm : core.
+>>>>>>> 07496cf201018da0992ae00368a9fa0f572e3d7c

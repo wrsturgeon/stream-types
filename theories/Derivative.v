@@ -5,8 +5,7 @@ From LambdaST Require Import
   Prefix
   Hole
   Types.
-From Hammer Require Import
-  Tactics.
+From Hammer Require Import Tactics.
 
 Inductive Derivative : prefix -> type -> type -> Prop :=
   | DrvEpsEmp :
@@ -85,9 +84,9 @@ Theorem derivative_fun : forall p s,
   exists s', Derivative p s s'.
 Proof.
   intros p s H. induction H; try solve [eexists; constructor];
-  try destruct IHPfxTyped as [s' Hd];
-  try destruct IHPfxTyped1 as [s' Hd1];
-  try destruct IHPfxTyped2 as [t' Hd2].
+  try destruct IHPrefixTyped as [s' Hd];
+  try destruct IHPrefixTyped1 as [s' Hd1];
+  try destruct IHPrefixTyped2 as [t' Hd2].
   - exists (TyPar s' t'). constructor; assumption.
   - exists (TyDot s' t). constructor. assumption.
   - exists t'. constructor. assumption.
@@ -144,7 +143,7 @@ Hint Resolve maximal_derivative_nullable : core.
 
 (* Theorem B.19 *)
 Theorem nullable_prefix_empty : forall p s,
-  PfxTyped p s ->
+  PrefixTyped p s ->
   Nullable s ->
   p = emp s.
 Proof.
@@ -218,7 +217,7 @@ Proof.
 Qed.
 Hint Resolve reflect_no_derivative : core.
 
-Definition derivative : forall p s, PfxTyped p s -> type.
+Definition derivative : forall p s, PrefixTyped p s -> type.
 Proof.
   intros p s H. destruct (maybe_derivative p s) as [d |] eqn:E. { apply d. }
   apply derivative_fun in H.

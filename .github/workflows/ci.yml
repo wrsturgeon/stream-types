@@ -23,7 +23,10 @@ jobs:
       run: make
     - name: nix build
       run: nix build
-    - name: Check for `Admitted`
-      run: for f in $(find . -name '*.v'); do if grep -q Admitted ${f}; then grep -Rnw theories -e 'Admitted'; exit 1; fi; done
+    - name: Check for unverified assumptions
+      # https://coq.inria.fr/refman/language/core/assumptions.html#assumptions
+      run: |
+        export MATCH='Admitted\|Axiom\|Axioms\|Conjecture\|Conjectures\|Parameter\|Parameters\|Hypothesis\|Hypotheses\|Variable\|Variables'
+        for f in $(find . -name '*.v'); do if grep -q ${MATCH} ${f}; then grep -Rnw theories -e ${MATCH}; exit 1; fi; done
     - name: Check for trailing whitespace
-      run: for f in $(find . -name '*.v'); do if grep -Q '.* $' ${f}; then grep -Rnw theories -e '.* $'; exit 1; fi; done
+      run: for f in $(find . -name '*.v'); do if grep -q '.* $' ${f}; then grep -Rnw theories -e '.* $'; exit 1; fi; done

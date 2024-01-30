@@ -1,18 +1,19 @@
+From Coq Require Import
+    Program.Equality
+    String.
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   Environment
   FV
   Hole
-  Ident
   Prefix
   Semantics
   SinkTm
+  Sets
   Terms
+  Types
   Typing.
-From Coq Require Import
-    Program.Equality.
-From Hammer Require Import
-  Tactics.
 
 Theorem maximal_push : forall e e' eta p,
   Step eta e e' p ->
@@ -104,10 +105,9 @@ Theorem soundout : forall G e e' s eta p,
     WFContext G ->
     EnvTyped eta G ->
     Step eta e e' p ->
-    PfxTyped p s
-.
+    PrefixTyped p s.
 Proof.
-    intros G e e' s eta p Hty HwfG.
+    intros G e e' s eta p Ht Hwf He Hs.
     generalize dependent e'.
     generalize dependent eta.
     generalize dependent p.
@@ -143,7 +143,6 @@ Admitted.
 (* let x = e in e' | *)
 
 (*
-
 (x : s, y : s) |- fix(x:s,y:s). rec(x+1,x) : s
 |->
 cut x = x+1 in y = x in rec(x+1,x)
