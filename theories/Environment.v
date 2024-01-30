@@ -234,48 +234,6 @@ Proof.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
 
-Lemma prop_on_union_fill : forall P n n' d d' h hd hd',
-  NoConflict n n' ->
-  (PropOn P (fv d) n <-> PropOn P (fv d') n') ->
-  FillWith d  h hd  ->
-  FillWith d' h hd' ->
-  PropOn P (fv hd) n ->
-  PropOn P (fv hd') (env_union n n').
-Proof.
-  (* intros P n n' D D' lhs lhs' lhs'' Hn Hp Hf Hf' H. generalize dependent P. generalize dependent n. generalize dependent n'.
-  generalize dependent D'. generalize dependent lhs''.
-  induction Hf; intros; sinvert Hf'; simpl in *; [ apply Hp in H; eapply Forall_impl; [|eauto]; hauto q:on | | | |];
-  apply Forall_app in H as [Hl Hr]; apply Forall_app; split; try (eapply IHHf; eassumption);
-  (eapply Forall_impl; [| eassumption]); intros a [p [Ha Hm]]; eexists; (split; [| eassumption]);
-  simpl; (specialize (Hn _ _ Ha) as [Hn | Hn]; rewrite Hn; [assumption | reflexivity]).
-Qed.  *)
-  intros P n n' d d' h hd hd' Hc Ha Hf Hf' Hp. generalize dependent P. generalize dependent n.
-  generalize dependent n'. generalize dependent d'. generalize dependent hd'.
-  induction Hf; intros; sinvert Hf'; intros.
-  - sauto lq: on.
-  - apply prop_on_union. split.
-    + hauto l: on.
-    + admit.
-Admitted.
-
-From Hammer Require Import Hammer. (* Admitted *)
-
-Theorem fill_replace : forall h d d' n n',
-  NoConflict n n' ->
-  EnvTyped n (fill h d) ->
-  EnvTyped n' d' ->
-  Agree n n' d d' ->
-  EnvTyped (env_union n n') (fill h d').
-Proof.
-  intros h d d' n n' Hnc Ht Ht' [Hm He].
-  remember (fill h d) as hd eqn:E. apply reflect_fill in E.
-  remember (fill h d') as hd' eqn:E'. apply reflect_fill in E'. generalize dependent n. generalize dependent n'.
-  generalize dependent d'. generalize dependent hd'.
-  induction E; intros; sinvert E'; [apply env_typed_weakening; assumption | | | |]; sinvert Ht; constructor;
-  try (eapply IHE; eassumption); clear IHE; try (apply env_typed_weakening_alt; assumption); destruct H5;
-  [left; apply prop_on_weakening_alt; assumption | | | right; apply maximal_on_weakening_alt; assumption].
-Admitted.
-
 (* environment typing smart constructors *)
 Theorem env_typed_singleton : forall x s p,
   PfxTyped p s ->
@@ -314,18 +272,33 @@ Proof.
 Qed.
 
 (* specialized environment substitution theorems. These are the downstream facts we really need. *)
-Theorem catlenvtyped :  forall G x y z p1 p2 s t r eta,
+Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
   x <> y ->
-  eta z = Some (PfxParPair p1 p2) ->
+  n z = Some (PfxParPair p1 p2) ->
   PfxTyped p1 s ->
   PfxTyped p2 t ->
-  EnvTyped eta (fill G (CtxHasTy z r)) ->
+  EnvTyped n (fill G (CtxHasTy z r)) ->
   EnvTyped
-  (env_union eta
-     (env_union (singleton_env x p1) (singleton_env y p2)))
-  (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
+    (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
+    (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
 Proof.
-Admitted.
+  best use: env_subctx_bind time: 10.
+
+  intros G x y z p1 p2 s t r n Hxy Hnz Hp1 Hp2 He.
+  remember (fill G (CtxHasTy z r)) as Gzr eqn:Ezr. apply reflect_fill in Ezr.
+  remember (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))) as Gxsyt eqn:Exsyt. apply reflect_fill in Exsyt.
+  generalize dependent x. generalize dependent y. generalize dependent z. generalize dependent p1.
+  generalize dependent p2. generalize dependent s. generalize dependent t. generalize dependent r.
+  generalize dependent n. generalize dependent Gzr. generalize dependent Gxsyt.
+  induction G; cbn in *; intros; sinvert Ezr; sinvert Exsyt.
+  - sinvert He. rewrite Hnz in H2. invert H2. constructor. best.
+
+
+  generalize dependent x. generalize dependent y.
+  generalize dependent p1. generalize dependent p2. generalize dependent s. generalize dependent t.
+  (* induction He; cbn in *; intros. *)
+  generalize dependent z. generalize dependent r. generalize dependent n. induction G; cbn in *; intros.
+Qed.
 
 Theorem catrenvtyped1 :  forall G x y z p1 s t r eta,
   x <> y ->
