@@ -49,11 +49,11 @@ Definition PropOn (P : prefix -> Prop) (ctx : context) (n : env) : Prop :=
 Arguments PropOn/ P ctx n.
 Hint Unfold PropOn : core.
 
-Definition EmptyOn := PropOn EmptyPfx.
+Definition EmptyOn := PropOn EmptyPrefix.
 Arguments EmptyOn/ ctx n.
 Hint Unfold EmptyOn : core.
 
-Definition MaximalOn := PropOn MaximalPfx.
+Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ ctx n.
 Hint Unfold MaximalOn : core.
 
@@ -70,7 +70,7 @@ Inductive EnvTyped : env -> context -> Prop :=
       EnvTyped n CtxEmpty
   | EnvTyHasTy : forall n p x s,
       n x = Some p ->
-      PfxTyped p s ->
+      PrefixTyped p s ->
       EnvTyped n (CtxHasTy x s)
   | EnvTyComma : forall n G D,
       EnvTyped n G ->
@@ -98,7 +98,7 @@ Hint Resolve maps_to_hole : core.
 (* Theorem B.10, part II *)
 Theorem maps_to_has_type : forall n G x s,
   EnvTyped n (fill G (CtxHasTy x s)) ->
-  exists p, (n x = Some p /\ PfxTyped p s).
+  exists p, (n x = Some p /\ PrefixTyped p s).
 Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
 Hint Resolve maps_to_has_type : core.
 
