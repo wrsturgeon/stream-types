@@ -349,8 +349,6 @@ Proof.
 Qed.
 Hint Resolve empty_or_maximal_pfx_par_pair : core.
 
-(* NOTE: Here on out: specialized environment substitution theorems.
- * These are the downstream facts we really need. *)
 Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
   x <> y ->
   NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
