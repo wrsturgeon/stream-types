@@ -9,7 +9,7 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
   | PfxCatEpsEmp :
       PrefixConcat PfxEpsEmp PfxEpsEmp PfxEpsEmp
   | PfxCatOneEmp : forall p,
-      PfxTyped p 1 ->
+      PrefixTyped p 1 ->
       PrefixConcat PfxOneEmp p p
   | PfxCatOneFull :
       PrefixConcat PfxOneFull PfxEpsEmp PfxOneFull
@@ -70,11 +70,11 @@ Hint Resolve prefix_concat_unique : core.
 Theorem prefix_concat_exists_when_typed : forall p p' s dps dp'dps,
   Derivative p s dps -> (* i.e., d_p(s) = `dps`. difficult to write in ASCII *)
   Derivative p' dps dp'dps -> (* i.e. d_{p'}(d_p(s)) = `dp'dps` *)
-  PfxTyped p s ->
-  PfxTyped p' dps ->
+  PrefixTyped p s ->
+  PrefixTyped p' dps ->
   exists p'',
   PrefixConcat p p' p'' /\ (* from "such a p'' exists" *)
-  PfxTyped p'' s /\
+  PrefixTyped p'' s /\
   Derivative p'' s dp'dps.
 Proof.
   intros p p' s dps dp'dps Hd Hd' Ht Ht'. generalize dependent p'. generalize dependent dps.
