@@ -80,7 +80,7 @@ Hint Resolve derivative_det : core.
 
 (* Theorem B.15, part II *)
 Theorem derivative_fun : forall p s,
-  PfxTyped p s ->
+  PrefixTyped p s ->
   exists s', Derivative p s s'.
 Proof.
   intros p s H. induction H; try solve [eexists; constructor];

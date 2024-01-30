@@ -16,6 +16,7 @@ Variant rec_sig : Set :=
 (* Notation "H '|' G '->' s" := (RecSigRecur H G s) (at level 97, right associativity). *)
 Hint Constructors rec_sig : core.
 
+(* this isn't a new type of typing derivation, it's the existing one !! *)
 Inductive RTyped (H : hist_ctx) : context -> rec_sig -> term -> type -> Prop :=
   | TEpsR : forall G E (* NOTE: `E` for \Sigma *),
       RTyped H G E TmSink TyEps

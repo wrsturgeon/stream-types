@@ -73,6 +73,9 @@ Definition subst_var (e : term) (x : string) (y : string) : term := e.
 Arguments subst_var e/ x y.
 Hint Unfold subst_var : core.
 
+Inductive reactive : term -> Prop := .
+
+(* 
 (* term is well-formed under a set of free variables.
  * this prevents shadowing and ensures all bindings are coherent *)
 Inductive WFTerm : set string -> term -> Prop :=
@@ -123,4 +126,4 @@ Proof.
   intros.
   generalize dependent s'.
   induction H0; sauto.
-Qed.
+Qed. *)

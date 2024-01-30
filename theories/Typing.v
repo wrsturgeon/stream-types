@@ -60,7 +60,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       CtxLEq G G' ->
       G' |- e \in s ->
       G |- e \in s
-  | T_Let : forall G D x e e' s t,
+  | T_Let : forall G D GD Gxs x e e' s t,
       ~(fv G x) ->
       D |- e \in s ->
       Fill G (CtxHasTy x s) Gxs ->

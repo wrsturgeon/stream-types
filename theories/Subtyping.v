@@ -21,6 +21,7 @@ Inductive Subtype : context -> context -> Prop :=
       Subtype (CtxComma g d) (CtxComma d g)
   | SubCommaWkn : forall g d,
       Subtype (CtxComma g d) g
+  (* TODO: remove weakenigns: this is what drop is for. *)
   (* don't need right-hand comma weakening b/c we have exchange *)
   | SubSemicWkn1 : forall g d,
       Subtype (CtxSemic g d) g

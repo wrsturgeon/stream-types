@@ -55,47 +55,29 @@ Theorem empty_push_reactive : forall e e' eta p,
 Proof.
   intros.
   induction H0; sinvert H.
-  - sauto lq: on.
-  - qauto l: on.
-  - sauto lq: on rew: off.
-  - eapply IHStep. eauto. admit. (* correct. *)
-  - eapply IHStep. eauto. admit. (* corrrect *) 
-  - admit.
-  - hauto drew: off.
-  - admit.
 Admitted.
 
 
 Theorem agree_step : forall e e' eta p G x s,
   (forall x0, fv e x0 -> fv G x0) ->
   Step eta e e' p ->
-  PfxTyped p s ->
+  PrefixTyped p s ->
   Agree eta (singleton_env x p) G (CtxHasTy x s)
 .
 Proof.
   intros.
   unfold Agree. split; split; intros; unfold MaximalOn in *; unfold EmptyOn in *; unfold PropOn in *; unfold PropOnItem in *; intros.
   - assert (MaximalPrefix p) by sfirstorder use:maximal_push.
-    exists p. sinvert H3. unfold singleton_env. sauto lq: on use:eq_id_refl.
-  -
+    exists p. sinvert H3. unfold singleton_env. admit.
+Admitted.
 
 
 Theorem step_reactive : forall e e' eta p,
-  reactive e ->
   Step eta e e' p ->
   reactive e'.
 Proof.
   intros.
-  induction H0; sinvert H.
-  - sfirstorder.
-  - sfirstorder.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on rew: off use:sink_reactive.
-  - sauto lq: on.
-  - sauto lq: on.
-Qed.
+Admitted.
 
 
 
@@ -111,11 +93,11 @@ Proof.
     generalize dependent e'.
     generalize dependent eta.
     generalize dependent p.
-    induction Hty; intros p eta e0' Heta Hstep.
-    - cbn in *. sauto q: on.
+    induction Ht; intros p eta e0' Heta Hstep.
+    (* - cbn in *. sauto q: on.
     - sinvert Hstep.
-      assert (~fv G z) by hauto q: on use:wf_fill.
-      eapply IHHty; [| | eauto].
+      assert (~fv G z) by hauto q: on use:wf_fill_reflect.
+      eapply IHHt; [| | eauto].
       + qauto l: on use: hmm'.
       + eapply catlenvtyped; eauto; sauto l: on use: maps_to_has_type.
     - sinvert HwfG; sinvert Heta. sinvert Hstep.
@@ -137,7 +119,7 @@ Proof.
       + sauto l: on use:wf_fill.
       + eapply letenvtyped; [ | | eauto].
         eapply IHHty1; [| | eauto]. sfirstorder use:wf_fill. sfirstorder use:maps_to_hole.
-    - sinvert Hstep. eapply IHHty; [ | | eauto]. hauto lq: on rew: off use: wf_fill.
+    - sinvert Hstep. eapply IHHty; [ | | eauto]. hauto lq: on rew: off use: wf_fill. *)
 Admitted.
 
 (* let x = e in e' | *)

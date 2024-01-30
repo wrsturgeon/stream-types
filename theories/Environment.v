@@ -397,7 +397,7 @@ Admitted.
 (* i think this one needs stronger premises... *)
 Theorem letenvtyped :  forall G D x p s eta,
   Agree eta (singleton_env x p) D (CtxHasTy x s) ->
-  PfxTyped p s ->
+  PrefixTyped p s ->
   EnvTyped eta (fill G D) ->
   EnvTyped (env_subst x p eta) (fill G (CtxHasTy x s)).
 Proof.
