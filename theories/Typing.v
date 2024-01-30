@@ -1,7 +1,9 @@
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   FV
   Hole
+  Sets
   Terms
   Types.
 
@@ -77,8 +79,11 @@ Inductive Typed : context -> term -> type -> Prop :=
 where "G '|-' x '\in' T" := (Typed G x T).
 Hint Constructors Typed : core.
 
-(* TODO:
 Theorem typed_wf_term : forall G x T,
   G |- x \in T ->
   WFTerm (fv G) x.
-*)
+Proof.
+  intros. induction H; cbn in *; intros.
+  - constructor; assumption.
+  - constructor. Abort.
+(* TODO *)
