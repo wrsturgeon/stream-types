@@ -14,6 +14,11 @@ From LambdaST Require Import
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
 
+Definition singleton_env (id : string) (p : prefix) : env := fun x =>
+  if eqb id x then Some p else None.
+Arguments singleton_env id p x/.
+Hint Unfold singleton_env : core.
+
 Definition dom (n : env) : set string :=
   fun x => exists p, n x = Some p.
 Arguments dom n x/.
@@ -232,20 +237,8 @@ Hint Resolve env_typed_weakening_alt : core.
 
 (* environment typing smart constructors *)
 Theorem env_typed_singleton : forall x s p,
-  PfxTyped p s ->
+  PrefixTyped p s ->
   EnvTyped (singleton_env x p) (CtxHasTy x s).
-Proof.
-  intros; econstructor; [| eauto]; cbn.
-  unfold singleton_env.
-  hauto lq: on use: eqb_refl.
-Qed.
-
-Lemma prop_on_fill : forall P n d d' g lhs lhs',
-  FillWith d g lhs ->
-  FillWith d' g lhs' ->
-  PropOn P (fv d') n ->
-  PropOn P (fv lhs) n ->
-  PropOn P (fv lhs') n.
 Proof.
   intros; econstructor; [| eauto]; cbn.
   unfold singleton_env.
@@ -378,7 +371,7 @@ Qed.
 Theorem catrenvtyped1 :  forall G x y z p1 s t r eta,
   x <> y ->
   eta z = Some (PfxCatFst p1) ->
-  PfxTyped p1 s ->
+  PrefixTyped p1 s ->
   EnvTyped eta (fill G (CtxHasTy z r)) ->
   EnvTyped
   (env_union eta
@@ -390,8 +383,8 @@ Admitted.
 Theorem catrenvtyped2 :  forall G x y z p1 p2 s t r eta,
   x <> y ->
   eta z = Some (PfxCatBoth p1 p2) ->
-  PfxTyped p1 s ->
-  PfxTyped p2 t ->
+  PrefixTyped p1 s ->
+  PrefixTyped p2 t ->
   MaximalPrefix p1 ->
   EnvTyped eta (fill G (CtxHasTy z r)) ->
   EnvTyped
@@ -403,7 +396,7 @@ Admitted.
 
 (* i think this one needs stronger premises... *)
 Theorem letenvtyped :  forall G D x p s eta,
-  PfxTyped p s ->
+  PrefixTyped p s ->
   EnvTyped eta (fill G D) ->
   EnvTyped (env_subst x p eta) (fill G (CtxHasTy x s)).
 Proof.

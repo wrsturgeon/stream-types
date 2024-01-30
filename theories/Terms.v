@@ -75,7 +75,6 @@ Hint Unfold subst_var : core.
 
 (* term is well-formed under a set of free variables.
  * this prevents shadowing and ensures all bindings are coherent *)
-(*
 Inductive WFTerm : set string -> term -> Prop :=
   | WFTmSink : forall s,
       WFTerm s TmSink
@@ -87,13 +86,13 @@ Inductive WFTerm : set string -> term -> Prop :=
   | WFTmComma : forall e e' s,
       WFTerm s e ->
       WFTerm s e' ->
-      WFTerm s (e , e')
+      WFTerm s (e, e')
   | WFTmSemic : forall e e' s,
       WFTerm s e ->
       WFTerm s e' ->
-      WFTerm s (e ; e')
+      WFTerm s (e; e')
   | WFTmLet : forall x e e' s,
-      ~(s x) ->
+      ~s x ->
       (* is this right? *)
       WFTerm s e ->
       WFTerm (set_union s (singleton_set x)) e' ->
@@ -101,18 +100,20 @@ Inductive WFTerm : set string -> term -> Prop :=
   | WFTmLetPar : forall x y z e s,
       WFTerm (set_union (set_minus s (singleton_set z)) (set_union (singleton_set x) (singleton_set y))) e ->
       s z ->
-      ~(s x) ->
-      ~(s y) ->
+      ~s x ->
+      ~s y ->
       x <> y ->
       WFTerm s (TmLetPar x y z e)
   | WFTmLetCat : forall x y z e t s,
       WFTerm (set_union (set_minus s (singleton_set z)) (set_union (singleton_set x) (singleton_set y))) e ->
       s z ->
-      ~(s x) ->
-      ~(s y) ->
+      ~s x ->
+      ~s y ->
       x <> y ->
+      (* TODO: WFType s t -> *)
       WFTerm s (TmLetCat t x y z e)
 .
+Hint Constructors WFTerm : core.
 
 Theorem wf_iff : forall s s' e,
   SetEq s s' ->
@@ -123,4 +124,3 @@ Proof.
   generalize dependent s'.
   induction H0; sauto.
 Qed.
-*)

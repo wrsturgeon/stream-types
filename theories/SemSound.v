@@ -35,8 +35,7 @@ Theorem soundout : forall G e e' s eta p,
     WFContext G ->
     EnvTyped eta G ->
     Step eta e e' p ->
-    PfxTyped p s
-.
+    PrefixTyped p s.
 Proof.
     intros G e e' s eta p Ht Hwf He Hs.
     generalize dependent e'.
@@ -48,7 +47,8 @@ Proof.
     - sinvert Hs. eapply IHHt; clear IHHt; [| | eassumption].
       + eapply hmm'; [left; reflexivity | | | |]; eassumption.
       + assert (A := maps_to_has_type _ _ _ _ He). destruct A as [p' [Hp1 Hp2]]. sinvert Hp2.
-        rewrite Hp1 in H9. sinvert H9. eapply catlenvtyped; eassumption.
+        rewrite Hp1 in H9. sinvert H9. eapply catlenvtyped; try eassumption.
+        shelve. (* <-- TODO *)
     - sinvert Hwf. sinvert He. sinvert Hs; constructor; [eapply IHHt1 | eapply IHHt1 | | eapply IHHt2]; eassumption.
     - sinvert Hs; eapply IHHt; [| | eassumption | | | eassumption].
       + eapply hmm'; [right; reflexivity | | | |]; eassumption.
@@ -68,7 +68,7 @@ Proof.
     - sinvert Hs. apply wf_fill in Hwf as [Hwfh [Hwfc Hd]]. eapply IHHt; [| | eassumption].
       + apply wf_fill. repeat split; [assumption | constructor | |]; scongruence.
       + eapply dropenvtyped. eassumption.
-Qed.
+    Unshelve. (* shit *) Abort.
 
 (*
 (x : s, y : s) |- fix(x:s,y:s). rec(x+1,x) : s
