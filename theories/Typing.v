@@ -7,11 +7,6 @@ From LambdaST Require Import
   Sets
   Terms
   Types.
-From Coq Require Import
-  List
-  String.
-
-From Hammer Require Import Tactics.
 
 Declare Scope typing_scope.
 

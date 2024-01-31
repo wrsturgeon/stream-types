@@ -3,7 +3,6 @@ From LambdaST Require Import
   Environment
   Nullable
   Prefix
-  Hole
   Types.
 From Hammer Require Import Tactics.
 

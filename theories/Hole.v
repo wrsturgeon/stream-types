@@ -189,6 +189,7 @@ Proof.
   - split; [| split]; [eapply wf_ctx_hole | eapply wf_ctx_plug | eapply fill_wf_disjoint]; eassumption.
   - eapply wf_ctx_fill; eassumption.
 Qed.
+Hint Resolve wf_hole_iff : core.
 
 Theorem wf_fill : forall h d,
   WFContext (fill h d) <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).

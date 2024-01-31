@@ -1,6 +1,4 @@
-From Coq Require Import
-  String
-  List.
+From Coq Require Import String.
 From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
 From LambdaST Require Import

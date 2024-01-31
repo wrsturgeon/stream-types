@@ -7,10 +7,6 @@ From LambdaST Require Import
 From Coq Require Import
   List
   String.
-From LambdaST Require Import
-  FV
-  Terms
-  Types.
 
 Inductive context : Set :=
   | CtxEmpty

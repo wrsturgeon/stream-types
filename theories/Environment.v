@@ -108,9 +108,6 @@ Inductive EnvTyped : env -> context -> Prop :=
   .
 Hint Constructors EnvTyped : core.
 
-Hint Constructors EnvTyped : core.
-
-
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
   EnvTyped n (fill G D) ->
