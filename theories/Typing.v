@@ -96,8 +96,8 @@ Proof.
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H'. specialize (IHHt _ H1).
-    eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH. } right. assumption. eauto.
+  - eapply fv_fill. { eassumption. } cbn. destruct H'; [| left; assumption]. specialize (IHHt _ H1).
+    eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH as []. } right. assumption.
 Qed.
 Hint Resolve typing_fv : core.
 

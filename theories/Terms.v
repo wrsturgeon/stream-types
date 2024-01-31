@@ -70,12 +70,11 @@ Definition subst_var (e : term) (x : string) (y : string) : term := e.
 Arguments subst_var e/ x y.
 Hint Unfold subst_var : core.
 
-(* inert relation. *)
 Inductive Inert : term -> Prop :=
   | InertParR : forall e1 e2,
       Inert e1 ->
       Inert e2 ->
-      Inert (e1 , e2)
+      Inert (e1, e2)
   | InertParL : forall x y z e ,
       Inert e ->
       Inert (TmLetPar x y z e)
@@ -91,8 +90,9 @@ Inductive Inert : term -> Prop :=
       Inert (TmLet x e e')
   | InertDrop : forall x e ,
       Inert e ->
-      Inert (TmDrop x e)
-.
+      Inert (drop x; e)
+  .
+Hint Constructors Inert : core.
 
 (*
 Inductive WFTerm : set string -> term -> Prop :=
