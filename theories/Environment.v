@@ -74,7 +74,7 @@ Arguments MaximalOn/ s n.
 Hint Unfold MaximalOn : core.
 
 Theorem prop_on_contains : forall P s s' n,
-  SubsetOf s' s ->
+  Subset s' s ->
   PropOn P s n ->
   PropOn P s' n.
 Proof. sfirstorder. Qed.
