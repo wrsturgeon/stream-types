@@ -8,22 +8,22 @@ From LambdaST Require Import
 
 Inductive hole : Set :=
   | HoleHere
-  | HoleCommaL (lhs : hole) (rhs : context)
-  | HoleCommaR (lhs : context) (rhs : hole)
-  | HoleSemicL (lhs : hole) (rhs : context)
-  | HoleSemicR (lhs : context) (rhs : hole)
+  | HoleCommaL (h : hole) (g : context)
+  | HoleCommaR (g : context) (h : hole)
+  | HoleSemicL (h : hole) (g : context)
+  | HoleSemicR (g : context) (h : hole)
   .
 Hint Constructors hole : core.
 Derive Show for hole.
 Derive Arbitrary for hole.
 
-Fixpoint fill h y :=
+Fixpoint fill h D :=
   match h with
-  | HoleHere => y
-  | HoleCommaL lhs rhs => CtxComma (fill lhs y) rhs
-  | HoleCommaR lhs rhs => CtxComma lhs (fill rhs y)
-  | HoleSemicL lhs rhs => CtxSemic (fill lhs y) rhs
-  | HoleSemicR lhs rhs => CtxSemic lhs (fill rhs y)
+  | HoleHere => D
+  | HoleCommaL lhs rhs => CtxComma (fill lhs D) rhs
+  | HoleCommaR lhs rhs => CtxComma lhs (fill rhs D)
+  | HoleSemicL lhs rhs => CtxSemic (fill lhs D) rhs
+  | HoleSemicR lhs rhs => CtxSemic lhs (fill rhs D)
   end.
 
 Inductive Fill : hole -> context -> context -> Prop :=
@@ -77,3 +77,127 @@ Lemma fv_fill : forall h plug ctx,
   SetEq (fv ctx) (set_union (fv plug) (fv h)).
 Proof. intros. induction H; sfirstorder. Qed.
 Hint Resolve fv_fill : core.
+
+Lemma fv_fill_fn : forall h plug,
+  SetEq (fv_ctx (fill h plug)) (set_union (fv plug) (fv h)).
+Proof. intros. remember (fill h plug) as ctx eqn:E. apply reflect_fill in E. apply fv_fill. assumption. Qed.
+Hint Resolve fv_fill_fn : core.
+
+Inductive WFHole : hole -> Prop :=
+  | WFHoleHere :
+      WFHole HoleHere
+  | WFHoleCommaL : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleCommaL h g)
+  | WFHoleCommaR : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv g) (fv h) ->
+      WFHole (HoleCommaR g h)
+  | WFHoleSemicL : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleSemicL h g)
+  | WFHoleSemicR : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv g) (fv h) ->
+      WFHole (HoleSemicR g h)
+  .
+Hint Constructors WFHole : core.
+
+Theorem fill_disjoint_l : forall G D GD (s : context),
+  Fill G D GD ->
+  DisjointSets (fv GD) (fv s) ->
+  DisjointSets (fv G) (fv s).
+Proof.
+  cbn in *. intros G D GDG s Hf Hd. split; intros H C; specialize (Hd x) as [Hlr Hrl];
+  (apply Hrl; [| eapply fv_fill; [| right]]; eassumption).
+Qed.
+Hint Resolve fill_disjoint_l : core.
+
+Theorem fill_disjoint_r : forall G D GD (s : context),
+  Fill G D GD ->
+  DisjointSets (fv s) (fv GD) ->
+  DisjointSets (fv s) (fv G).
+Proof.
+  cbn in *. intros G D GDG s Hf Hd. split; intros H C; specialize (Hd x) as [Hlr Hrl];
+  (apply Hlr; [| eapply fv_fill; [| right]]; eassumption).
+Qed.
+Hint Resolve fill_disjoint_r : core.
+
+Theorem wf_ctx_hole : forall GD,
+  WFContext GD ->
+  forall G D,
+  Fill G D GD ->
+  WFHole G.
+Proof.
+  intros GD Hc G D Hf. generalize dependent Hc.
+  induction Hf; intros; [constructor | | | |]; sinvert Hc; constructor; try apply IHHf; try assumption;
+  try (eapply fill_disjoint_l; eassumption); eapply fill_disjoint_r; eassumption.
+Qed.
+Hint Resolve wf_ctx_hole : core.
+
+Theorem wf_ctx_plug : forall GD,
+  WFContext GD ->
+  forall G D,
+  Fill G D GD ->
+  WFContext D.
+Proof.
+  intros GD Hc G D Hf. generalize dependent Hc.
+  induction Hf; intros; try (apply IHHf; sinvert Hc); assumption.
+Qed.
+Hint Resolve wf_ctx_plug : core.
+
+Lemma wf_ctx_fill : forall G D GD,
+  Fill G D GD ->
+  WFHole G ->
+  WFContext D ->
+  DisjointSets (fv G) (fv D) ->
+  WFContext GD.
+Proof.
+  intros G D GD Hf HG HD Hd. generalize dependent D. generalize dependent GD.
+  induction HG; cbn in *; intros; sinvert Hf; [assumption | | | |];
+  constructor; try assumption (* 1/3 *); try eapply IHHG; clear IHHG; try eassumption;
+  apply fv_fill in H5; (* <-- this is the crucial move! *) sfirstorder.
+Qed.
+Hint Resolve wf_ctx_fill : core.
+
+Lemma fill_wf_disjoint : forall G D GD,
+  Fill G D GD ->
+  WFContext GD ->
+  DisjointSets (fv G) (fv D).
+Proof.
+  intros G D GD Hf Hwf.
+  cbn in *. intro x. assert (Hiff := fv_fill _ _ _ Hf x). cbn in Hiff.
+  generalize dependent D. generalize dependent GD. induction G; cbn in *; intros; [sfirstorder | | | |];
+  sinvert Hf; sinvert Hwf; assert (Hfv := fv_fill _ _ _ H3); cbn in *; specialize (H4 x) as [Hlr Hrl];
+  (edestruct IHG as [IH1 IH2]; [| eassumption | apply fv_fill |]; [assumption | assumption |]; sfirstorder).
+Qed.
+Hint Resolve fill_wf_disjoint : core.
+
+Theorem wf_hole_iff : forall G D GD,
+  Fill G D GD -> (
+    WFContext GD <-> (
+      WFHole G /\
+      WFContext D /\
+      DisjointSets (fv G) (fv D))).
+Proof.
+  intros G D GD Hf. split; [intro Hwf | intros [HG [HD Hd]]].
+  - split; [| split]; [eapply wf_ctx_hole | eapply wf_ctx_plug | eapply fill_wf_disjoint]; eassumption.
+  - eapply wf_ctx_fill; eassumption.
+Qed.
+Hint Resolve wf_hole_iff : core.
+
+Theorem wf_fill : forall h d,
+  WFContext (fill h d) <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
+Proof.
+  intros h d.
+  remember (fill h d) as g.
+  apply reflect_fill in Heqg.
+  hauto l: on use: wf_hole_iff.
+Qed.
+Hint Resolve wf_fill : core.

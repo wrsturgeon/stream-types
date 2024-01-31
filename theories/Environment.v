@@ -20,6 +20,11 @@ Definition singleton_env (id : string) (p : prefix) : env := fun x =>
 Arguments singleton_env id p x/.
 Hint Unfold singleton_env : core.
 
+Definition dom (n : env) : set string :=
+  fun x => exists p, n x = Some p.
+Arguments dom n x/.
+Hint Unfold dom : core.
+
 Definition env_union (n n' : env) : env := fun x =>
   match n' x with
   | None => n x
@@ -41,16 +46,14 @@ Hint Unfold env_drop : core.
 Theorem maps_to_unique_literal : forall p x (n : env),
   n x = Some p ->
   ~exists q, p <> q /\ n x = Some q.
-Proof.
-  introv Hp [q [Hpq Hq]]. rewrite Hp in Hq. sinvert Hq. apply Hpq. reflexivity.
-Qed.
+Proof. sfirstorder. Qed.
 Hint Resolve maps_to_unique_literal : core.
 
 Theorem maps_to_unique : forall p1 p2 x (n : env),
   n x = Some p1 ->
   n x = Some p2 ->
   p1 = p2.
-Proof. introv H1 H2. cbn in *. rewrite H1 in H2. sinvert H2. reflexivity. Qed.
+Proof. sfirstorder. Qed.
 Hint Resolve maps_to_unique : core.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
@@ -71,11 +74,19 @@ Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ s n.
 Hint Unfold MaximalOn : core.
 
-(* TODO: empty/maximal on (free variables in) terms *)
+Theorem prop_on_contains : forall P s s' n,
+  Subset s' s ->
+  PropOn P s n ->
+  PropOn P s' n.
+Proof. sfirstorder. Qed.
+
+Theorem prop_on_union: forall P s s' n,
+  PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
+Proof. sfirstorder. Qed.
 
 Definition Agree (n n' : env) (D D' : context) : Prop :=
-  (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\
-  (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
+  (MaximalOn (fv D) n -> MaximalOn (fv D') n') /\
+  (EmptyOn (fv D) n -> EmptyOn (fv D') n').
 Arguments Agree/ n n' D D'.
 Hint Unfold Agree : core.
 
@@ -123,6 +134,20 @@ Definition NoConflict (n n' : env) := forall x p,
   p = p'.
 Arguments NoConflict/ n n'.
 Hint Unfold NoConflict : core.
+
+Lemma prop_on_fill : forall P n d d' g lhs lhs',
+  Fill g d lhs ->
+  Fill g d' lhs' ->
+  PropOn P (fv d') n ->
+  PropOn P (fv lhs) n ->
+  PropOn P (fv lhs') n.
+Proof.
+  cbn in *. intros P n d d' g lhs lhs' Hf Hf' Hp' Hp x Hfv.
+  assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
+  assert (A : SetEq (fv lhs) (set_union (fv d) (fv g))). { apply fv_fill. assumption. } cbn in *.
+  destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
+Qed.
+Hint Resolve prop_on_fill : core.
 
 Lemma prop_on_item_weakening : forall P nr nl vs,
   PropOnItem P nr vs ->
@@ -195,27 +220,14 @@ Lemma env_typed_weakening_alt : forall n n' G,
   EnvTyped n G ->
   EnvTyped (env_union n n') G.
 Proof.
-  introv Hm Ht. gen n'.
-  induction Ht; intros; cbn in *; econstructor; try apply IHHt1; try apply IHHt2; try eassumption.
-  - cbn. specialize (Hm _ _ H). destruct (n' x) as [p' |] eqn:E. 2: { assumption. }
-    f_equal. symmetry. apply Hm. reflexivity.
-  - destruct H; hauto q: on. (* TODO: speed this up *)
+  intros n n' G Hc Ht. generalize dependent n'. induction Ht; intros; simpl in *. { constructor. }
+  - econstructor; [| eassumption]. cbn. destruct (n' x) as [n'x |] eqn:E; [| assumption].
+    f_equal. symmetry. eapply Hc; eassumption.
+  - constructor; [apply IHHt1 | apply IHHt2]; assumption.
+  - constructor. { hauto l: on. } { hauto l: on. } destruct H;
+    (eapply prop_on_weakening_alt in Hc; [| eassumption]); [left | right]; assumption.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
-
-Lemma prop_on_fill : forall P n d d' g lhs lhs',
-  Fill g d lhs ->
-  Fill g d' lhs' ->
-  PropOn P (fv d') n ->
-  PropOn P (fv lhs) n ->
-  PropOn P (fv lhs') n.
-Proof.
-  cbn in *. introv Hf Hf' Hp' Hp Hfv.
-  assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
-  assert (A : SetEq (fv lhs) (set_union (fv d) (fv g))). { apply fv_fill. assumption. } cbn in *.
-  destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
-Qed.
-Hint Resolve prop_on_fill : core.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
 Theorem env_subctx_bind_equal : forall hole plug n n',
@@ -238,7 +250,7 @@ Hint Resolve or_hyp : core.
 
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
-  (PropOn P (fv D) n <-> PropOn P (fv D') n') ->
+  (PropOn P (fv D) n -> PropOn P (fv D') n') ->
   Fill lhs D  lhs'  ->
   Fill lhs D' lhs'' ->
   PropOn P (fv lhs') n ->
