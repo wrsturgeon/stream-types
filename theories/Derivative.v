@@ -29,7 +29,7 @@ Inductive Derivative : prefix -> type -> type -> Prop :=
   | DrvSumInl : forall p s s' t,
       Derivative p s s' ->
       Derivative (PfxSumInl p) (TySum s t) s'
-  (* TODO: his definition is almost certainly wrong in Appendix B *)
+  (* TODO: this definition is almost certainly wrong in Appendix B *)
   | DrvSumInr : forall p s t t',
       Derivative p t t' ->
       Derivative (PfxSumInr p) (TySum s t) t'

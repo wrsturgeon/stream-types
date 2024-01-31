@@ -1,3 +1,5 @@
+From Coq Require Import String.
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   FV
@@ -35,6 +37,7 @@ Inductive Typed : context -> term -> type -> Prop :=
   | TCatR : forall G D e1 e2 s t,
       G |- e1 \in s ->
       D |- e2 \in t ->
+      DisjointSets (fv G) (fv D) ->
       CtxSemic G D |- (e1; e2) \in TyDot s t
   | TCatL : forall G x y z s t e r Gxsyt Gzst,
       x <> y ->
@@ -60,8 +63,8 @@ Inductive Typed : context -> term -> type -> Prop :=
       CtxLEq G G' ->
       G' |- e \in s ->
       G |- e \in s
-  | T_Let : forall G D GD Gxs x e e' s t,
-      ~(fv G x) ->
+  | TLet : forall G D x e e' s t Gxs GD,
+      ~fv G x ->
       D |- e \in s ->
       Fill G (CtxHasTy x s) Gxs ->
       Fill G D GD ->
@@ -79,17 +82,11 @@ Inductive Typed : context -> term -> type -> Prop :=
 where "G '|-' x '\in' T" := (Typed G x T).
 Hint Constructors Typed : core.
 
-(* TODO:
-Theorem typed_wf_term : forall G x T,
-  G |- x \in T ->
-  WFTerm (fv G) x.
-*)
-
-Theorem typing_fv : forall G e s,
-    G |- e \in s ->
-    forall x,
-    fv e x ->
-    fv G x.
+Theorem typed_fv : forall G e s,
+  G |- e \in s ->
+  forall x,
+  fv e x ->
+  fv G x.
 Proof.
   intros G e s Ht x Hfv. generalize dependent x. (* just for naming *)
   induction Ht; try rename x into x' (* hands off my `x`! *); intros x H'; cbn in *.
@@ -111,4 +108,25 @@ Proof.
   - eapply fv_fill. { eassumption. } cbn. destruct H'. specialize (IHHt _ H1).
     eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH. } right. assumption.
 Qed.
-Hint Resolve typing_fv : core.
+Hint Resolve typed_fv : core.
+
+(* TODO: add WF weakening theorem assuming all FVs are covered, then use the above to prove the below *)
+
+Theorem typed_wf_term : forall G x T,
+  G |- x \in T ->
+  WFTerm (fv G) x.
+Proof.
+  intros. induction H; intros.
+  - (* (e1, e2) *)
+    constructor; assumption.
+  - (* let (x, y) = z in e *)
+    shelve. (* until `inert` (might change something) *)
+    (*
+    constructor; cbn in *.
+    + assert (Fxsyt := fv_fill _ _ _ H2). assert (Fzst := fv_fill _ _ _ H3). cbn in *.
+      eapply wf_set_eq; [| eassumption]. cbn. intro test. rewrite Fzst. rewrite Fxsyt. split; intros H'.
+      * destruct H' as [H' | H']. { right. assumption. } left. split. { right. assumption. } intro. subst. Search test. best use: fv_fill time: 10.
+        destruct H' as [H' | H']; subst. { right. left. reflexivity. } right. right. best.
+    *)
+  - (* (e1; e2) *)
+    cbn in *. constructor. eapply typed_fv in H. Abort. (* TODO *)

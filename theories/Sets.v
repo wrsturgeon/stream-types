@@ -63,3 +63,7 @@ Lemma set_prop_incl : forall {T} P big little,
   SubsetOf little big ->
   SetProp P little.
 Proof. auto. Qed.
+
+Lemma set_union_comm : forall T a b,
+  SetEq (set_union a b) (@set_union T b a).
+Proof. cbn. intros. split; intros []; try (left; assumption); right; assumption. Qed.
