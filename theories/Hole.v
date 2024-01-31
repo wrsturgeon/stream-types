@@ -88,7 +88,7 @@ Inductive WFHole : hole -> Prop :=
   | WFHoleCommaR : forall h g,
       WFHole h ->
       WFContext g ->
-      DisjointSets (fv h) (fv g) ->
+      DisjointSets (fv g) (fv h) ->
       WFHole (HoleCommaR g h)
   | WFHoleSemicL : forall h g,
       WFHole h ->
@@ -98,7 +98,7 @@ Inductive WFHole : hole -> Prop :=
   | WFHoleSemicR : forall h g,
       WFHole h ->
       WFContext g ->
-      DisjointSets (fv h) (fv g) ->
+      DisjointSets (fv g) (fv h) ->
       WFHole (HoleSemicR g h)
   .
 Hint Constructors WFHole : core.
