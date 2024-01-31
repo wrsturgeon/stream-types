@@ -52,7 +52,7 @@ Theorem maps_to_unique : forall p1 p2 x (n : env),
   n x = Some p1 ->
   n x = Some p2 ->
   p1 = p2.
-Proof. intros p1 p2 x n H1 H2. cbn in *. rewrite H1 in H2. sinvert H2. reflexivity. Qed.
+Proof. sfirstorder. Qed.
 Hint Resolve maps_to_unique : core.
 
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
@@ -84,8 +84,8 @@ Theorem prop_on_union: forall P s s' n,
 Proof. sfirstorder. Qed.
 
 Definition Agree (n n' : env) (D D' : context) : Prop :=
-  (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\
-  (EmptyOn (fv D) n <-> EmptyOn (fv D') n').
+  (MaximalOn (fv D) n -> MaximalOn (fv D') n') /\
+  (EmptyOn (fv D) n -> EmptyOn (fv D') n').
 Arguments Agree/ n n' D D'.
 Hint Unfold Agree : core.
 
@@ -251,7 +251,7 @@ Hint Resolve or_hyp : core.
 
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
-  (PropOn P (fv D) n <-> PropOn P (fv D') n') ->
+  (PropOn P (fv D) n -> PropOn P (fv D') n') ->
   Fill lhs D  lhs'  ->
   Fill lhs D' lhs'' ->
   PropOn P (fv lhs') n ->
