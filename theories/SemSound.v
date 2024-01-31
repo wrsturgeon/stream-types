@@ -1,6 +1,4 @@
-From Coq Require Import
-    Program.Equality
-    String.
+From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
@@ -9,7 +7,7 @@ From LambdaST Require Import
   Hole
   Prefix
   Semantics
-  SinkTm
+  SinkTerm
   Sets
   Terms
   Types

@@ -1,7 +1,7 @@
 From LambdaST Require Import
   Environment
   Prefix
-  SinkTm
+  SinkTerm
   Terms.
 
 Inductive Step : env -> term -> term -> prefix -> Prop :=
