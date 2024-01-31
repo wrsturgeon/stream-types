@@ -154,9 +154,10 @@ Lemma pfx_cat_assoc_r : forall p q r s qr,
   PrefixConcat q r qr ->
   exists pq, PrefixConcat p q pq /\ PrefixConcat pq r s.
 Proof.
-  intros p q r s pq Hl Hr. generalize dependent r. generalize dependent q. induction Hl; intros.
-  - (* PfxEpsEmp *)
-    (* PrefixConcat q r PfxEpsEmp -> exists pq, PrefixConcat PfxEpsEmp q pq /\ PrefixConcat pq r PfxEpsEmp *)
+  intros p q r s qr Hl Hr. generalize dependent r. generalize dependent q. induction Hl; intros.
+  - (* PfxEpsEmp: p = PfxEpsEmp, qr = PfxEpsEmp
+     * so we want to prove that there exists a pq s.t. EpsEmp . q ~ pq /\ pq . r ~ EpsEmp
+     * obviously this should be EpsEmp, but the problem is we don't know q or r *)
     sinvert Hr.
     + (* q, r both PfxEpsEmp *) sauto lq: on.
     + (* q PfxOneEmp, r PfxEpsEmp *) sauto lq: on.
