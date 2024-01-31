@@ -168,13 +168,11 @@ Proof.
   intros G D GD Hf Hwf.
   cbn in *. intro x. assert (Hiff := fv_fill _ _ _ Hf x). cbn in Hiff.
   generalize dependent D. generalize dependent GD. induction G; cbn in *; intros; [sfirstorder | | | |];
-  sinvert Hf; sinvert Hwf; cbn in *; specialize (H4 x) as [Hlr Hrl].
-  - specialize (IHG _ H1 _ H3).
-  (* TODO: we should totally be able to prove this, right? *)
-Admitted.
+  sinvert Hf; sinvert Hwf; assert (Hfv := fv_fill _ _ _ H3); cbn in *; specialize (H4 x) as [Hlr Hrl];
+  (edestruct IHG as [IH1 IH2]; [| eassumption | apply fv_fill |]; [assumption | assumption |]; sfirstorder).
+Qed.
 Hint Resolve fill_wf_disjoint : core.
 
-(* NOTE: that we might still be adding shadowed terms in `D`, which we by definition can't inspect from the hole! *)
 Theorem wf_hole_iff : forall G D GD,
   Fill G D GD -> (
     WFContext GD <-> (
