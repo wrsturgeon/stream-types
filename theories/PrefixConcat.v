@@ -157,12 +157,15 @@ Proof.
   intros p q r s pq Hl Hr. generalize dependent r. generalize dependent q. induction Hl; intros.
   - (* PfxEpsEmp *)
     (* PrefixConcat q r PfxEpsEmp -> exists pq, PrefixConcat PfxEpsEmp q pq /\ PrefixConcat pq r PfxEpsEmp *)
+    (* convenient fact I only realized after all cases: *) assert (A : r = PfxEpsEmp) by sauto lq: on. subst.
     sinvert Hr.
     + (* q, r both PfxEpsEmp *) sauto lq: on.
     + (* q PfxOneEmp, r PfxEpsEmp *) sauto lq: on.
     + (* q PfxSumEmp, r PfxEpsEmp *)
       (* (no hypotheses) exists pq, PrefixConcat PfxEpsEmp PfxSumEmp pq /\ PrefixConcat pq PfxEpsEmp PfxEpsEmp *)
-      Fail best time: 1000000000000000000. (* stops in < 1 second: probably actually false *)
+      Fail best time: 1000000000000000000. (* stops in < 1 second: probably actually false *) shelve.
+    + (* q PfxStarEmp, r PfxEpsEmp *)
+      Fail best time: 1000000000000000000. (* ditto ^^ *) shelve.
 Abort.
 
 Lemma oh_shit :
