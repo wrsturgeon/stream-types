@@ -64,7 +64,7 @@ Fixpoint fv_term e : set string :=
   | TmLetPar x y z e | TmLetCat _ x y z e => set_union (singleton_set z) (
       set_minus (set_minus (fv_term e) (singleton_set x)) (singleton_set y))
   | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
-  | TmDrop x e => set_minus (fv_term e) (singleton_set x)
+  | TmDrop x e => set_union (fv_term e) (singleton_set x)
   end.
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
@@ -73,7 +73,29 @@ Definition subst_var (e : term) (x : string) (y : string) : term := e.
 Arguments subst_var e/ x y.
 Hint Unfold subst_var : core.
 
-Inductive reactive : term -> Prop := .
+(* inert relation. *)
+Inductive Inert : term -> Prop :=
+  | InertParR : forall e1 e2,
+      Inert e1 ->
+      Inert e2 ->
+      Inert (e1 , e2)
+  | InertParL : forall x y z e ,
+      Inert e ->
+      Inert (TmLetPar x y z e)
+  | InertCatL : forall t x y z e,
+      Inert e ->
+      Inert (TmLetCat t x y z e)
+  | InertEpsR : Inert sink
+  | InertVar : forall x,
+      Inert (TmVar x)
+  | InertLet : forall x e e',
+      Inert e ->
+      Inert e' ->
+      Inert (TmLet x e e')
+  | InertDrop : forall x e ,
+      Inert e ->
+      Inert (TmDrop x e)
+.
 
 (* 
 (* term is well-formed under a set of free variables.

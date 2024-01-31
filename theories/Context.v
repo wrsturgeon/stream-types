@@ -35,6 +35,17 @@ Fixpoint fv_ctx ctx : set string :=
 
 Instance fv_context : FV context := { fv := fv_ctx; }.
 
+Fixpoint bindings ctx : set (prod string type) :=
+  match ctx with
+  | CtxEmpty =>
+      empty_set
+  | CtxHasTy x s =>
+      singleton_set (pair x s)
+  | CtxComma lhs rhs
+  | CtxSemic lhs rhs =>
+      set_union (bindings lhs) (bindings rhs)
+  end.
+
 Inductive WFContext : context -> Prop :=
   | WFCtxEmpty :
       WFContext CtxEmpty

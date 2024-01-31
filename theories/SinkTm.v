@@ -21,7 +21,3 @@ Fixpoint sink_tm (p : prefix) : term :=
       | PfxStarRest p1 p2 => sink_tm p2
     end
 .
-
-Theorem sink_reactive : forall p, reactive (sink_tm p).
-Proof.
-Admitted.

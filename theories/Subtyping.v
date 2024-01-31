@@ -19,14 +19,6 @@ Inductive Subtype : context -> context -> Prop :=
       Subtype g g
   | SubCommaExc : forall g d,
       Subtype (CtxComma g d) (CtxComma d g)
-  | SubCommaWkn : forall g d,
-      Subtype (CtxComma g d) g
-  (* TODO: remove weakenigns: this is what drop is for. *)
-  (* don't need right-hand comma weakening b/c we have exchange *)
-  | SubSemicWkn1 : forall g d,
-      Subtype (CtxSemic g d) g
-  | SubSemicWkn2 : forall g d,
-      Subtype (CtxSemic g d) d
   | SubCommaUnit : forall g,
       Subtype g (CtxComma g CtxEmpty)
   | SubSemicUnit1 : forall g,
@@ -39,18 +31,27 @@ Hint Constructors Subtype : core.
 Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
   Fill g d gd ->
   Fill g d' gd' ->
-  Subtype d d' ->
+  (* Subtype d d' -> *)
   (forall n : env, EnvTyped n d -> EnvTyped n d') ->
   forall n : env,
+  (* NOTE: added the agreement, should be good here. *)
+  Agree n n d d' ->
   EnvTyped n gd ->
   EnvTyped n gd'.
 Proof.
-  intros d d' g gd gd' Hf Hf' Hs IH n He.
-  generalize dependent d. generalize dependent d'. generalize dependent gd. generalize dependent gd'.
-  generalize dependent n. induction g; cbn in *; intros;
+  intros d d' g gd gd' Hf.
+  generalize dependent gd'.
+  generalize dependent d'.
+  induction Hf; intros.
+  - sauto lq: on.
+  - sauto lq: on rew: off.
+  - sauto lq: on rew: off.
+  - sinvert H. sinvert H2. admit.
+Admitted.
+  (* generalize dependent n. induction g; cbn in *; intros;
   sinvert Hf'; sinvert Hf; [apply IH; assumption | | | |]; sinvert He; constructor; try assumption;
   try (eapply IHg; [| eassumption | eassumption | |]; assumption);
-  destruct H6; [left; assumption | right | left | right; assumption]. Abort.
+  destruct H6; [left; assumption | right | left | right; assumption]. Abort. *)
 (*
   (* TODO: we have to have something to do with `Agree`--maybe Subtype -> Agree? *)
   (eapply prop_on_fill; [eassumption | eassumption | | assumption]).
@@ -63,21 +64,22 @@ Hint Resolve fill_preserves_env : core.
 *)
 
 (* Theorem B.35 *)
+(* NOTE: had to strengthen this to, carry along the agreement. *)
 Theorem sub_preserves_env : forall n G D,
   EnvTyped n G ->
   Subtype G D ->
-  EnvTyped n D.
+  EnvTyped n D /\ Agree n n G D.
 Proof.
-  intros n G D He Hs. generalize dependent n. induction Hs; cbn in *; intros.
-  - shelve. (* eapply fill_preserves_env; [apply H | | | |]; eassumption. *)
-  - assumption.
-  - sinvert He. constructor; assumption.
-  - sinvert He. assumption.
-  - sinvert He. assumption.
-  - sinvert He. assumption.
-  - constructor. { assumption. } constructor.
-  - constructor. { assumption. } { constructor. } left. cbn. (* no free variables: holds vacuously *) intros _ [].
-  - constructor. { constructor. } { assumption. } right. cbn. (* ditto *) intros _ [].
+  intros n G D He Hs. generalize dependent n. induction Hs; intros.
+  - edestruct IHHs. sfirstorder use:maps_to_hole_reflect.
+    split. eapply fill_preserves_env; [apply H | | | |]; try eassumption. hauto l: on.
+    (* go to this point: it's clearly true. *)
+    admit.
+  - sfirstorder.
+  - sauto lq: on.
+  - sfirstorder.
+  - sauto q: on.
+  - sauto q: on.
   Unshelve. Abort.
 (*
 Qed.

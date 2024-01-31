@@ -13,7 +13,9 @@ From LambdaST Require Import
   Sets
   Terms
   Types
-  Typing.
+  Typing
+  Nullable
+  .
 
 Theorem maximal_push : forall e e' eta p,
   Step eta e e' p ->
@@ -29,37 +31,43 @@ Proof.
   - sauto l: on.
   - sauto l: on.
   - sauto l: on.
-  - intros. eapply IHStep.
-    simpl in H1.
-    edestruct (H1 z) as [p [A B]]; [sfirstorder|].
-    assert (p = PfxParPair p1 p2) by scongruence.
-    subst.
-    sinvert B.
-    unfold MaximalOn. unfold PropOn. intros.
-    unfold PropOnItem.
-    admit.
+  - admit.
 Admitted.
 
-(* NOT CLEAR ABOUT RECURSION. when you unfold a fixpoint, you might get a thing that's not reactive at toplevel.
-1, ::, (;) are not reactive.
-*)
-
-(* terms need to be primed. The output of EVERY STEP is inert. it won't produce
-anything with the empty prefix, because otherwise it would have earlier. This problem *can only happen* when you're kicking off a function (and on recursive calls).*)
-
-Theorem empty_push_reactive : forall e e' eta p,
-  reactive e ->
+Theorem empty_push_inert : forall e e' eta p ,
+  Inert e ->
   Step eta e e' p ->
   EmptyOn (fv e) eta ->
-  EmptyPrefix p.
+  EmptyPrefix p /\ Inert e'.
 Proof.
   intros.
-  induction H0; sinvert H.
+  induction H0; intros.
+  - sauto lq: on.
+  - sauto lq: on.
+  - qauto l: on.
+  - sauto.
+  - sinvert H.
+  - sauto lq: on.
+  - sinvert H. 
+    edestruct IHStep as [A B]; [eauto | admit |]. (* obvious, gotta compute envs. *)
+    split; sauto lq: on rew: off.
+  - sinvert H. 
+    edestruct IHStep as [A B]; [eauto | admit |]. (* obvious, gotta compute envs. *)
+    split; sauto lq: on rew: off.
+  - assert (exists p, n z = Some p /\ EmptyPrefix p) by sfirstorder.
+    destruct H3 as [p'' [A B]].
+    destruct (ltac:(sfirstorder) : PfxCatBoth p1 p2 = p'').
+    sinvert B.
+  - sinvert H. edestruct IHStep1; [eauto | hauto q: on use:prop_on_contains|].
+    assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on use:prop_on_contains.
+    edestruct IHStep2; [eauto | admit |].
+    sauto lq: on.
+  - sinvert H. edestruct IHStep; [eauto | admit |]. sauto lq: on.
 Admitted.
 
-
-Theorem agree_step : forall e e' eta p G x s,
-  SubsetOf (fv e) (fv G) ->
+Theorem agree_step_inert : forall e e' eta p G x s,
+  Inert e ->
+  SubsetOf (fv e) (fv G) -> (*automatic from typing derivatino*)
   Step eta e e' p ->
   PrefixTyped p s ->
   Agree eta (singleton_env x p) G (CtxHasTy x s)
@@ -67,19 +75,13 @@ Theorem agree_step : forall e e' eta p G x s,
 Proof.
   intros.
   unfold Agree. split; intros.
-  - assert (MaximalOn (fv e) eta). eapply prop_on_contains. eauto.
-  assert (MaximalPrefix p) by sfirstorder use:maximal_push.
-    exists p. sinvert H3. unfold singleton_env. admit.
-Admitted.
-
-
-Theorem step_reactive : forall e e' eta p,
-  Step eta e e' p ->
-  reactive e'.
-Proof.
-  intros.
-Admitted.
-
+  - assert (MaximalOn (fv e) eta); [eapply prop_on_contains; eauto |].
+    assert (MaximalPrefix p) by sfirstorder use:maximal_push.
+    exists p. sinvert H6. unfold singleton_env. hauto lq: on use:eqb_refl. 
+  - assert (EmptyOn (fv e) eta); [eapply prop_on_contains; eauto |].
+    assert (EmptyPrefix p) by hauto lb: on drew: off use:empty_push_inert.
+    exists p. sinvert H6. unfold singleton_env. hauto lq: on use:eqb_refl.
+Qed.
 
 
 Theorem soundout : forall G e e' s eta p,
@@ -95,12 +97,12 @@ Proof.
     generalize dependent eta.
     generalize dependent p.
     induction Ht; intros p eta e0' Heta Hstep.
-    (* - cbn in *. sauto q: on.
+    - cbn in *. sauto q: on.
     - sinvert Hstep.
       assert (~fv G z) by hauto q: on use:wf_fill_reflect.
       eapply IHHt; [| | eauto].
-      + qauto l: on use: hmm'.
-      + eapply catlenvtyped; eauto; sauto l: on use: maps_to_has_type.
+      + admit.
+      + admit. (*eapply catlenvtyped; eauto; sauto l: on use: maps_to_has_type.*)
     - sinvert HwfG; sinvert Heta. sinvert Hstep.
       + constructor. eapply IHHty1; eauto.
       + constructor. eapply IHHty1; eauto. eauto. eauto.
@@ -120,7 +122,7 @@ Proof.
       + sauto l: on use:wf_fill.
       + eapply letenvtyped; [ | | eauto].
         eapply IHHty1; [| | eauto]. sfirstorder use:wf_fill. sfirstorder use:maps_to_hole.
-    - sinvert Hstep. eapply IHHty; [ | | eauto]. hauto lq: on rew: off use: wf_fill. *)
+    - sinvert Hstep. eapply IHHty; [ | | eauto]. hauto lq: on rew: off use: wf_fill.
 Admitted.
 
 (* let x = e in e' | *)

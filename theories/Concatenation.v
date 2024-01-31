@@ -106,3 +106,9 @@ Abort.
   - sinvert Hd'. { sauto lq: on. } sinvert Ht'. Fail best. Abort.
 >>>>>>> origin/main
 *)
+
+
+(* TODO: prefix concatenation and derivatives,*)
+(* TODO: prefix concatenation is associative. *)
+(* TODO: environment concatenation, and the same. Environment concat: n . n' ~ n'' if,
+for all x in dom(n) and dom(n'), n(x) . n'(x) ~ n''(x)*)

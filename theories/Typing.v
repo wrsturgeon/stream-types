@@ -4,7 +4,8 @@ From LambdaST Require Import
   Hole
   Sets
   Terms
-  Types.
+  Types
+  Nullable.
 From Coq Require Import
   List
   String.
@@ -13,13 +14,12 @@ From Hammer Require Import Tactics.
 
 Declare Scope typing_scope.
 
-Reserved Notation "G '|-' x '\in' T" (at level 97).
 
 Inductive Typed : context -> term -> type -> Prop :=
   | TParR : forall G e1 e2 s t,
-      G |- e1 \in s ->
-      G |- e2 \in t ->
-      G |- (e1, e2) \in TyPar s t
+      Typed G e1 s ->
+      Typed G e2 t ->
+      Typed G (e1, e2) (TyPar s t)
   | TParL : forall G x y z s t e r Gxsyt Gzst,
       x <> y ->
       ~fv G x ->
@@ -30,12 +30,12 @@ Inductive Typed : context -> term -> type -> Prop :=
       *)
       Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyPar s t)) Gzst ->
-      Gxsyt |- e \in r ->
-      Gzst |- TmLetPar x y z e \in r
+      Typed Gxsyt e r ->
+      Typed Gzst (TmLetPar x y z e) r
   | TCatR : forall G D e1 e2 s t,
-      G |- e1 \in s ->
-      D |- e2 \in t ->
-      CtxSemic G D |- (e1; e2) \in TyDot s t
+      Typed G e1 s ->
+      Typed D e2 t ->
+      Typed (CtxSemic G D) (e1; e2) (TyDot s t)
   | TCatL : forall G x y z s t e r Gxsyt Gzst,
       x <> y ->
       ~fv G x ->
@@ -46,27 +46,27 @@ Inductive Typed : context -> term -> type -> Prop :=
       *)
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyDot s t)) Gzst ->
-      Gxsyt |- e \in r ->
-      Gzst |- TmLetCat t x y z e \in r
+      Typed Gxsyt e r ->
+      Typed Gzst (TmLetCat t x y z e) r
   | TEpsR : forall G,
-      G |- sink \in eps
+      Typed G sink eps
   | TOneR : forall G,
-      G |- unit \in 1
+      Typed G unit 1
   | TVar : forall G x s Gxs,
       (* fill G (CtxHasTy x s) |- (TmVar x) \in s *)
       Fill G (CtxHasTy x s) Gxs ->
-      Gxs |- TmVar x \in s
-  | TSubCtx : forall G G' e s,
-      CtxLEq G G' ->
-      G' |- e \in s ->
-      G |- e \in s
+      Typed Gxs (TmVar x) s
+  (* | TSubCtx : forall G G' e s, *)
+      (* CtxLEq G G' -> *)
+      (* Typed G' e s -> *)
+      (* Typed G e s *)
   | T_Let : forall G D GD Gxs x e e' s t,
       ~(fv G x) ->
-      D |- e \in s ->
+      Typed D e s ->
       Fill G (CtxHasTy x s) Gxs ->
       Fill G D GD ->
-      Gxs |- e' \in t ->
-      GD |- TmLet x e e' \in t
+      Typed Gxs e' t ->
+      Typed GD (TmLet x e e') t
   | TDrop : forall G x s t e Ge Gxs,
       (*
       fill G CtxEmpty |- e \in t ->
@@ -74,11 +74,9 @@ Inductive Typed : context -> term -> type -> Prop :=
       *)
       Fill G CtxEmpty Ge ->
       Fill G (CtxHasTy x s) Gxs ->
-      Ge |- e \in t ->
-      Gxs |- drop x; e \in t
-where "G '|-' x '\in' T" := (Typed G x T).
-Hint Constructors Typed : core.
-
+      Typed Ge e t ->
+      Typed Gxs (drop x; e) t
+  .
 (* TODO:
 Theorem typed_wf_term : forall G x T,
   G |- x \in T ->
@@ -86,7 +84,7 @@ Theorem typed_wf_term : forall G x T,
 *)
 
 Theorem typing_fv : forall G e s,
-    G |- e \in s ->
+    Typed G e s ->
     forall x,
     fv e x ->
     fv G x.
@@ -104,7 +102,6 @@ Proof.
   - destruct H' as [].
   - destruct H' as [].
   - eapply fv_fill. { eassumption. } cbn. left. assumption.
-  - cbn in *. specialize (IHHt _ H'). invert H. (* TODO: SubCtx hasn't been defined yet, so holds vacuously *)
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
@@ -112,3 +109,36 @@ Proof.
     eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH. } right. assumption.
 Qed.
 Hint Resolve typing_fv : core.
+
+
+
+(* Inductive Inert : set (prod string type) -> term -> type -> Prop :=
+  | InertParR : forall G e1 e2 s t,
+      Inert G e1 s ->
+      Inert G e2 t ->
+      Inert G (e1 , e2) (TyPar s t)
+  | InertParL : forall G x y z s t e r ,
+      Inert (set_union G (set_union (singleton_set (pair x s)) (singleton_set (pair y t)))) e r ->
+      Inert (set_union G (singleton_set (pair z (TyPar s t)))) (TmLetPar x y z e) r
+  | InertCatR : forall G D e1 e2 s t,
+      ~(Nullable s) ->
+      DisjointSets G D ->
+      Inert G e1 s ->
+      Inert D e2 t ->
+      Inert (set_union G D) (e1 ; e2) (TyDot s t)
+  | InertCatL : forall G x y z s t e r ,
+      Inert (set_union G (set_union (singleton_set (pair x s)) (singleton_set (pair y t)))) e r ->
+      Inert (set_union G (singleton_set (pair z (TyDot s t)))) (TmLetCat t x y z e) r
+  | InertEpsR : forall G,
+      Inert G sink eps
+  | InertVar : forall G x s,
+      G (pair x s) ->
+      Inert G (TmVar x) s
+  | InertLet : forall G D x e e' s t,
+      Inert D e s  ->
+      Inert (set_union G (singleton_set (pair x s))) e' t ->
+      Inert (set_union G D) (TmLet x e e') t
+  | InertDrop : forall G x s t e ,
+      Inert (set_minus G (singleton_set (pair x s))) e t ->
+      Inert G (TmDrop x e) t
+. *)

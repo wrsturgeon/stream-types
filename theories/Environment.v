@@ -85,7 +85,6 @@ Proof.
 sfirstorder.
 Qed.
 
-
 Definition Agree (n n' : env) (D D' : context) : Prop :=
   (MaximalOn (fv D) n -> MaximalOn (fv D') n') /\
   (EmptyOn (fv D) n -> EmptyOn (fv D') n').
@@ -113,6 +112,19 @@ Hint Constructors EnvTyped : core.
 
 Hint Constructors EnvTyped : core.
 
+Theorem maps_to_hole_reflect : forall g d gd n,
+  Fill g d gd ->
+  EnvTyped n gd ->
+  EnvTyped n d.
+Proof.
+  intros.
+ generalize dependent g. generalize dependent d. induction H0; intros; subst; cbn in *.
+ - sauto lq: on.
+ - sauto lq: on rew: off.
+ - sauto lq: on rew: off.
+ - sinvert H0. hauto l: on. sfirstorder. sfirstorder.
+Qed.
+
 
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
@@ -120,8 +132,7 @@ Theorem maps_to_hole : forall n G D,
   EnvTyped n D.
 Proof.
   intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  generalize dependent G. generalize dependent D. induction H; intros; subst; cbn in *;
-  sinvert E; try econstructor; try eassumption; try (eapply IHEnvTyped1; eassumption); eapply IHEnvTyped2; eassumption.
+  sfirstorder use:maps_to_hole_reflect.
 Qed.
 Hint Resolve maps_to_hole : core.
 
@@ -333,6 +344,8 @@ Hint Resolve env_subctx_bind : core.
 
 (* TODO: what's the notation in Theorem B.12? *)
 
+(*TODO: Fix uses of fill.*)
+
 Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
   (P = EmptyPrefix \/ P = MaximalPrefix) ->
   x <> y ->
@@ -394,7 +407,6 @@ Theorem catrenvtyped2 :  forall G x y z p1 p2 s t r eta,
 Proof.
 Admitted.
 
-(* i think this one needs stronger premises... *)
 Theorem letenvtyped :  forall G D x p s eta,
   Agree eta (singleton_env x p) D (CtxHasTy x s) ->
   PrefixTyped p s ->
