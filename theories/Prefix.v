@@ -120,8 +120,3 @@ Inductive EmptyPrefix : prefix -> Prop :=
       EmptyPrefix PfxSumEmp
   .
 Hint Constructors EmptyPrefix : core.
-
-Definition EmptyOnSet (s : Set) (n : s -> prefix) : Prop := forall x, EmptyPrefix (n x).
-Hint Unfold EmptyOnSet : core.
-Definition MaximalOnSet (s : Set) (n : s -> prefix) : Prop := forall x, MaximalPrefix (n x).
-Hint Unfold MaximalOnSet : core.

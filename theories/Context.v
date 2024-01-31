@@ -20,9 +20,13 @@ Derive Arbitrary for context.
 
 Fixpoint fv_ctx ctx : set string :=
   match ctx with
-  | CtxEmpty => empty_set
-  | CtxHasTy x _ => singleton_set x
-  | CtxComma lhs rhs | CtxSemic lhs rhs => set_union (fv_ctx lhs) (fv_ctx rhs)
+  | CtxEmpty =>
+      empty_set
+  | CtxHasTy x _ =>
+      singleton_set x
+  | CtxComma lhs rhs
+  | CtxSemic lhs rhs =>
+      set_union (fv_ctx lhs) (fv_ctx rhs)
   end.
 
 Instance fv_context : FV context := { fv := fv_ctx; }.
@@ -44,6 +48,8 @@ Inductive WFContext : context -> Prop :=
       WFContext (CtxSemic g g')
   .
 Hint Constructors WFContext : core.
+
+(* TODO: will need to prove that context derivatives preserve this... *)
 
 (* Argument order matches notation: (CtxLEq G G') === (G <= G') *)
 Inductive CtxLEq (G G' : context) : Prop :=
