@@ -228,3 +228,4 @@ Proof.
   intros G x y z s t r ctr Hctr Hx Hy Hxy H. apply wf_fill in H as [H1 [H2 H3]]. sinvert H2. apply wf_fill.
   repeat split; intros; [eassumption | sauto | |]; destruct Hctr; sfirstorder.
 Qed.
+Hint Resolve wf_hole_iff : core.

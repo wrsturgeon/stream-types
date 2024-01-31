@@ -81,10 +81,7 @@ Proof. sfirstorder. Qed.
 
 Theorem prop_on_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
-Proof.
-sfirstorder.
-Qed.
-
+Proof. sfirstorder. Qed.
 
 Definition Agree (n n' : env) (D D' : context) : Prop :=
   (MaximalOn (fv D) n -> MaximalOn (fv D') n') /\

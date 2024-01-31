@@ -129,7 +129,6 @@ Proof.
 Qed.
 Hint Resolve context_derivative_fun : core.
 
-
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
   Derivative p s s' ->

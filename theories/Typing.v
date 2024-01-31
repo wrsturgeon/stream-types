@@ -26,10 +26,6 @@ Inductive Typed : context -> term -> type -> Prop :=
       x <> y ->
       ~fv G x ->
       ~fv G y ->
-      (*
-      fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
-      fill G (CtxHasTy z (TyPar s t)) |- (TmLetPar x y z e) \in r
-      *)
       Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyPar s t)) Gzst ->
       Gxsyt |- e \in r ->
@@ -43,10 +39,6 @@ Inductive Typed : context -> term -> type -> Prop :=
       x <> y ->
       ~fv G x ->
       ~fv G y ->
-      (*
-      fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
-      fill G (CtxHasTy z (TyDot s t)) |- (TmLetCat t x y z e) \in r
-      *)
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyDot s t)) Gzst ->
       Gxsyt |- e \in r ->
@@ -56,7 +48,6 @@ Inductive Typed : context -> term -> type -> Prop :=
   | TOneR : forall G,
       G |- unit \in 1
   | TVar : forall G x s Gxs,
-      (* fill G (CtxHasTy x s) |- (TmVar x) \in s *)
       Fill G (CtxHasTy x s) Gxs ->
       Gxs |- TmVar x \in s
   | TSubCtx : forall G G' e s,
@@ -71,10 +62,6 @@ Inductive Typed : context -> term -> type -> Prop :=
       Gxs |- e' \in t ->
       GD |- TmLet x e e' \in t
   | TDrop : forall G x s t e Ge Gxs,
-      (*
-      fill G CtxEmpty |- e \in t ->
-      fill G (CtxHasTy x s) |- TmDrop x e \in t
-      *)
       Fill G CtxEmpty Ge ->
       Fill G (CtxHasTy x s) Gxs ->
       Ge |- e \in t ->
