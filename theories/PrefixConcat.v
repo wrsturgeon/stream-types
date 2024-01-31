@@ -29,7 +29,7 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
   | PfxCatSumEmp : forall p,
       PrefixConcat PfxSumEmp p p
   | PfxCatSumInl : forall p p' p'',
-      PrefixConcat p p' p'' -> (* <-- TODO: Make sure this was a typo in the Appendix! *)
+      PrefixConcat p p' p'' -> (* <-- TODO: Was this a typo in the Appendix? *)
       PrefixConcat (PfxSumInl p) p' (PfxSumInl p'')
   | PfxCatSumInr : forall p p' p'',
       PrefixConcat p p' p'' ->
