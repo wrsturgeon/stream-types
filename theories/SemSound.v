@@ -59,7 +59,7 @@ Admitted.
 
 
 Theorem agree_step : forall e e' eta p G x s,
-  SubsetOf (fv e) (fv G) ->
+  Subset (fv e) (fv G) ->
   Step eta e e' p ->
   PrefixTyped p s ->
   Agree eta (singleton_env x p) G (CtxHasTy x s)
