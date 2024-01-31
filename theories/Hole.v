@@ -108,39 +108,6 @@ Inductive WFHole : hole -> Prop :=
   .
 Hint Constructors WFHole : core.
 
-Theorem wf_hole_iff : forall G D GD,
-  Fill G D GD -> (
-    WFContext GD <-> (
-      WFHole G /\
-      WFContext D /\
-      DisjointSets (fv G) (fv D))).
-Proof.
-  intros G D GD Hf. split; [intro Hwf | intros [HG [HD Hd]]].
-  - split; [| split]; [eapply wf_ctx_hole | eapply wf_ctx_plug | eapply fill_wf_disjoint]; eassumption.
-  - eapply wf_fill; eassumption.
-Qed.
-
-Theorem wf_fill : forall h d,
-  WFContext (fill h d) <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
-Proof.
-  intros h d.
-  remember (fill h d) as g.
-  apply reflect_fill in Heqg.
-  hauto l: on use: wf_hole_iff.
-Qed.
-Hint Resolve wf_fill : core.
-
-Theorem wf_ctx_plug : forall GD,
-  WFContext GD ->
-  forall G D,
-  Fill G D GD ->
-  WFContext D.
-Proof.
-  intros GD Hc G D Hf. generalize dependent Hc.
-  induction Hf; intros; try (apply IHHf; sinvert Hc); assumption.
-Qed.
-Hint Resolve wf_ctx_plug : core.
-
 Theorem fill_disjoint_l : forall G D GD (s : context),
   Fill G D GD ->
   DisjointSets (fv GD) (fv s) ->
@@ -173,7 +140,18 @@ Proof.
 Qed.
 Hint Resolve wf_ctx_hole : core.
 
-Lemma wf_fill : forall G D GD,
+Theorem wf_ctx_plug : forall GD,
+  WFContext GD ->
+  forall G D,
+  Fill G D GD ->
+  WFContext D.
+Proof.
+  intros GD Hc G D Hf. generalize dependent Hc.
+  induction Hf; intros; try (apply IHHf; sinvert Hc); assumption.
+Qed.
+Hint Resolve wf_ctx_plug : core.
+
+Lemma wf_ctx_fill : forall G D GD,
   Fill G D GD ->
   WFHole G ->
   WFContext D ->
@@ -185,7 +163,7 @@ Proof.
   constructor; try assumption (* 1/3 *); try eapply IHHG; clear IHHG; try eassumption;
   apply fv_fill in H5; (* <-- this is the crucial move! *) sfirstorder.
 Qed.
-Hint Resolve wf_fill : core.
+Hint Resolve wf_ctx_fill : core.
 
 Lemma fill_wf_disjoint : forall G D GD,
   Fill G D GD ->
@@ -199,6 +177,28 @@ Proof.
   (edestruct IHG as [IH1 IH2]; [| eassumption | apply fv_fill |]; [assumption | assumption |]; sfirstorder).
 Qed.
 Hint Resolve fill_wf_disjoint : core.
+
+Theorem wf_hole_iff : forall G D GD,
+  Fill G D GD -> (
+    WFContext GD <-> (
+      WFHole G /\
+      WFContext D /\
+      DisjointSets (fv G) (fv D))).
+Proof.
+  intros G D GD Hf. split; [intro Hwf | intros [HG [HD Hd]]].
+  - split; [| split]; [eapply wf_ctx_hole | eapply wf_ctx_plug | eapply fill_wf_disjoint]; eassumption.
+  - eapply wf_ctx_fill; eassumption.
+Qed.
+
+Theorem wf_fill : forall h d,
+  WFContext (fill h d) <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
+Proof.
+  intros h d.
+  remember (fill h d) as g.
+  apply reflect_fill in Heqg.
+  hauto l: on use: wf_hole_iff.
+Qed.
+Hint Resolve wf_fill : core.
 
 Theorem hmm : forall G x y z s t r ctr,
   (ctr = CtxComma \/ ctr = CtxSemic) ->

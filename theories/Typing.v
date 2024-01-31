@@ -112,6 +112,7 @@ Hint Resolve typed_fv : core.
 
 (* TODO: add WF weakening theorem assuming all FVs are covered, then use the above to prove the below *)
 
+(*
 Theorem typed_wf_term : forall G x T,
   G |- x \in T ->
   WFTerm (fv G) x.
@@ -130,3 +131,4 @@ Proof.
     *)
   - (* (e1; e2) *)
     cbn in *. constructor. eapply typed_fv in H. Abort. (* TODO *)
+*)

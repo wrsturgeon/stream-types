@@ -21,12 +21,12 @@ Inductive Subtype : context -> context -> Prop :=
       Subtype (CtxComma g d) (CtxComma d g)
   | SubCommaWkn : forall g d,
       Subtype (CtxComma g d) g
-  (* TODO: remove weakenigns: this is what drop is for. *)
+  (* NOTE: REMOVED: this is what `drop` is for
   (* don't need right-hand comma weakening b/c we have exchange *)
   | SubSemicWkn1 : forall g d,
       Subtype (CtxSemic g d) g
   | SubSemicWkn2 : forall g d,
-      Subtype (CtxSemic g d) d
+      Subtype (CtxSemic g d) d *)
   | SubCommaUnit : forall g,
       Subtype g (CtxComma g CtxEmpty)
   | SubSemicUnit1 : forall g,
@@ -73,8 +73,9 @@ Proof.
   - assumption.
   - sinvert He. constructor; assumption.
   - sinvert He. assumption.
+  (* removed cases
   - sinvert He. assumption.
-  - sinvert He. assumption.
+  - sinvert He. assumption. *)
   - constructor. { assumption. } constructor.
   - constructor. { assumption. } { constructor. } left. cbn. (* no free variables: holds vacuously *) intros _ [].
   - constructor. { constructor. } { assumption. } right. cbn. (* ditto *) intros _ [].
