@@ -77,14 +77,4 @@ Theorem prefix_concat_exists_when_typed : forall p p' s dps dp'dps,
   PrefixTyped p'' s /\
   Derivative p'' s dp'dps.
 Proof.
-  intros p p' s dps dp'dps Hd Hd' Ht Ht'. generalize dependent p'. generalize dependent dps.
-  generalize dependent dp'dps. induction Ht; cbn in *; intros; sinvert Hd.
-  - eexists. repeat split; [| eassumption | assumption]. invert Ht'. constructor.
-  - sfirstorder.
-  - sauto lq: on.
-  - sinvert Ht'. sinvert Hd'.
-    destruct (IHHt1 _ _ H4 _ H8 H2) as [P1 [Hpc1 [Hpt1 Hd1]]]; clear IHHt1.
-    destruct (IHHt2 _ _ H5 _ H9 H3) as [P2 [Hpc2 [Hpt2 Hd2]]]; clear IHHt2.
-    eexists. repeat constructor; eassumption.
-  - sinvert Hd'. { sauto lq: on. } sinvert Ht'. Fail best. Abort.
 *)

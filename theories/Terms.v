@@ -66,6 +66,7 @@ Fixpoint fv_term e : set string :=
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 
+(*
 Inductive WFTerm : set string -> term -> Prop :=
   | WFTmSink : forall s,
       WFTerm s TmSink
@@ -154,3 +155,4 @@ Proof.
     eapply IHx. { shelve. } eapply wf_set_eq; [| eassumption]. cbn. intro x'. split; intro H'. { sfirstorder. }
     destruct H'. { destruct H0. split; [| assumption]. destruct H0; [| right; assumption]. sfirstorder. }
     split. { left. right. assumption. } intro. subst. (* Need to show that `sr` does not contain `bound` *) Abort.
+*)

@@ -1,6 +1,7 @@
 From Coq Require Import
   List
   String.
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   FV
@@ -9,7 +10,6 @@ From LambdaST Require Import
   Sets
   Terms
   Types.
-From Hammer Require Import Tactics.
 
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
@@ -18,6 +18,11 @@ Definition singleton_env (id : string) (p : prefix) : env := fun x =>
   if eqb id x then Some p else None.
 Arguments singleton_env id p x/.
 Hint Unfold singleton_env : core.
+
+Definition dom (n : env) : set string :=
+  fun x => exists p, n x = Some p.
+Arguments dom n x/.
+Hint Unfold dom : core.
 
 Definition env_union (n n' : env) : env := fun x =>
   match n' x with
@@ -40,9 +45,7 @@ Hint Unfold env_drop : core.
 Theorem maps_to_unique_literal : forall p x (n : env),
   n x = Some p ->
   ~exists q, p <> q /\ n x = Some q.
-Proof.
-  intros p x n Hp [q [Hpq Hq]]. rewrite Hp in Hq. sinvert Hq. apply Hpq. reflexivity.
-Qed.
+Proof. sfirstorder. Qed.
 Hint Resolve maps_to_unique_literal : core.
 
 Theorem maps_to_unique : forall p1 p2 x (n : env),
@@ -70,7 +73,15 @@ Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ s n.
 Hint Unfold MaximalOn : core.
 
-(* TODO: empty/maximal on (free variables in) terms *)
+Theorem prop_on_contains : forall P s s' n,
+  SubsetOf s' s ->
+  PropOn P s' n ->
+  PropOn P s n.
+Proof. sfirstorder. Qed.
+
+Theorem prop_on_union: forall P s s' n,
+  PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
+Proof. sfirstorder. Qed.
 
 Definition Agree (n n' : env) (D D' : context) : Prop :=
   (MaximalOn (fv D) n <-> MaximalOn (fv D') n') /\
@@ -122,6 +133,20 @@ Definition NoConflict (n n' : env) := forall x p,
   p = p'.
 Arguments NoConflict/ n n'.
 Hint Unfold NoConflict : core.
+
+Lemma prop_on_fill : forall P n d d' g lhs lhs',
+  Fill g d lhs ->
+  Fill g d' lhs' ->
+  PropOn P (fv d') n ->
+  PropOn P (fv lhs) n ->
+  PropOn P (fv lhs') n.
+Proof.
+  cbn in *. intros P n d d' g lhs lhs' Hf Hf' Hp' Hp x Hfv.
+  assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
+  assert (A : SetEq (fv lhs) (set_union (fv d) (fv g))). { apply fv_fill. assumption. } cbn in *.
+  destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
+Qed.
+Hint Resolve prop_on_fill : core.
 
 Lemma prop_on_item_weakening : forall P nr nl vs,
   PropOnItem P nr vs ->
@@ -195,27 +220,14 @@ Lemma env_typed_weakening_alt : forall n n' G,
   EnvTyped n G ->
   EnvTyped (env_union n n') G.
 Proof.
-  intros n n' G Hm Ht. generalize dependent n'.
-  induction Ht; intros; cbn in *; econstructor; try apply IHHt1; try apply IHHt2; try eassumption.
-  - cbn. specialize (Hm _ _ H). destruct (n' x) as [p' |] eqn:E. 2: { assumption. }
-    f_equal. symmetry. apply Hm. reflexivity.
-  - destruct H; hauto q: on db: core. (* TODO: speed this up *)
+  intros n n' G Hc Ht. generalize dependent n'. induction Ht; intros; simpl in *. { constructor. }
+  - econstructor; [| eassumption]. cbn. destruct (n' x) as [n'x |] eqn:E; [| assumption].
+    f_equal. symmetry. eapply Hc; eassumption.
+  - constructor; [apply IHHt1 | apply IHHt2]; assumption.
+  - constructor. { hauto l: on. } { hauto l: on. } destruct H;
+    (eapply prop_on_weakening_alt in Hc; [| eassumption]); [left | right]; assumption.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
-
-Lemma prop_on_fill : forall P n d d' g lhs lhs',
-  Fill g d lhs ->
-  Fill g d' lhs' ->
-  PropOn P (fv d') n ->
-  PropOn P (fv lhs) n ->
-  PropOn P (fv lhs') n.
-Proof.
-  cbn in *. intros P n d d' g lhs lhs' Hf Hf' Hp' Hp x Hfv.
-  assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
-  assert (A : SetEq (fv lhs) (set_union (fv d) (fv g))). { apply fv_fill. assumption. } cbn in *.
-  destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
-Qed.
-Hint Resolve prop_on_fill : core.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
 Theorem env_subctx_bind_equal : forall hole plug n n',
