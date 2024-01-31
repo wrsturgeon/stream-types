@@ -68,7 +68,7 @@ Theorem agree_step_inert : forall e e' eta p S x s,
   Subset (fv e) S -> (*automatic from typing derivatino*)
   Step eta e e' p ->
   PrefixTyped p s ->
-  Agree eta (singleton_env x p) S (singleton_set x)
+  Agree Inert eta (singleton_env x p) S (singleton_set x)
 .
 Proof.
   intros.

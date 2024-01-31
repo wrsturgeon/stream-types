@@ -9,7 +9,8 @@ From LambdaST Require Import
   Prefix
   Sets
   Terms
-  Types.
+  Types
+  Inertness.
 
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
@@ -83,10 +84,10 @@ Theorem prop_on_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
 Proof. sfirstorder. Qed.
 
-Definition Agree (n n' : env) (s s' : set string) : Prop :=
+Definition Agree (i : Inertness) (n n' : env) (s s' : set string) : Prop :=
   (MaximalOn s n -> MaximalOn s' n') /\
-  (EmptyOn s n -> EmptyOn s' n').
-Arguments Agree/ n n' s s'.
+  (i = Inert -> EmptyOn s n -> EmptyOn s' n'). (* Agree Inert means "including emptyon agreement", Agree Jumpy means "not including emptyon agreement." *)
+Arguments Agree/ i n n' s s'.
 Hint Unfold Agree : core.
 
 Inductive EnvTyped : env -> context -> Prop :=
@@ -335,7 +336,7 @@ Theorem env_subctx_bind : forall hole plug plug' n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug' ->
-  Agree n n' (fv plug) (fv plug') ->
+  Agree Inert n n' (fv plug) (fv plug') ->
   EnvTyped (env_union n n') (fill hole plug').
 Proof.
   intros hole plug plug' n n' Hc Hn Hn' [Ham Hae].
@@ -345,7 +346,7 @@ Proof.
   induction Hf; cbn in *; intros; [sinvert Hf'; apply env_typed_weakening; assumption | | | |];
   sinvert Hf'; sinvert Hn; constructor; try (eapply IHHf; eassumption); clear IHHf;
   try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
-  (destruct H5; [left | right]); try (apply prop_on_weakening_alt; assumption); eapply agree_union; eassumption.
+  (destruct H5; [left | right]); try (apply prop_on_weakening_alt; assumption); eapply agree_union; eauto.
 Qed.
 Hint Resolve env_subctx_bind : core.
 
@@ -385,7 +386,7 @@ Proof.
   eapply env_subctx_bind; [eassumption | eassumption | |].
   - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
     destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
-  - split; apply empty_or_maximal_pfx_par_pair; try assumption; [right | left]; reflexivity.
+  - split. eapply empty_or_maximal_pfx_par_pair; eauto. intro. eapply empty_or_maximal_pfx_par_pair;eauto. 
 Qed.
 
 Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
@@ -419,7 +420,7 @@ Proof.
 Admitted.
 
 Theorem letenvtyped :  forall G D GD Gx x p s eta,
-  Agree eta (singleton_env x p) (fv D) (singleton_set x) ->
+  Agree Inert eta (singleton_env x p) (fv D) (singleton_set x) ->
   PrefixTyped p s ->
   Fill G D GD ->
   Fill G (CtxHasTy x s) Gx ->

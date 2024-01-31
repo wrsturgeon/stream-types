@@ -5,7 +5,9 @@ From LambdaST Require Import
   FV
   Hole
   Prefix
-  Sets.
+  Sets
+  Inertness
+  .
 
 (* Definition B.34 *)
 (* Argument order designed for notation: (Subtype A B) === (A <: B) *)
@@ -35,7 +37,7 @@ Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context)
   (forall n : env, EnvTyped n d -> EnvTyped n d') ->
   forall n : env,
   (* NOTE: added the agreement, should be good here. *)
-  Agree n n (fv d) (fv d') ->
+  Agree Inert n n (fv d) (fv d') ->
   EnvTyped n gd ->
   EnvTyped n gd'.
 Proof.
@@ -68,7 +70,7 @@ Hint Resolve fill_preserves_env : core.
 Theorem sub_preserves_env : forall n G D,
   EnvTyped n G ->
   Subtype G D ->
-  EnvTyped n D /\ Agree n n (fv G) (fv D).
+  EnvTyped n D /\ Agree Inert n n (fv G) (fv D).
 Proof.
   intros n G D He Hs. generalize dependent n. induction Hs; cbn in *; intros.
   - shelve. (* eapply fill_preserves_env; [apply H | | | |]; eassumption. *)

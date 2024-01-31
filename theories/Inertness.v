@@ -1,0 +1,1 @@
+Inductive Inertness := Inert | Jumpy.

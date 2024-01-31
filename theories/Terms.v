@@ -66,9 +66,17 @@ Fixpoint fv_term e : set string :=
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 
-Definition subst_var (e : term) (x : string) (y : string) : term := e.
+Definition subst_var (e : term) (x : string) (y : string) : term.
+Admitted.
 Arguments subst_var e/ x y.
 Hint Unfold subst_var : core.
+
+Inductive ctx_term : Set :=
+  | CtxTmEmp
+  | CtxTmVarTerm (id : string) (t : type) (tm : term)
+  | CtxTmComma : ctx_term -> ctx_term -> ctx_term
+  | CtxTmSemic : ctx_term -> ctx_term -> ctx_term
+  .
 
 Inductive Inert : term -> Prop :=
   | InertParR : forall e1 e2,
