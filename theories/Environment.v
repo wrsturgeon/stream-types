@@ -83,10 +83,10 @@ Theorem prop_on_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
 Proof. sfirstorder. Qed.
 
-Definition Agree (n n' : env) (D D' : context) : Prop :=
-  (MaximalOn (fv D) n -> MaximalOn (fv D') n') /\
-  (EmptyOn (fv D) n -> EmptyOn (fv D') n').
-Arguments Agree/ n n' D D'.
+Definition Agree (n n' : env) (s s' : set string) : Prop :=
+  (MaximalOn s n -> MaximalOn s' n') /\
+  (EmptyOn s n -> EmptyOn s' n').
+Arguments Agree/ n n' s s'.
 Hint Unfold Agree : core.
 
 Inductive EnvTyped : env -> context -> Prop :=
@@ -274,7 +274,7 @@ Theorem env_subctx_bind : forall hole plug plug' n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug' ->
-  Agree n n' plug plug' ->
+  Agree n n' (fv plug) (fv plug') ->
   EnvTyped (env_union n n') (fill hole plug').
 Proof.
   intros hole plug plug' n n' Hc Hn Hn' [Ham Hae].
