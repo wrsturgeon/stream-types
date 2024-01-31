@@ -77,34 +77,6 @@ Theorem prefix_concat_exists_when_typed : forall p p' s dps dp'dps,
   PrefixTyped p'' s /\
   Derivative p'' s dp'dps.
 Proof.
-<<<<<<< HEAD
-  intros p p' s dps Ht Hd Ht'. generalize dependent p'. generalize dependent Ht.
-  induction Hd; intros; sinvert Ht.
-  - sinvert Ht'; repeat eexists; repeat constructor.
-  - sinvert Ht'; repeat eexists; repeat constructor.
-  - sinvert Ht'; repeat eexists; repeat constructor.
-  - sinvert Ht'. specialize (IHHd1 H2). specialize (IHHd2 H4).
-    apply IHHd1 in H3 as [p''1 [dp'dps1 [H21 [H22 [H23 H24]]]]].
-    apply IHHd2 in H5 as [p''2 [dp'dps2 [H31 [H32 [H33 H34]]]]].
-    repeat eexists; repeat constructor;
-    try apply H21; try apply H31; try apply H22; try apply H32; assumption.
-  - specialize (IHHd H1). sinvert Ht';
-    apply IHHd in H2 as [p'' [dp'dps [h1 [h2 [h3 h4]]]]].
-    + repeat eexists; repeat constructor; [apply h1 | apply h2 | |]; assumption.
-    + repeat eexists; repeat constructor; try assumption.
-Abort.
-=======
-  intros p p' s dps dp'dps Hd Hd' Ht Ht'. generalize dependent p'. generalize dependent dps.
-  generalize dependent dp'dps. induction Ht; cbn in *; intros; sinvert Hd.
-  - eexists. repeat split; [| eassumption | assumption]. invert Ht'. constructor.
-  - sfirstorder.
-  - sauto lq: on.
-  - sinvert Ht'. sinvert Hd'.
-    destruct (IHHt1 _ _ H4 _ H8 H2) as [P1 [Hpc1 [Hpt1 Hd1]]]; clear IHHt1.
-    destruct (IHHt2 _ _ H5 _ H9 H3) as [P2 [Hpc2 [Hpt2 Hd2]]]; clear IHHt2.
-    eexists. repeat constructor; eassumption.
-  - sinvert Hd'. { sauto lq: on. } sinvert Ht'. Fail best. Abort.
->>>>>>> origin/main
 *)
 
 

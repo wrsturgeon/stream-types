@@ -27,11 +27,11 @@ Definition DisjointSets {T} (a b : set T) : Prop := forall x,
 Arguments DisjointSets {T} a b/.
 Hint Unfold DisjointSets : core.
 
-(* Argument order chosen for currying: `(SubsetOf a)` can be read out loud *)
-Definition SubsetOf {T} (little big : set T) : Prop := forall x,
+(* Argument order matches notation: (Subset a b) === (a is a subset of b) *)
+Definition Subset {T} (little big : set T) : Prop := forall x,
   little x -> big x.
-Arguments SubsetOf {T} little big.
-Hint Unfold SubsetOf : core.
+Arguments Subset {T} little big.
+Hint Unfold Subset : core.
 
 Definition SetEq {T} (a b : set T) : Prop := forall x,
   a x <-> b x.
@@ -60,6 +60,10 @@ Proof. auto. Qed.
 (* Analogous to `incl_Forall` *)
 Lemma set_prop_incl : forall {T} P big little,
   @SetProp T P big ->
-  SubsetOf little big ->
+  Subset little big ->
   SetProp P little.
 Proof. auto. Qed.
+
+Lemma set_union_comm : forall T a b,
+  SetEq (set_union a b) (@set_union T b a).
+Proof. cbn. intros. split; intros []; try (left; assumption); right; assumption. Qed.

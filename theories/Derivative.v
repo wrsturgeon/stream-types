@@ -3,7 +3,6 @@ From LambdaST Require Import
   Environment
   Nullable
   Prefix
-  Hole
   Types.
 From Hammer Require Import Tactics.
 
@@ -29,7 +28,7 @@ Inductive Derivative : prefix -> type -> type -> Prop :=
   | DrvSumInl : forall p s s' t,
       Derivative p s s' ->
       Derivative (PfxSumInl p) (TySum s t) s'
-  (* TODO: his definition is almost certainly wrong in Appendix B *)
+  (* TODO: this definition is almost certainly wrong in Appendix B *)
   | DrvSumInr : forall p s t t',
       Derivative p t t' ->
       Derivative (PfxSumInr p) (TySum s t) t'
@@ -128,7 +127,6 @@ Proof.
   eexists; econstructor; try apply H; try apply HG; try apply HD; apply D.
 Qed.
 Hint Resolve context_derivative_fun : core.
-
 
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',

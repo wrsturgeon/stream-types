@@ -70,16 +70,16 @@ Theorem sub_preserves_env : forall n G D,
   Subtype G D ->
   EnvTyped n D /\ Agree n n G D.
 Proof.
-  intros n G D He Hs. generalize dependent n. induction Hs; intros.
-  - edestruct IHHs. sfirstorder use:maps_to_hole_reflect.
-    split. eapply fill_preserves_env; [apply H | | | |]; try eassumption. hauto l: on.
-    (* go to this point: it's clearly true. *)
-    admit.
-  - sfirstorder.
-  - sauto lq: on.
-  - sfirstorder.
-  - sauto q: on.
-  - sauto q: on.
+  intros n G D He Hs. generalize dependent n. induction Hs; cbn in *; intros.
+  - shelve. (* eapply fill_preserves_env; [apply H | | | |]; eassumption. *)
+  - admit.
+  - admit.
+  - admit. 
+  (* removed cases
+  - sinvert He. assumption.
+  - sinvert He. assumption. *)
+  - admit.
+  - admit.
   Unshelve. Abort.
 (*
 Qed.

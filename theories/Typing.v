@@ -1,3 +1,5 @@
+From Coq Require Import String.
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   FV
@@ -24,10 +26,6 @@ Inductive Typed : context -> term -> type -> Prop :=
       x <> y ->
       ~fv G x ->
       ~fv G y ->
-      (*
-      fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
-      fill G (CtxHasTy z (TyPar s t)) |- (TmLetPar x y z e) \in r
-      *)
       Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyPar s t)) Gzst ->
       Typed Gxsyt e r ->
@@ -40,10 +38,6 @@ Inductive Typed : context -> term -> type -> Prop :=
       x <> y ->
       ~fv G x ->
       ~fv G y ->
-      (*
-      fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) |- e \in r ->
-      fill G (CtxHasTy z (TyDot s t)) |- (TmLetCat t x y z e) \in r
-      *)
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyDot s t)) Gzst ->
       Typed Gxsyt e r ->
@@ -53,25 +47,20 @@ Inductive Typed : context -> term -> type -> Prop :=
   | TOneR : forall G,
       Typed G unit 1
   | TVar : forall G x s Gxs,
-      (* fill G (CtxHasTy x s) |- (TmVar x) \in s *)
       Fill G (CtxHasTy x s) Gxs ->
       Typed Gxs (TmVar x) s
-  (* | TSubCtx : forall G G' e s, *)
-      (* CtxLEq G G' -> *)
-      (* Typed G' e s -> *)
-      (* Typed G e s *)
-  | T_Let : forall G D GD Gxs x e e' s t,
-      ~(fv G x) ->
+  | TSubCtx : forall G G' e s,
+      CtxLEq G G' ->
+      Typed G' e s ->
+      Typed G e s
+  | TLet : forall G D x e e' s t Gxs GD,
+      ~fv G x ->
       Typed D e s ->
       Fill G (CtxHasTy x s) Gxs ->
       Fill G D GD ->
       Typed Gxs e' t ->
       Typed GD (TmLet x e e') t
   | TDrop : forall G x s t e Ge Gxs,
-      (*
-      fill G CtxEmpty |- e \in t ->
-      fill G (CtxHasTy x s) |- TmDrop x e \in t
-      *)
       Fill G CtxEmpty Ge ->
       Fill G (CtxHasTy x s) Gxs ->
       Typed Ge e t ->
@@ -102,11 +91,12 @@ Proof.
   - destruct H' as [].
   - destruct H' as [].
   - eapply fv_fill. { eassumption. } cbn. left. assumption.
+  - sinvert H.
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
   - eapply fv_fill. { eassumption. } cbn. destruct H'. specialize (IHHt _ H1).
-    eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH. } right. assumption.
+    eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH. } right. assumption. eauto.
 Qed.
 Hint Resolve typing_fv : core.
 

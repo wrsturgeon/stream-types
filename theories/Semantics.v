@@ -1,6 +1,5 @@
 From LambdaST Require Import
   Environment
-  FV
   Prefix
   SinkTm
   Terms.
