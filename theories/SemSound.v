@@ -65,12 +65,12 @@ Proof.
   - sinvert H. edestruct IHStep; [eauto | admit |]. sauto lq: on.
 Admitted.
 
-Theorem agree_step_inert : forall e e' eta p G x s,
+Theorem agree_step_inert : forall e e' eta p S x s,
   Inert e ->
-  Subset (fv e) (fv G) -> (*automatic from typing derivatino*)
+  Subset (fv e) S -> (*automatic from typing derivatino*)
   Step eta e e' p ->
   PrefixTyped p s ->
-  Agree eta (singleton_env x p) G (CtxHasTy x s)
+  Agree eta (singleton_env x p) S (singleton_set x)
 .
 Proof.
   intros.
@@ -91,11 +91,11 @@ Theorem soundout : forall G e e' s eta p,
     Step eta e e' p ->
     PrefixTyped p s.
 Proof.
-    (* intros G e e' s eta p Ht Hwf Hstep.
+    intros G e e' s eta p Ht Hwf Hstep.
     generalize dependent e'.
     generalize dependent eta.
     generalize dependent p.
-    induction Ht; intros p eta e0' Heta Hstep.
+    induction Ht; intros p eta Heta e0' Hstep.
     - cbn in *. sauto q: on.
     - sinvert Hstep.
       assert (~fv G z) by hauto q: on use:wf_fill_reflect.
@@ -105,24 +105,25 @@ Proof.
     - sinvert Hwf. sinvert Heta. sinvert Hstep.
       + constructor. eapply IHHt1; sauto lq: on rew: off.
       + constructor. eapply IHHt1; sauto lq: on rew: off. eauto. sauto lq: on rew: off.
-      + best.
-    - sinvert Hstep; eapply IHHty; [| | eauto | | | eauto].
-      + eapply hmm'; eauto.
-      + eapply catrenvtyped1; eauto. sauto l: on use: maps_to_has_type.
-      + eapply hmm'; eauto.
-      + assert (PfxTyped (PfxCatBoth p1 p2) (Types.TyDot s t)) by sauto l: on use: maps_to_has_type.
-        sinvert H2.
+    - sinvert Hstep; eapply IHHt; [| | eauto | | | eauto].
+      + eapply hmm'_reflect; eauto.
+      + eapply catrenvtyped1; admit.
+      + eapply hmm'_reflect; eauto.
+      + assert (PrefixTyped (PfxCatBoth p1 p2) (Types.TyDot s t)) by hauto l: on use:maps_to_has_type_reflect.
+        sinvert H4.
         eapply catrenvtyped2; eauto. 
     - sauto lq: on.
     - sauto lq: on.
     - sinvert Hstep. 
-      sauto use: maps_to_has_type.
+      sauto use: maps_to_has_type_reflect.
     - sfirstorder.
-    - sinvert Hstep. eapply IHHty2; [ | | eauto].
-      + sauto l: on use:wf_fill.
-      + eapply letenvtyped; [ | | eauto].
-        eapply IHHty1; [| | eauto]. sfirstorder use:wf_fill. sfirstorder use:maps_to_hole.
-    - sinvert Hstep. eapply IHHty; [ | | eauto]. hauto lq: on rew: off use: wf_fill. *)
+    - sinvert Hstep. 
+      assert (PrefixTyped p0 s). eapply IHHt1; eauto. sfirstorder use:maps_to_hole_reflect.
+      eapply IHHt2; [ | | eauto].
+      + eapply wf_fill_reflect. eauto. sfirstorder use:wf_fill_reflect.
+      + eapply letenvtyped; eauto.
+        eapply agree_step_inert; eauto.
+    - sinvert Hstep. eapply IHHt; [ | | eauto]. eapply wf_fill_reflect. eauto. sfirstorder use:wf_fill_reflect. admit.
 Admitted.
 
 (* let x = e in e' | *)

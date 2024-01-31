@@ -35,7 +35,7 @@ Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context)
   (forall n : env, EnvTyped n d -> EnvTyped n d') ->
   forall n : env,
   (* NOTE: added the agreement, should be good here. *)
-  Agree n n d d' ->
+  Agree n n (fv d) (fv d') ->
   EnvTyped n gd ->
   EnvTyped n gd'.
 Proof.
@@ -68,7 +68,7 @@ Hint Resolve fill_preserves_env : core.
 Theorem sub_preserves_env : forall n G D,
   EnvTyped n G ->
   Subtype G D ->
-  EnvTyped n D /\ Agree n n G D.
+  EnvTyped n D /\ Agree n n (fv G) (fv D).
 Proof.
   intros n G D He Hs. generalize dependent n. induction Hs; cbn in *; intros.
   - shelve. (* eapply fill_preserves_env; [apply H | | | |]; eassumption. *)

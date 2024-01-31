@@ -241,4 +241,22 @@ Proof.
   intros G x y z s t r ctr Hctr Hx Hy Hxy H. apply wf_fill in H as [H1 [H2 H3]]. sinvert H2. apply wf_fill.
   repeat split; intros; [eassumption | sauto | |]; destruct Hctr; sfirstorder.
 Qed.
+
+Theorem hmm'_reflect : forall G Gz Gxy x y z s t r ctr,
+  (ctr = CtxComma \/ ctr = CtxSemic) ->
+  x <> y ->
+  ~(fv G x) ->
+  ~(fv G y) ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (ctr (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  WFContext Gz ->
+  WFContext Gxy.
+Proof.
+ intros. 
+ eapply reflect_fill in H3.
+ eapply reflect_fill in H4.
+ rewrite -> H3 in *.
+ rewrite -> H4 in *.
+ eapply hmm'; eauto.
+Qed.
 Hint Resolve wf_hole_iff : core.

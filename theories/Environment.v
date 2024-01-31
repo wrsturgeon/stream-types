@@ -83,10 +83,10 @@ Theorem prop_on_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
 Proof. sfirstorder. Qed.
 
-Definition Agree (n n' : env) (D D' : context) : Prop :=
-  (MaximalOn (fv D) n -> MaximalOn (fv D') n') /\
-  (EmptyOn (fv D) n -> EmptyOn (fv D') n').
-Arguments Agree/ n n' D D'.
+Definition Agree (n n' : env) (s s' : set string) : Prop :=
+  (MaximalOn s n -> MaximalOn s' n') /\
+  (EmptyOn s n -> EmptyOn s' n').
+Arguments Agree/ n n' s s'.
 Hint Unfold Agree : core.
 
 Inductive EnvTyped : env -> context -> Prop :=
@@ -140,6 +140,15 @@ Theorem maps_to_has_type : forall n G x s,
   exists p, (n x = Some p /\ PrefixTyped p s).
 Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
 Hint Resolve maps_to_has_type : core.
+
+Theorem maps_to_has_type_reflect : forall n G x Gx s,
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped n Gx ->
+  exists p, (n x = Some p /\ PrefixTyped p s).
+Proof. sauto use:maps_to_hole_reflect. Qed.
+Hint Resolve maps_to_has_type : core.
+
+
 
 Definition NoConflict (n n' : env) := forall x p,
   n x = Some p ->
@@ -326,7 +335,7 @@ Theorem env_subctx_bind : forall hole plug plug' n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug' ->
-  Agree n n' plug plug' ->
+  Agree n n' (fv plug) (fv plug') ->
   EnvTyped (env_union n n') (fill hole plug').
 Proof.
   intros hole plug plug' n n' Hc Hn Hn' [Ham Hae].
@@ -379,42 +388,50 @@ Proof.
   - split; apply empty_or_maximal_pfx_par_pair; try assumption; [right | left]; reflexivity.
 Qed.
 
-Theorem catrenvtyped1 :  forall G x y z p1 s t r eta,
+Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
   x <> y ->
   eta z = Some (PfxCatFst p1) ->
   PrefixTyped p1 s ->
-  EnvTyped eta (fill G (CtxHasTy z r)) ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  EnvTyped eta Gz ->
   EnvTyped
   (env_union eta
      (env_union (singleton_env x p1) (singleton_env y (emp t))))
-  (fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t))).
+  Gxy.
 Proof.
 Admitted.
 
-Theorem catrenvtyped2 :  forall G x y z p1 p2 s t r eta,
+Theorem catrenvtyped2 :  forall G Gz Gxy x y z p1 p2 s t r eta,
   x <> y ->
   eta z = Some (PfxCatBoth p1 p2) ->
   PrefixTyped p1 s ->
   PrefixTyped p2 t ->
   MaximalPrefix p1 ->
-  EnvTyped eta (fill G (CtxHasTy z r)) ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  EnvTyped eta Gz ->
   EnvTyped
   (env_union eta
      (env_union (singleton_env x p1) (singleton_env y p2)))
-  (fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t))).
+  Gxy.
 Proof.
 Admitted.
 
-Theorem letenvtyped :  forall G D x p s eta,
-  Agree eta (singleton_env x p) D (CtxHasTy x s) ->
+Theorem letenvtyped :  forall G D GD Gx x p s eta,
+  Agree eta (singleton_env x p) (fv D) (singleton_set x) ->
   PrefixTyped p s ->
-  EnvTyped eta (fill G D) ->
-  EnvTyped (env_subst x p eta) (fill G (CtxHasTy x s)).
+  Fill G D GD ->
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped eta GD ->
+  EnvTyped (env_subst x p eta) Gx.
 Proof.
 Admitted.
 
-Theorem dropenvtyped :  forall G x s eta,
-  EnvTyped eta (fill G (CtxHasTy x s)) ->
-  EnvTyped (env_drop eta x) (fill G CtxEmpty).
+Theorem dropenvtyped :  forall G Gx GE x s eta,
+  Fill G (CtxHasTy x s) Gx ->
+  Fill G CtxEmpty GE ->
+  EnvTyped eta Gx ->
+  EnvTyped (env_drop eta x) GE.
 Proof.
 Admitted.
