@@ -85,26 +85,26 @@ Hint Resolve fv_fill_fn : core.
 Inductive WFHole : hole -> Prop :=
   | WFHoleHere :
       WFHole HoleHere
-  | WFHoleCommaL : forall lhs rhs,
-      WFHole lhs ->
-      WFContext rhs ->
-      DisjointSets (fv lhs) (fv rhs) ->
-      WFHole (HoleCommaL lhs rhs)
-  | WFHoleCommaR : forall lhs rhs,
-      WFContext lhs ->
-      WFHole rhs ->
-      DisjointSets (fv lhs) (fv rhs) ->
-      WFHole (HoleCommaR lhs rhs)
-  | WFHoleSemicL : forall lhs rhs,
-      WFHole lhs ->
-      WFContext rhs ->
-      DisjointSets (fv lhs) (fv rhs) ->
-      WFHole (HoleSemicL lhs rhs)
-  | WFHoleSemicR : forall lhs rhs,
-      WFContext lhs ->
-      WFHole rhs ->
-      DisjointSets (fv lhs) (fv rhs) ->
-      WFHole (HoleSemicR lhs rhs)
+  | WFHoleCommaL : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleCommaL h g)
+  | WFHoleCommaR : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleCommaR g h)
+  | WFHoleSemicL : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleSemicL h g)
+  | WFHoleSemicR : forall h g,
+      WFHole h ->
+      WFContext g ->
+      DisjointSets (fv h) (fv g) ->
+      WFHole (HoleSemicR g h)
   .
 Hint Constructors WFHole : core.
 
