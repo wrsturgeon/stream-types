@@ -158,12 +158,16 @@ Proof.
   - (* PfxEpsEmp: p = PfxEpsEmp, qr = PfxEpsEmp
      * so we want to prove that there exists a pq s.t. EpsEmp . q ~ pq /\ pq . r ~ EpsEmp
      * obviously this should be EpsEmp, but the problem is we don't know q or r *)
+    (* convenient fact I only realized after all cases: *) assert (A : r = PfxEpsEmp) by sauto lq: on. subst.
+    (* so really the problem is forall q, exists pq, EpsEmp . q ~ pq /\ pq . EpsEmp ~ EpsEmp *)
     sinvert Hr.
     + (* q, r both PfxEpsEmp *) sauto lq: on.
     + (* q PfxOneEmp, r PfxEpsEmp *) sauto lq: on.
     + (* q PfxSumEmp, r PfxEpsEmp *)
       (* (no hypotheses) exists pq, PrefixConcat PfxEpsEmp PfxSumEmp pq /\ PrefixConcat pq PfxEpsEmp PfxEpsEmp *)
-      Fail best time: 1000000000000000000. (* stops in < 1 second: probably actually false *)
+      Fail best time: 1000000000000000000. (* stops in < 1 second: probably actually false *) shelve.
+    + (* q PfxStarEmp, r PfxEpsEmp *)
+      Fail best time: 1000000000000000000. (* ditto ^^ *) shelve.
 Abort.
 
 Lemma oh_shit :
