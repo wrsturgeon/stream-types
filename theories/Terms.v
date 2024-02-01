@@ -7,8 +7,6 @@ From LambdaST Require Import
   Sets
   Types.
 
-Declare Scope term_scope.
-
 Inductive term : Set :=
   | TmSink
   | TmUnit
@@ -25,8 +23,8 @@ Derive Arbitrary for ascii.
 Derive Arbitrary for string.
 Derive Arbitrary for term.
 
+Declare Scope term_scope.
 Bind Scope term_scope with term.
-
 Notation "'sink'" := TmSink : term_scope.
 Notation "'unit'" := TmUnit : term_scope.
 (* Notation "`id`" := (TmVar id) : term_scope. *)
@@ -68,6 +66,9 @@ Inductive ctx_term : Set :=
   | CtxTmComma (lhs rhs : ctx_term)
   | CtxTmSemic (lhs rhs : ctx_term)
   .
+Hint Constructors ctx_term : core.
+Derive Show for ctx_term.
+Derive Arbitrary for ctx_term.
 
 (*
 Inductive WFTerm : set string -> term -> Prop :=
