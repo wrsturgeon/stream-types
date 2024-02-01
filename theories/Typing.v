@@ -5,62 +5,59 @@ From LambdaST Require Import
   FV
   Hole
   Sets
+  Subcontext
   Terms
   Types.
 
-Declare Scope typing_scope.
-
-Reserved Notation "G '|-' x '\in' T" (at level 97).
-
 Inductive Typed : context -> term -> type -> Prop :=
   | TParR : forall G e1 e2 s t,
-      G |- e1 \in s ->
-      G |- e2 \in t ->
-      G |- (e1, e2) \in TyPar s t
+      Typed G e1 s ->
+      Typed G e2 t ->
+      Typed G (e1, e2) (TyPar s t)
   | TParL : forall G x y z s t e r Gxsyt Gzst,
       x <> y ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyPar s t)) Gzst ->
-      Gxsyt |- e \in r ->
-      Gzst |- TmLetPar x y z e \in r
+      Typed Gxsyt e r ->
+      Typed Gzst (TmLetPar x y z e) r
   | TCatR : forall G D e1 e2 s t,
-      G |- e1 \in s ->
-      D |- e2 \in t ->
+      Typed G e1 s ->
+      Typed D e2 t ->
       DisjointSets (fv G) (fv D) ->
-      CtxSemic G D |- (e1; e2) \in TyDot s t
+      Typed (CtxSemic G D) (e1; e2) (TyDot s t)
   | TCatL : forall G x y z s t e r Gxsyt Gzst,
       x <> y ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyDot s t)) Gzst ->
-      Gxsyt |- e \in r ->
-      Gzst |- TmLetCat t x y z e \in r
+      Typed Gxsyt e r ->
+      Typed Gzst (TmLetCat t x y z e) r
   | TEpsR : forall G,
-      G |- sink \in eps
+      Typed G TmSink TyEps
   | TOneR : forall G,
-      G |- unit \in 1
+      Typed G TmUnit TyOne
   | TVar : forall G x s Gxs,
       Fill G (CtxHasTy x s) Gxs ->
-      Gxs |- TmVar x \in s
+      Typed Gxs (TmVar x) s
   | TSubCtx : forall G G' e s,
-      CtxLEq G G' ->
-      G' |- e \in s ->
-      G |- e \in s
+      Subcontext G G' ->
+      Typed G' e s ->
+      Typed G e s
   | TLet : forall G D x e e' s t Gxs GD,
       ~fv G x ->
-      D |- e \in s ->
+      Typed D e s ->
       Fill G (CtxHasTy x s) Gxs ->
       Fill G D GD ->
-      Gxs |- e' \in t ->
-      GD |- TmLet x e e' \in t
-where "G '|-' x '\in' T" := (Typed G x T).
+      Typed Gxs e' t ->
+      Typed GD (TmLet x e e') t
+  .
 Hint Constructors Typed : core.
 
-Theorem typed_fv : forall G e s,
-  G |- e \in s ->
+Theorem typing_fv : forall G e s,
+  Typed G e s ->
   forall x,
   fv e x ->
   fv G x.
@@ -78,18 +75,18 @@ Proof.
   - destruct H' as [].
   - destruct H' as [].
   - eapply fv_fill. { eassumption. } cbn. left. assumption.
-  - cbn in *. specialize (IHHt _ H'). invert H. (* TODO: SubCtx hasn't been defined yet, so holds vacuously *)
+  - eapply subcontext_fv_subset; [| apply IHHt]; eassumption.
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
 Qed.
-Hint Resolve typed_fv : core.
+Hint Resolve typing_fv : core.
 
 (* TODO: add WF weakening theorem assuming all FVs are covered, then use the above to prove the below *)
 
 (*
 Theorem typed_wf_term : forall G x T,
-  G |- x \in T ->
+  Typed G x T ->
   WFTerm (fv G) x.
 Proof.
   intros. induction H; intros.
@@ -105,5 +102,5 @@ Proof.
         destruct H' as [H' | H']; subst. { right. left. reflexivity. } right. right. best.
     *)
   - (* (e1; e2) *)
-    cbn in *. constructor. eapply typed_fv in H. Abort. (* TODO *)
+    cbn in *. constructor. eapply typing_fv in H. Abort. (* TODO *)
 *)
