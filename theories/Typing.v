@@ -4,8 +4,6 @@ From LambdaST Require Import
   Context
   FV
   Hole
-  Inert
-  Nullable
   Sets
   Subcontext
   Terms
