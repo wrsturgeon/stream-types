@@ -18,7 +18,6 @@ Inductive term : Set :=
   | TmLet (bind : string) (bound body : term)
   | TmLetPar (lhs rhs bound : string) (body : term) (* Note that the bound term is NOT really a term, but we can w.l.o.g. surround it with another `let` *)
   | TmLetCat (t : type) (lhs rhs bound : string) (body : term)
-  | TmDrop (x : string) (e : term)
   .
 Hint Constructors term : core.
 Derive Show for term.
@@ -39,8 +38,6 @@ Notation "'let' '(' lhs ',' rhs ')' '=' both 'in' body" :=
   (TmLetPar lhs rhs both body) (at level 97, right associativity) : term_scope.
 Notation "'let' '(' lhs ';' rhs ')' '=' both 'in' body" :=
   (TmLetCat lhs rhs both body) (at level 97, right associativity) : term_scope.
-Notation "'drop' x ';' body" :=
-  (TmDrop x body) (at level 97, right associativity) : term_scope.
 
 Scheme Equality for term.
 Theorem eqb_spec_term : forall a b : term, Bool.reflect (a = b) (term_beq a b).
@@ -61,7 +58,6 @@ Fixpoint fv_term e : set string :=
   | TmLetPar x y z e | TmLetCat _ x y z e => set_union (singleton_set z) (
       set_minus (set_minus (fv_term e) (singleton_set x)) (singleton_set y))
   | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
-  | TmDrop x e => set_union (fv_term e) (singleton_set x)
   end.
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
