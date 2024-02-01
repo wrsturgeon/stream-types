@@ -61,9 +61,3 @@ Inductive WFContext : context -> Prop :=
 Hint Constructors WFContext : core.
 
 (* TODO: will need to prove that context derivatives preserve this... *)
-
-(* Argument order matches notation: (CtxLEq G G') === (G <= G') *)
-Inductive CtxLEq (G G' : context) : Prop :=
-  (* TODO *)
-  .
-Hint Constructors CtxLEq : core.

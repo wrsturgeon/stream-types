@@ -8,6 +8,7 @@ From LambdaST Require Import
   Terms
   Types
   Inertness
+  Subctx
   Nullable.
 From Coq Require Import
   List
@@ -51,7 +52,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       Fill G (CtxHasTy x s) Gxs ->
       Typed Gxs (TmVar x) s
   | TSubCtx : forall G G' e s,
-      CtxLEq G G' ->
+      Subctx G G' ->
       Typed G' e s ->
       Typed G e s
   | TLet : forall G D x e e' s t Gxs GD,
@@ -67,6 +68,9 @@ Inductive Typed : context -> term -> type -> Prop :=
       Typed Ge e t ->
       Typed Gxs (drop x; e) t
   .
+
+Check Typed_ind.
+
 (* TODO:
 Theorem typed_wf_term : forall G x T,
   G |- x \in T ->
@@ -92,7 +96,7 @@ Proof.
   - destruct H' as [].
   - destruct H' as [].
   - eapply fv_fill. { eassumption. } cbn. left. assumption.
-  - sinvert H.
+  - sfirstorder use:Subctx_fv_subset.
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
