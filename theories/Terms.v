@@ -66,30 +66,6 @@ Fixpoint fv_term e : set string :=
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 
-Inductive Inert : term -> Prop :=
-  | InertParR : forall e1 e2,
-      Inert e1 ->
-      Inert e2 ->
-      Inert (e1, e2)
-  | InertParL : forall x y z e ,
-      Inert e ->
-      Inert (TmLetPar x y z e)
-  | InertCatL : forall t x y z e,
-      Inert e ->
-      Inert (TmLetCat t x y z e)
-  | InertEpsR : Inert sink
-  | InertVar : forall x,
-      Inert (TmVar x)
-  | InertLet : forall x e e',
-      Inert e ->
-      Inert e' ->
-      Inert (TmLet x e e')
-  | InertDrop : forall x e ,
-      Inert e ->
-      Inert (drop x; e)
-  .
-Hint Constructors Inert : core.
-
 (*
 Inductive WFTerm : set string -> term -> Prop :=
   | WFTmSink : forall s,
