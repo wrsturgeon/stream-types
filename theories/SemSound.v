@@ -14,25 +14,8 @@ From LambdaST Require Import
   Typing
   Nullable
   Inertness
+  Ind
   .
-
-Theorem maximal_push : forall e e' eta p,
-  Step eta e e' p ->
-  MaximalOn (fv e) eta ->
-  MaximalPrefix p.
-Proof.
-  intros.
-  generalize dependent H0.
-  induction H.
-  - hauto l: on.
-  - hauto l: on.
-  - qauto l: on.
-  - sauto l: on.
-  - sauto l: on.
-  - sauto l: on.
-  - admit.
-Admitted.
-
 
 (* Theorem agree_step_inert : forall e e' eta p S x s,
   Inert e ->
@@ -52,17 +35,33 @@ Proof.
     exists p. sinvert H6. unfold singleton_env. hauto lq: on use:eqb_refl.
 Qed. *)
 
+Definition Preserves i eta p e :=
+    (MaximalOn (fv e) eta -> MaximalPrefix p)
+    /\
+    (i = Inert -> EmptyOn (fv e) eta -> EmptyPrefix p)
+.
 
-Theorem soundout : forall G e e' s eta p,
+Definition P_sound G (e : term) s eta (e' : term) p :=
+  WFContext G ->
+  EnvTyped eta G ->
+    PrefixTyped p s /\
+    Preserves Jumpy eta p e
+.
+
+Theorem soundout : forall G e s eta e' p,
     Typed G e s ->
-    WFContext G ->
-    EnvTyped eta G ->
     Step eta e e' p ->
-    PrefixTyped p s.
+    P_sound G e s eta e' p.
 Proof.
-    intros G e e' s eta p Ht Hwf Heta Hstep.
-    generalize dependent G.
-    generalize dependent s.
+    apply (lex_ind P_sound); unfold P_sound in *; intros.
+    - admit.
+    - sauto lq: on.
+    - hauto l: on use:maps_to_has_type_reflect.
+    - sauto lq: on.
+    - eapply wf_fill_reflect in H7; [|eauto].
+      assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by hauto l: on use:maps_to_has_type_reflect. sinvert H00.
+      edestruct IHe as [A B]; [ eapply wf_fill_reflect; eauto; sauto | eapply parlenvtyped; eauto |]. admit. (* not possible to establish disjoint here, need weaker. *)
+      admit.
     (* induction Hstep; intros.
     - admit.
     - admit.

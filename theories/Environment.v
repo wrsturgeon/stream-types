@@ -376,23 +376,30 @@ Proof.
 Qed.
 Hint Resolve empty_or_maximal_pfx_par_pair : core.
 
-Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
+(*
+NEED THE STRONGER THEOREM HERE! We can't get away with them not conflicting everywhere,
+it has to be true on G.
+*)
+
+Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
   x <> y ->
   NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
   n z = Some (PfxParPair p1 p2) ->
   PrefixTyped p1 s ->
   PrefixTyped p2 t ->
-  EnvTyped n (fill G (CtxHasTy z r)) ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  EnvTyped n Gz ->
   EnvTyped
     (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
-    (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
+    Gxy.
 Proof.
-  intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
+  (* intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
   eapply env_subctx_bind; [eassumption | eassumption | |].
   - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
     destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
-  - split. eapply empty_or_maximal_pfx_par_pair; eauto. intro. eapply empty_or_maximal_pfx_par_pair;eauto. 
-Qed.
+  - split. eapply empty_or_maximal_pfx_par_pair; eauto. intro. eapply empty_or_maximal_pfx_par_pair;eauto.  *)
+Admitted.
 
 Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
   x <> y ->

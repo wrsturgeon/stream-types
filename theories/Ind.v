@@ -1,5 +1,6 @@
 From Coq Require Import String.
 From Hammer Require Import Tactics.
+Require Import Coq.Program.Equality.
 From LambdaST Require Import
   Context
   Environment
@@ -16,23 +17,11 @@ From LambdaST Require Import
   Inertness
   .
 
-Check Typed_ind.
-Check Step_ind.
-
-(* Typed_ind
+(*
+Typed_ind
 	 : forall P : context -> term -> type -> Prop,
-       (forall (G : context) (e1 e2 : term) (s t : type),
-        Typed G e1 s ->
-        P G e1 s ->
-        Typed G e2 t -> P G e2 t -> P G (TmComma e1 e2) (TyPar s t)) ->
-       (forall (G : hole) (x y z : string) (s t : type) 
-          (e : term) (r : type) (Gxsyt Gzst : context),
-        x <> y ->
-        ~ fv G x ->
-        ~ fv G y ->
-        Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
-        Fill G (CtxHasTy z (s || t)) Gzst ->
-        Typed Gxsyt e r -> P Gxsyt e r -> P Gzst (TmLetPar x y z e) r) ->
+        ->
+        ->
        (forall (G D : context) (e1 e2 : term) (s t : type),
         Typed G e1 s ->
         P G e1 s ->
@@ -51,7 +40,7 @@ Check Step_ind.
        (forall (G : hole) (x : string) (s : type) (Gxs : context),
         Fill G (CtxHasTy x s) Gxs -> P Gxs (TmVar x) s) ->
        (forall (G G' : context) (e : term) (s : type),
-        CtxLEq G G' -> Typed G' e s -> P G' e s -> P G e s) ->
+        Subctx.Subctx G G' -> Typed G' e s -> P G' e s -> P G e s) ->
        (forall (G : hole) (D : context) (x : string) 
           (e e' : term) (s t : type) (Gxs GD : context),
         ~ fv G x ->
@@ -71,12 +60,7 @@ Step_ind
        (forall n : env, P n TmUnit TmSink PfxOneFull) ->
        (forall (n : string -> option prefix) (x : string) (p : prefix),
         n x = Some p -> P n (TmVar x) (TmVar x) p) ->
-       (forall (n : env) (e1 e1' e2 e2' : term) (p1 p2 : prefix),
-        Step n e1 e1' p1 ->
-        P n e1 e1' p1 ->
-        Step n e2 e2' p2 ->
-        P n e2 e2' p2 ->
-        P n (TmComma e1 e2) (TmComma e1' e2') (PfxParPair p1 p2)) ->
+        ->
        (forall (n : env) (e1 e1' e2 : term) (p : prefix),
         Step n e1 e1' p ->
         P n e1 e1' p ->
@@ -88,14 +72,7 @@ Step_ind
         MaximalPrefix p1 ->
         Step n e2 e2' p2 ->
         P n e2 e2' p2 -> P n (TmSemic e1 e2) e2' (PfxCatBoth p1 p2)) ->
-       (forall (n : string -> option prefix) (x y z : string) 
-          (e e' : term) (p1 p2 p' : prefix),
-        n z = Some (PfxParPair p1 p2) ->
-        Step
-          (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
-          e e' p' ->
-        P (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
-          e e' p' -> P n (TmLetPar x y z e) (TmLetPar x y z e') p') ->
+        ->
        (forall (t : type) (n : string -> option prefix) 
           (x y z : string) (e e' : term) (p p' : prefix),
         n z = Some (PfxCatFst p) ->
@@ -127,12 +104,75 @@ Step_ind
         Step (env_drop eta x) e e' p ->
         P (env_drop eta x) e e' p -> P eta (TmDrop x e) (TmDrop x e') p) ->
        forall (e : env) (t t0 : term) (p : prefix),
-       Step e t t0 p -> P e t t0 p *)
+       Step e t t0 p -> P e t t0 p
+
+
+*)
+
+
 
 Theorem lex_ind :
     forall P : context -> term -> type -> env -> term -> prefix -> Prop,
 
+    (forall (G G' : context) (e : term) (s : type) eta e' p,
+        Step eta e e' p ->
+        Subctx.Subctx G G' -> Typed G' e s -> P G' e s eta e' p -> P G e s eta e' p) ->
+      
+    (forall G n, P G TmSink TyEps n TmSink PfxEpsEmp) ->
 
+    (forall G x s Gxs n p,
+      Fill G (CtxHasTy x s) Gxs ->
+      n x = Some p ->
+      P Gxs (TmVar x) s n (TmVar x) p
+    ) ->
 
-    (forall G e s eta e' p, P G e s eta e' p).
+    (forall G (n : env) (e1 e1' e2 e2' : term) (p1 p2 : prefix) s t,
+        Step n e1 e1' p1 ->
+        Typed G e1 s ->
+        
+
+        Step n e2 e2' p2 ->
+        Typed G e2 t ->
+
+        forall IHe1 : P G e1 s n e1' p1,
+        forall IHe2 : P G e2 t n e2' p2,
+
+        P G (TmComma e1 e2) (TyPar s t) n (TmComma e1' e2') (PfxParPair p1 p2)) ->
+    
+    (forall G Gxsyt Gzst x y z s t r e n e' p1 p2 p',
+
+        x <> y ->
+        ~ fv G x ->
+        ~ fv G y ->
+        Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
+        Fill G (CtxHasTy z (TyPar s t)) Gzst ->
+        Typed Gxsyt e r -> 
+
+        n z = Some (PfxParPair p1 p2) ->
+        Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
+
+        forall IHe : P Gxsyt e r (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e' p',
+
+        P Gzst (TmLetPar x y z e) r n (TmLetPar x y z e') p'
+    ) ->
+
+    (forall G e s eta e' p, Typed G e s -> Step eta e e' p -> P G e s eta e' p).
+Proof.
+  intros.
+  generalize dependent G.
+  generalize dependent s.
+  induction H5; intros s G H00. 
+  - dependent induction H00; sfirstorder.
+  - admit.
+  - dependent induction H00; sfirstorder.
+  - dependent induction H00; sfirstorder.
+  - admit.
+  - admit.
+  - dependent induction H00.
+    + best.
+    + eapply H; sfirstorder.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
 Admitted.
