@@ -4,6 +4,7 @@ From LambdaST Require Import
   Environment
   FV
   Hole
+  Inert
   Prefix
   Sets.
 

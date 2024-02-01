@@ -6,6 +6,7 @@ From LambdaST Require Import
   Context
   FV
   Hole
+  Inert
   Prefix
   Sets
   Terms
@@ -83,10 +84,12 @@ Theorem prop_on_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
 Proof. sfirstorder. Qed.
 
-Definition Agree (n n' : env) (s s' : set string) : Prop :=
+(* Agree Inert means "including empty on agreement";
+ * Agree Jumpy means "not including empty on agreement." *)
+Definition Agree (i : inertness) (n n' : env) (s s' : set string) : Prop :=
   (MaximalOn s n -> MaximalOn s' n') /\
-  (EmptyOn s n -> EmptyOn s' n').
-Arguments Agree/ n n' s s'.
+  (i = Inert -> EmptyOn s n -> EmptyOn s' n').
+Arguments Agree/ i n n' s s'.
 Hint Unfold Agree : core.
 
 Inductive EnvTyped : env -> context -> Prop :=
@@ -274,7 +277,7 @@ Theorem env_subctx_bind : forall hole plug plug' n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug' ->
-  Agree n n' (fv plug) (fv plug') ->
+  Agree Inert n n' (fv plug) (fv plug') ->
   EnvTyped (env_union n n') (fill hole plug').
 Proof.
   intros hole plug plug' n n' Hc Hn Hn' [Ham Hae].
@@ -284,7 +287,7 @@ Proof.
   induction Hf; cbn in *; intros; [sinvert Hf'; apply env_typed_weakening; assumption | | | |];
   sinvert Hf'; sinvert Hn; constructor; try (eapply IHHf; eassumption); clear IHHf;
   try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
-  (destruct H5; [left | right]); try (apply prop_on_weakening_alt; assumption); eapply agree_union; eassumption.
+  (destruct H5; [left | right]); try (apply prop_on_weakening_alt; eassumption); eapply agree_union; sfirstorder.
 Qed.
 Hint Resolve env_subctx_bind : core.
 
@@ -322,5 +325,6 @@ Proof.
   eapply env_subctx_bind; [eassumption | eassumption | |].
   - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
     destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
-  - split; apply empty_or_maximal_pfx_par_pair; try assumption; [right | left]; reflexivity.
+  - split; intros; eapply empty_or_maximal_pfx_par_pair; try eassumption; [right | left]; reflexivity.
 Qed.
+Hint Resolve catlenvtyped : core.
