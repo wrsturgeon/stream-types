@@ -12,12 +12,13 @@ Hint Constructors type : core.
 Derive Show for type.
 Derive Arbitrary for type.
 
+Declare Scope stream_type_scope.
+Bind Scope stream_type_scope with type.
+
 Arguments TyDot lhs%stream_type_scope rhs%stream_type_scope.
 Arguments TyPar lhs%stream_type_scope rhs%stream_type_scope.
 Arguments TyStar starred%stream_type_scope.
 
-Declare Scope stream_type_scope.
-Bind Scope stream_type_scope with type.
 Notation "'eps'" := TyEps : stream_type_scope.
 Notation "'1'" := TyOne : stream_type_scope.
 Notation "'(' lhs '.' rhs ')'" := (TyDot lhs rhs) : stream_type_scope.
