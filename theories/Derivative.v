@@ -6,48 +6,65 @@ From LambdaST Require Import
   Types.
 From Hammer Require Import Tactics.
 
+(* Intuition: things you can append to a thing of type T should have type (its derivative)
+ * With jargon, concatenation is meaningful only between a prefix of type T and something of type (its derivative) *)
 Inductive Derivative : prefix -> type -> type -> Prop :=
+    (* You can append nothing to nothing *)
   | DrvEpsEmp :
       Derivative PfxEpsEmp eps eps
+    (* You can receive a one where you expect a one and end up having a one *)
   | DrvOneEmp :
       Derivative PfxOneEmp 1 1
+    (* You can append nothing to a received one *)
   | DrvOneFull :
       Derivative PfxOneFull 1 eps
+    (* If you've received some stuff from parallel streams, you can receive more, regardless of which side *)
   | DrvParPair : forall p1 p2 s s' t t',
       Derivative p1 s s' ->
       Derivative p2 t t' ->
       Derivative (PfxParPair p1 p2) (TyPar s t) (TyPar s' t')
+    (* You can receive an (s' . t) after an (s . t) if the `s` hasn't finished yet *)
   | DrvCatFst : forall p s s' t,
       Derivative p s s' ->
       Derivative (PfxCatFst p) (TyDot s t) (TyDot s' t)
+    (* You can receive an (s . t') after an (s . t) if the `s` has already finished *)
   | DrvCatBoth : forall p1 p2 s t t',
       Derivative p2 t t' ->
       Derivative (PfxCatBoth p1 p2) (TyDot s t) t'
+    (* If you haven't gotten anything yet, you can receive either side of a sum *)
   | DrvSumEmp : forall s t,
       Derivative PfxSumEmp (TySum s t) (TySum s t)
+    (* If you've already received from the left side of a sum, continue receiving that side *)
   | DrvSumInl : forall p s s' t,
       Derivative p s s' ->
       Derivative (PfxSumInl p) (TySum s t) s'
-  (* TODO: this definition is almost certainly wrong in Appendix B *)
+    (* TODO: this was almost certainly a typo in the appendix *)
+    (* If you've already received from the right side of a sum, continue receiving that side *)
   | DrvSumInr : forall p s t t',
       Derivative p t t' ->
       Derivative (PfxSumInr p) (TySum s t) t'
+    (* If you're expecting a star and haven't gotten anything yet, receive a star *)
   | DrvStarEmp : forall s,
       Derivative PfxStarEmp (TyStar s) (TyStar s)
+    (* Nothing can follow the end of a star *)
   | DrvStarDone : forall s,
       Derivative PfxStarDone (TyStar s) eps
+    (* If you just received the first element of a star, ... TODO: this is probably the most obscure one *)
   | DrvStarFirst : forall p s s',
       Derivative p s s' ->
       Derivative (PfxStarFirst p) (TyStar s) (TyDot s' (TyStar s))
+    (* If you've already received some of a star, receive one at a time (TODO: verify) *)
   | DrvStarRest : forall p p' s s',
       Derivative p' (TyStar s) s' ->
       Derivative (PfxStarRest p p') (TyStar s) s'
   .
 Hint Constructors Derivative : core.
 
+(* Recurse on all variables in context, use the above relation on each, then put them back exactly where they were *)
 Inductive ContextDerivative : env -> context -> context -> Prop :=
   | CtxDrvEmpty : forall n,
       ContextDerivative n CtxEmpty CtxEmpty
+    (* On each variable, "call" the above inductive definition *)
   | CtxDrvHasTy : forall n x p s s',
       n x = Some p ->
       Derivative p s s' ->
