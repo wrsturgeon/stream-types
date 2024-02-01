@@ -66,6 +66,9 @@ Inductive ctx_term : Set :=
   | CtxTmComma (lhs rhs : ctx_term)
   | CtxTmSemic (lhs rhs : ctx_term)
   .
+Hint Constructors ctx_term : core.
+Derive Show for ctx_term.
+Derive Arbitrary for ctx_term.
 
 (*
 Inductive WFTerm : set string -> term -> Prop :=
