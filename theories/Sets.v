@@ -67,3 +67,7 @@ Proof. auto. Qed.
 Lemma set_union_comm : forall T a b,
   SetEq (set_union a b) (@set_union T b a).
 Proof. cbn. intros. split; intros []; try (left; assumption); right; assumption. Qed.
+
+Lemma set_eq_comm : forall T a b,
+  @SetEq T a b <-> SetEq b a.
+Proof. cbn in *. split; intros H x; split; apply H. Qed.
