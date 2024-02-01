@@ -44,4 +44,5 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step eta (TmLet x e1 e2) (TmLet x e1' e2') p'
   .
 (* TODO: FINISH DEFINITION *)
+Arguments Step n e e' p.
 Hint Constructors Step : core.

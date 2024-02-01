@@ -369,6 +369,8 @@ Hint Resolve env_subctx_bind : core.
 
 (* TODO: what's the notation in Theorem B.12? *)
 
+(*TODO: Fix uses of fill.*)
+
 Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
   (P = EmptyPrefix \/ P = MaximalPrefix) ->
   x <> y ->
@@ -386,21 +388,75 @@ Proof.
 Qed.
 Hint Resolve empty_or_maximal_pfx_par_pair : core.
 
-Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
+(*
+NEED THE STRONGER THEOREM HERE! We can't get away with them not conflicting everywhere,
+it has to be true on G.
+*)
+
+Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
   x <> y ->
   NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
   n z = Some (PfxParPair p1 p2) ->
   PrefixTyped p1 s ->
   PrefixTyped p2 t ->
-  EnvTyped n (fill G (CtxHasTy z r)) ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  EnvTyped n Gz ->
   EnvTyped
     (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
-    (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
+    Gxy.
 Proof.
-  intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
+  (* intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
   eapply env_subctx_bind; [eassumption | eassumption | |].
   - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
     destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
-  - split; intros; eapply empty_or_maximal_pfx_par_pair; try eassumption; [right | left]; reflexivity.
-Qed.
-Hint Resolve catlenvtyped : core.
+  - split. eapply empty_or_maximal_pfx_par_pair; eauto. intro. eapply empty_or_maximal_pfx_par_pair;eauto.  *)
+Admitted.
+
+Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
+  x <> y ->
+  eta z = Some (PfxCatFst p1) ->
+  PrefixTyped p1 s ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  EnvTyped eta Gz ->
+  EnvTyped
+  (env_union eta
+     (env_union (singleton_env x p1) (singleton_env y (emp t))))
+  Gxy.
+Proof.
+Admitted.
+
+Theorem catrenvtyped2 :  forall G Gz Gxy x y z p1 p2 s t r eta,
+  x <> y ->
+  eta z = Some (PfxCatBoth p1 p2) ->
+  PrefixTyped p1 s ->
+  PrefixTyped p2 t ->
+  MaximalPrefix p1 ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  EnvTyped eta Gz ->
+  EnvTyped
+  (env_union eta
+     (env_union (singleton_env x p1) (singleton_env y p2)))
+  Gxy.
+Proof.
+Admitted.
+
+Theorem letenvtyped :  forall G D GD Gx x p s eta,
+  Agree Inert eta (singleton_env x p) (fv D) (singleton_set x) ->
+  PrefixTyped p s ->
+  Fill G D GD ->
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped eta GD ->
+  EnvTyped (env_subst x p eta) Gx.
+Proof.
+Admitted.
+
+Theorem dropenvtyped :  forall G Gx GE x s eta,
+  Fill G (CtxHasTy x s) Gx ->
+  Fill G CtxEmpty GE ->
+  EnvTyped eta Gx ->
+  EnvTyped (env_drop eta x) GE.
+Proof.
+Admitted.

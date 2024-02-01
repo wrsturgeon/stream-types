@@ -25,7 +25,8 @@ Inductive Typed : context -> term -> type -> Prop :=
   | TCatR : forall G D e1 e2 s t,
       Typed G e1 s ->
       Typed D e2 t ->
-      DisjointSets (fv G) (fv D) ->
+      (* TODO: Should this have been removed? *)
+      (* DisjointSets (fv G) (fv D) -> *)
       Typed (CtxSemic G D) (e1; e2) (TyDot s t)
   | TCatL : forall G x y z s t e r Gxsyt Gzst,
       x <> y ->
@@ -56,6 +57,12 @@ Inductive Typed : context -> term -> type -> Prop :=
   .
 Hint Constructors Typed : core.
 
+(* TODO:
+Theorem typed_wf_term : forall G x T,
+  G |- x \in T ->
+  WFTerm (fv G) x.
+*)
+
 Theorem typing_fv : forall G e s,
   Typed G e s ->
   forall x,
@@ -81,26 +88,3 @@ Proof.
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
 Qed.
 Hint Resolve typing_fv : core.
-
-(* TODO: add WF weakening theorem assuming all FVs are covered, then use the above to prove the below *)
-
-(*
-Theorem typed_wf_term : forall G x T,
-  Typed G x T ->
-  WFTerm (fv G) x.
-Proof.
-  intros. induction H; intros.
-  - (* (e1, e2) *)
-    constructor; assumption.
-  - (* let (x, y) = z in e *)
-    shelve. (* until `inert` (might change something) *)
-    (*
-    constructor; cbn in *.
-    + assert (Fxsyt := fv_fill _ _ _ H2). assert (Fzst := fv_fill _ _ _ H3). cbn in *.
-      eapply wf_set_eq; [| eassumption]. cbn. intro test. rewrite Fzst. rewrite Fxsyt. split; intros H'.
-      * destruct H' as [H' | H']. { right. assumption. } left. split. { right. assumption. } intro. subst. Search test. best use: fv_fill time: 10.
-        destruct H' as [H' | H']; subst. { right. left. reflexivity. } right. right. best.
-    *)
-  - (* (e1; e2) *)
-    cbn in *. constructor. eapply typing_fv in H. Abort. (* TODO *)
-*)

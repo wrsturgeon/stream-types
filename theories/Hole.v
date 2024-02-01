@@ -202,7 +202,6 @@ Proof.
 Qed.
 Hint Resolve wf_fill : core.
 
-
 Theorem wf_fill_reflect : forall h d hd,
   Fill h d hd ->
   WFContext hd <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
