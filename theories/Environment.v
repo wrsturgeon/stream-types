@@ -90,6 +90,15 @@ Definition Agree (i : Inertness) (n n' : env) (s s' : set string) : Prop :=
 Arguments Agree/ i n n' s s'.
 Hint Unfold Agree : core.
 
+Theorem Agree_same_subset : forall i n s s',
+  Subset s s' ->
+  Agree i n n s' s.
+Proof.
+  intros.
+  unfold Subset in H.
+  sfirstorder.
+Qed.
+
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
       EnvTyped n CtxEmpty

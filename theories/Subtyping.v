@@ -23,6 +23,10 @@ Inductive Subtype : context -> context -> Prop :=
       Subtype (CtxComma g d) (CtxComma d g)
   | SubCommaWkn : forall g d,
       Subtype (CtxComma g d) g
+  | SubSemicWkn1 : forall g d,
+      Subtype (CtxSemic g d) g
+| SubSemicWkn2 : forall g d,
+      Subtype (CtxSemic g d) d
   | SubCommaUnit : forall g,
       Subtype g (CtxComma g CtxEmpty)
   | SubSemicUnit1 : forall g,
@@ -31,6 +35,17 @@ Inductive Subtype : context -> context -> Prop :=
       Subtype g (CtxSemic CtxEmpty g)
   .
 Hint Constructors Subtype : core.
+
+Theorem subtype_fv_subset : forall g g',
+  Subtype g g' ->
+  Subset (fv g') (fv g).
+Proof.
+  intros.
+  induction H; unfold Subset in *; cbn; try sfirstorder.
+  intros.
+  hauto q: on use:fv_fill.
+Qed.
+
 
 Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
   Fill g d gd ->
@@ -57,18 +72,19 @@ Theorem sub_preserves_env : forall n G D,
   Subtype G D ->
   EnvTyped n D /\ Agree Inert n n (fv G) (fv D).
 Proof.
-  intros n G D He Hs. generalize dependent n. induction Hs; cbn in *; intros.
-  - shelve. (* eapply fill_preserves_env; [apply H | | | |]; eassumption. *)
-  - admit.
-  - admit.
-  - admit. 
-  (* removed cases
-  - sinvert He. assumption.
-  - sinvert He. assumption. *)
-  - admit.
-  - admit.
-  Unshelve. Abort.
-(*
+  intros n G D He Hs. generalize dependent n. induction Hs; intros.
+  - assert (EnvTyped n d) by sfirstorder use:maps_to_hole_reflect.
+   edestruct IHHs; eauto.
+   split.
+    + eapply fill_preserves_env; [ | | | eauto | ]; eauto. hauto l: on.
+    + assert (Subset (fv gd') (fv gd)) by sauto lq: on rew: off use:subtype_fv_subset.
+      unfold Subset in *. hauto q: on.
+  - split. eauto. sfirstorder.
+  - sauto lq: on  rew: off.
+  - sauto lq: on rew: off.
+  - sauto lq: on rew: off.
+  - sauto lq: on rew: off.
+  - sauto lq: on rew: off.
+  - sauto.
+  - sauto.
 Qed.
-Hint Resolve sub_preserves_env : core.
-*)
