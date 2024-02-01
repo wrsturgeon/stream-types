@@ -159,19 +159,15 @@ Definition NoConflict (n n' : env) := forall x p,
 Arguments NoConflict/ n n'.
 Hint Unfold NoConflict : core.
 
-Lemma prop_on_fill : forall P n d d' g lhs lhs',
-  Fill g d lhs ->
-  Fill g d' lhs' ->
-  PropOn P (fv d') n ->
-  PropOn P (fv lhs) n ->
-  PropOn P (fv lhs') n.
+Lemma prop_on_fill : forall P n h d g,
+  Fill h d g ->
+  (PropOn P (fv h) n /\ PropOn P (fv d) n) <-> PropOn P (fv g) n.
 Proof.
-  cbn in *. intros P n d d' g lhs lhs' Hf Hf' Hp' Hp x Hfv.
-  assert (A' : SetEq (fv lhs') (set_union (fv d') (fv g))). { apply fv_fill. assumption. } apply A' in Hfv.
-  assert (A : SetEq (fv lhs) (set_union (fv d) (fv g))). { apply fv_fill. assumption. } cbn in *.
-  destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
+intros. 
+assert (SetEq (set_union (fv h) (fv d)) (fv g)) by hauto q: on use:fv_fill.
+assert (Subset (set_union (fv h) (fv d)) (fv g)) by sfirstorder.
+split; intros; sfirstorder use: prop_on_contains, prop_on_union.
 Qed.
-Hint Resolve prop_on_fill : core.
 
 Lemma prop_on_item_weakening : forall P nr nl vs,
   PropOnItem P nr vs ->

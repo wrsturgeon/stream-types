@@ -7,6 +7,7 @@ From LambdaST Require Import
   Sets
   Terms
   Types
+  Inertness
   Nullable.
 From Coq Require Import
   List
@@ -54,7 +55,6 @@ Inductive Typed : context -> term -> type -> Prop :=
       Typed G' e s ->
       Typed G e s
   | TLet : forall G D x e e' s t Gxs GD,
-      Inert e ->
       ~fv G x ->
       Typed D e s ->
       Fill G (CtxHasTy x s) Gxs ->

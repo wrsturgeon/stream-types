@@ -21,6 +21,8 @@ Inductive Subtype : context -> context -> Prop :=
       Subtype g g
   | SubCommaExc : forall g d,
       Subtype (CtxComma g d) (CtxComma d g)
+  | SubCommaWkn : forall g d,
+      Subtype (CtxComma g d) g
   | SubCommaUnit : forall g,
       Subtype g (CtxComma g CtxEmpty)
   | SubSemicUnit1 : forall g,
@@ -33,10 +35,8 @@ Hint Constructors Subtype : core.
 Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
   Fill g d gd ->
   Fill g d' gd' ->
-  (* Subtype d d' -> *)
   (forall n : env, EnvTyped n d -> EnvTyped n d') ->
   forall n : env,
-  (* NOTE: added the agreement, should be good here. *)
   Agree Inert n n (fv d) (fv d') ->
   EnvTyped n gd ->
   EnvTyped n gd'.
@@ -44,26 +44,11 @@ Proof.
   intros d d' g gd gd' Hf.
   generalize dependent gd'.
   generalize dependent d'.
-  induction Hf; intros.
-  - sauto lq: on.
-  - sauto lq: on rew: off.
-  - sauto lq: on rew: off.
-  - sinvert H. sinvert H2. admit.
-Admitted.
-  (* generalize dependent n. induction g; cbn in *; intros;
-  sinvert Hf'; sinvert Hf; [apply IH; assumption | | | |]; sinvert He; constructor; try assumption;
-  try (eapply IHg; [| eassumption | eassumption | |]; assumption);
-  destruct H6; [left; assumption | right | left | right; assumption]. Abort. *)
-(*
-  (* TODO: we have to have something to do with `Agree`--maybe Subtype -> Agree? *)
-  (eapply prop_on_fill; [eassumption | eassumption | | assumption]).
-  admit.
-  cbn in *; intros; apply H.
-
-  (eapply prop_on_fill; [| | | eassumption]); eassumption.
+  induction Hf; intros; [sauto lq: on | sauto lq: on | sauto lq: on | | ];
+  sinvert H; sinvert H2; sinvert H8; constructor; eauto; [right | left];
+  eapply prop_on_fill in H; eauto;
+  qauto l: on use:prop_on_fill.
 Qed.
-Hint Resolve fill_preserves_env : core.
-*)
 
 (* Theorem B.35 *)
 (* NOTE: had to strengthen this to, carry along the agreement. *)

@@ -13,6 +13,7 @@ From LambdaST Require Import
   Types
   Typing
   Nullable
+  Inertness
   .
 
 Theorem maximal_push : forall e e' eta p,
@@ -32,38 +33,8 @@ Proof.
   - admit.
 Admitted.
 
-Theorem empty_push_inert : forall e e' eta p ,
-  Inert e ->
-  Step eta e e' p ->
-  EmptyOn (fv e) eta ->
-  EmptyPrefix p /\ Inert e'.
-Proof.
-  intros.
-  induction H0; intros.
-  - sauto lq: on.
-  - sauto lq: on.
-  - qauto l: on.
-  - sauto.
-  - sinvert H.
-  - sauto lq: on.
-  - sinvert H. 
-    edestruct IHStep as [A B]; [eauto | admit |]. (* obvious, gotta compute envs. *)
-    split; sauto lq: on rew: off.
-  - sinvert H. 
-    edestruct IHStep as [A B]; [eauto | admit |]. (* obvious, gotta compute envs. *)
-    split; sauto lq: on rew: off.
-  - assert (exists p, n z = Some p /\ EmptyPrefix p) by sfirstorder.
-    destruct H3 as [p'' [A B]].
-    destruct (ltac:(sfirstorder) : PfxCatBoth p1 p2 = p'').
-    sinvert B.
-  - sinvert H. edestruct IHStep1; [eauto | hauto q: on use:prop_on_contains|].
-    assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on use:prop_on_contains.
-    edestruct IHStep2; [eauto | admit |].
-    sauto lq: on.
-  - sinvert H. edestruct IHStep; [eauto | admit |]. sauto lq: on.
-Admitted.
 
-Theorem agree_step_inert : forall e e' eta p S x s,
+(* Theorem agree_step_inert : forall e e' eta p S x s,
   Inert e ->
   Subset (fv e) S -> (*automatic from typing derivatino*)
   Step eta e e' p ->
@@ -79,7 +50,7 @@ Proof.
   - assert (EmptyOn (fv e) eta); [eapply prop_on_contains; eauto |].
     assert (EmptyPrefix p) by hauto lb: on drew: off use:empty_push_inert.
     exists p. sinvert H6. unfold singleton_env. hauto lq: on use:eqb_refl.
-Qed.
+Qed. *)
 
 
 Theorem soundout : forall G e e' s eta p,
@@ -89,12 +60,14 @@ Theorem soundout : forall G e e' s eta p,
     Step eta e e' p ->
     PrefixTyped p s.
 Proof.
-    intros G e e' s eta p Ht Hwf Hstep.
-    generalize dependent e'.
-    generalize dependent eta.
-    generalize dependent p.
-    induction Ht; intros p eta Heta e0' Hstep.
-    - cbn in *. sauto q: on.
+    intros G e e' s eta p Ht Hwf Heta Hstep.
+    generalize dependent G.
+    generalize dependent s.
+    (* induction Hstep; intros.
+    - admit.
+    - admit.
+    - admit.
+    - sinvert Ht; admit.
     - sinvert Hstep.
       assert (~fv G z) by hauto q: on use:wf_fill_reflect.
       eapply IHHt; [| | eauto].
@@ -120,8 +93,9 @@ Proof.
       eapply IHHt2; [ | | eauto].
       + eapply wf_fill_reflect. eauto. sfirstorder use:wf_fill_reflect.
       + eapply letenvtyped; eauto.
-        eapply agree_step_inert; eauto.
-    - sinvert Hstep. eapply IHHt; [ | | eauto]. eapply wf_fill_reflect. eauto. sfirstorder use:wf_fill_reflect. admit.
+      admit.
+        (* eapply agree_step_inert; eauto. *)
+    - sinvert Hstep. eapply IHHt; [ | | eauto]. eapply wf_fill_reflect. eauto. sfirstorder use:wf_fill_reflect. admit. *)
 Admitted.
 
 (* let x = e in e' | *)
