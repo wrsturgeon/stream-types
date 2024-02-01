@@ -99,7 +99,9 @@ Proof.
     + shelve.
   - sinvert Hp. specialize (IHHd H4 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]].
     eexists. repeat split; constructor; eassumption.
-  Unshelve. Abort. (* Two lemmas left *)
+  Unshelve. Abort. (* TODO: two lemmas left *)
+
+(* TODO: prefix concatenation and derivatives,*)
 
 Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->
@@ -115,7 +117,22 @@ Proof.
 Qed.
 Hint Resolve pfx_cat_assoc : core.
 
-(* TODO: prefix concatenation and derivatives,*)
-(* TODO: prefix concatenation is associative. *)
-(* TODO: environment concatenation, and the same. Environment concat: n . n' ~ n'' if,
-for all x in dom(n) and dom(n'), n(x) . n'(x) ~ n''(x)*)
+(* NOTE: Joe, this is what you said you needed last time--it was a pretty easy corollary of the above *)
+Lemma pfx_cat_assoc_eq : forall p q r pq qr s1 s2,
+  PrefixConcat p q pq ->
+  PrefixConcat q r qr ->
+  PrefixConcat pq r s1 ->
+  PrefixConcat p qr s2 ->
+  s1 = s2.
+Proof.
+  intros p q r pq qr s1 s2 Hpq Hqr Hs1 Hs2.
+  assert (A := pfx_cat_assoc _ _ _ _ _ Hpq Hs1). destruct A as [qr' [H1 H2]].
+  assert (A := pfx_cat_unique _ _ _ _ Hqr H2). clear H2. symmetry in A. subst.
+  assert (A := pfx_cat_unique _ _ _ _ Hs2 H1). subst. reflexivity.
+Qed.
+Hint Resolve pfx_cat_assoc_eq : core.
+
+(* TODO: environment concatenation, and the same.
+ * Environment concat: n . n' ~ n'' if,
+ * for all x in dom(n) and dom(n'),
+ * n(x) . n'(x) ~ n''(x) *)

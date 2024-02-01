@@ -92,7 +92,7 @@ Definition Agree (i : inertness) (n n' : env) (s s' : set string) : Prop :=
 Arguments Agree/ i n n' s s'.
 Hint Unfold Agree : core.
 
-Theorem Agree_same_subset : forall i n s s',
+Theorem agree_subset : forall i n s s',
   Subset s s' ->
   Agree i n n s' s.
 Proof.
@@ -100,6 +100,7 @@ Proof.
   unfold Subset in H.
   sfirstorder.
 Qed.
+Hint Resolve agree_subset : core.
 
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
@@ -139,7 +140,7 @@ Theorem maps_to_hole : forall n G D,
   EnvTyped n D.
 Proof.
   intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  sfirstorder use:maps_to_hole_reflect.
+  eapply maps_to_hole_reflect; eassumption.
 Qed.
 Hint Resolve maps_to_hole : core.
 
@@ -154,10 +155,8 @@ Theorem maps_to_has_type_reflect : forall n G x Gx s,
   Fill G (CtxHasTy x s) Gx ->
   EnvTyped n Gx ->
   exists p, (n x = Some p /\ PrefixTyped p s).
-Proof. sauto use:maps_to_hole_reflect. Qed.
+Proof. intros. assert (A := maps_to_hole_reflect _ _ _ _ H H0). sinvert A. repeat econstructor; eassumption. Qed.
 Hint Resolve maps_to_has_type : core.
-
-
 
 Definition NoConflict (n n' : env) := forall x p,
   n x = Some p ->
@@ -274,6 +273,7 @@ Proof.
   unfold singleton_env.
   hauto lq: on use: eqb_refl.
 Qed.
+Hint Resolve env_typed_singleton : core.
 
 Theorem env_typed_comma: forall n n' g g',
   DisjointSets (dom n) (dom n') ->
@@ -286,6 +286,7 @@ Proof.
     specialize (H x) as [H _]. contradiction H; eexists; eassumption.
   + apply env_typed_weakening. assumption.
 Qed.
+Hint Resolve env_typed_comma : core.
 
 Theorem env_typed_semic : forall n n' g g',
   DisjointSets (dom n) (dom n') ->
@@ -301,6 +302,7 @@ Proof.
   + destruct H2; [left; apply prop_on_weakening | right; apply prop_on_weakening_alt]; try assumption.
     cbn in *. intros. specialize (H x) as [H _]. contradiction H; eexists; eassumption.
 Qed.
+Hint Resolve env_typed_semic : core.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
 Theorem env_subctx_bind_equal : forall hole plug n n',

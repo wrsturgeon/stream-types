@@ -41,9 +41,6 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step eta e1 e1' p ->
       Step (env_subst x p eta) e2 e2' p' ->
       Step eta (TmLet x e1 e2) (TmLet x e1' e2') p'
-  | S_Drop : forall eta x e e' p,
-      Step (env_drop eta x) e e' p ->
-      Step eta (TmDrop x e) (TmDrop x e') p
   .
 (* TODO: FINISH DEFINITION *)
 Hint Constructors Step : core.

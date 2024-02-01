@@ -9,8 +9,9 @@ From LambdaST Require Import
   Nullable
   Prefix
   Semantics
-  SinkTerm
   Sets
+  SinkTerm
+  Subcontext
   Terms
   Types
   Typing.
@@ -38,7 +39,7 @@ Typed_ind
        (forall (G : hole) (x : string) (s : type) (Gxs : context),
         Fill G (CtxHasTy x s) Gxs -> P Gxs (TmVar x) s) ->
        (forall (G G' : context) (e : term) (s : type),
-        Subctx.Subctx G G' -> Typed G' e s -> P G' e s -> P G e s) ->
+        Subcontext G G' -> Typed G' e s -> P G' e s -> P G e s) ->
        (forall (G : hole) (D : context) (x : string) 
           (e e' : term) (s t : type) (Gxs GD : context),
         ~ fv G x ->
@@ -114,7 +115,7 @@ Theorem lex_ind :
 
     (forall (G G' : context) (e : term) (s : type) eta e' p,
         Step eta e e' p ->
-        Subctx.Subctx G G' -> Typed G' e s -> P G' e s eta e' p -> P G e s eta e' p) ->
+        Subcontext G G' -> Typed G' e s -> P G' e s eta e' p -> P G e s eta e' p) ->
       
     (forall G n, P G TmSink TyEps n TmSink PfxEpsEmp) ->
 
@@ -167,9 +168,8 @@ Proof.
   - admit.
   - admit.
   - dependent induction H00.
-    + best.
+    + sauto lq: on rew: off.
     + eapply H; sfirstorder.
-  - admit.
   - admit.
   - admit.
   - admit.

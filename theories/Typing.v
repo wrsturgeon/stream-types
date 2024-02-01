@@ -7,7 +7,7 @@ From LambdaST Require Import
   Inert
   Nullable
   Sets
-  Subctx
+  Subcontext
   Terms
   Types.
 
@@ -47,7 +47,7 @@ Inductive Typed : context -> term -> type -> Prop :=
       Fill G (CtxHasTy x s) Gxs ->
       Typed Gxs (TmVar x) s
   | TSubCtx : forall G G' e s,
-      Subctx G G' ->
+      Subcontext G G' ->
       Typed G' e s ->
       Typed G e s
   | TLet : forall G D x e e' s t Gxs GD,
@@ -57,14 +57,8 @@ Inductive Typed : context -> term -> type -> Prop :=
       Fill G D GD ->
       Typed Gxs e' t ->
       Typed GD (TmLet x e e') t
-  | TDrop : forall G x s t e Ge Gxs,
-      Fill G CtxEmpty Ge ->
-      Fill G (CtxHasTy x s) Gxs ->
-      Typed Ge e t ->
-      Typed Gxs (drop x; e) t
   .
-
-Check Typed_ind.
+Hint Constructors Typed : core.
 
 (* TODO:
 Theorem typed_wf_term : forall G x T,
@@ -91,12 +85,10 @@ Proof.
   - destruct H' as [].
   - destruct H' as [].
   - eapply fv_fill. { eassumption. } cbn. left. assumption.
-  - sfirstorder use:Subctx_fv_subset.
+  - sfirstorder use:subcontext_fv_subset.
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H'; [| left; assumption]. specialize (IHHt _ H1).
-    eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH as []. } right. assumption.
 Qed.
 Hint Resolve typing_fv : core.
 
