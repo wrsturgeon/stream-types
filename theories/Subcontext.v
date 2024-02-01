@@ -23,12 +23,11 @@ Inductive Subcontext : context -> context -> Prop :=
       Subcontext (CtxComma g d) (CtxComma d g)
   | SubCommaWkn : forall g d,
       Subcontext (CtxComma g d) g
-  (* NOTE: REMOVED: this is what `drop` is for
   (* don't need right-hand comma weakening b/c we have exchange *)
   | SubSemicWkn1 : forall g d,
       Subcontext (CtxSemic g d) g
   | SubSemicWkn2 : forall g d,
-      Subcontext (CtxSemic g d) d *)
+      Subcontext (CtxSemic g d) d
   | SubCommaUnit : forall g,
       Subcontext g (CtxComma g CtxEmpty)
   | SubSemicUnit1 : forall g,
@@ -42,7 +41,7 @@ Theorem subcontext_fv_subset : forall g g',
   Subcontext g g' ->
   Subset (fv g') (fv g).
 Proof.
-  intros. induction H; cbn in *; intros; [shelve | | | | | |]; sfirstorder.
+  intros. induction H; cbn in *; intros; [shelve | | | | | | | |]; sfirstorder.
   (* Only interesting case is `Fill`, covered below: *)
   Unshelve. eapply fv_fill; [eassumption |]. apply fv_fill in H. apply fv_fill in H0. cbn in *.
   apply H0 in H2. destruct H2; [| right; assumption]. left. apply IHSubcontext. assumption.
@@ -86,6 +85,8 @@ Proof.
     + split; intros; (eapply prop_on_contains; [| eassumption]);
       apply subcontext_fv_subset; econstructor; eassumption.
   - repeat split; intros; eassumption.
+  - sinvert He. repeat split; sfirstorder.
+  - sinvert He. repeat split; sfirstorder.
   - sinvert He. repeat split; sfirstorder.
   - sinvert He. repeat split; sfirstorder.
   - repeat constructor; sfirstorder.
