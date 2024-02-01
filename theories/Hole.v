@@ -191,9 +191,6 @@ Proof.
 Qed.
 Hint Resolve wf_hole_iff : core.
 
-
-
-
 Theorem wf_fill : forall h d,
   WFContext (fill h d) <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
 Proof.
