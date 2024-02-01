@@ -6,16 +6,14 @@ From LambdaST Require Import
   Environment
   FV
   Hole
+  Nullable
   Prefix
   Semantics
   SinkTerm
   Sets
   Terms
   Types
-  Typing
-  Nullable
-  Inertness
-  .
+  Typing.
 
 (*
 Typed_ind

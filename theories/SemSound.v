@@ -5,17 +5,16 @@ From LambdaST Require Import
   Environment
   FV
   Hole
+  Ind
+  Inert
+  Nullable
   Prefix
   Semantics
   SinkTerm
   Sets
   Terms
   Types
-  Typing
-  Nullable
-  Inertness
-  Ind
-  .
+  Typing.
 
 (* Theorem agree_step_inert : forall e e' eta p S x s,
   Inert e ->

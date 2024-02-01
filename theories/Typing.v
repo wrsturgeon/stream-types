@@ -4,17 +4,12 @@ From LambdaST Require Import
   Context
   FV
   Hole
+  Inert
+  Nullable
   Sets
-  Terms
-  Types
-  Inertness
   Subctx
-  Nullable.
-From Coq Require Import
-  List
-  String.
-
-From Hammer Require Import Tactics.
+  Terms
+  Types.
 
 Declare Scope typing_scope.
 

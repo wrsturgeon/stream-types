@@ -6,11 +6,11 @@ From LambdaST Require Import
   Context
   FV
   Hole
+  Inert
   Prefix
   Sets
   Terms
-  Types
-  Inertness.
+  Types.
 
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
@@ -84,9 +84,11 @@ Theorem prop_on_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
 Proof. sfirstorder. Qed.
 
-Definition Agree (i : Inertness) (n n' : env) (s s' : set string) : Prop :=
+(* Agree Inert means "including empty on agreement";
+ * Agree Jumpy means "not including empty on agreement." *)
+Definition Agree (i : inertness) (n n' : env) (s s' : set string) : Prop :=
   (MaximalOn s n -> MaximalOn s' n') /\
-  (i = Inert -> EmptyOn s n -> EmptyOn s' n'). (* Agree Inert means "including emptyon agreement", Agree Jumpy means "not including emptyon agreement." *)
+  (i = Inert -> EmptyOn s n -> EmptyOn s' n').
 Arguments Agree/ i n n' s s'.
 Hint Unfold Agree : core.
 
@@ -118,21 +120,18 @@ Inductive EnvTyped : env -> context -> Prop :=
   .
 Hint Constructors EnvTyped : core.
 
-Hint Constructors EnvTyped : core.
-
 Theorem maps_to_hole_reflect : forall g d gd n,
   Fill g d gd ->
   EnvTyped n gd ->
   EnvTyped n d.
 Proof.
-  intros.
- generalize dependent g. generalize dependent d. induction H0; intros; subst; cbn in *.
- - sauto lq: on.
- - sauto lq: on rew: off.
- - sauto lq: on rew: off.
- - sinvert H0. hauto l: on. sfirstorder. sfirstorder.
+  intros. generalize dependent g. generalize dependent d. induction H0; cbn in *; intros; subst.
+ - sinvert H. constructor.
+ - sinvert H1. econstructor; eassumption.
+ - sinvert H; [constructor | eapply IHEnvTyped1 | eapply IHEnvTyped2]; eassumption.
+ - sinvert H0; [constructor | eapply IHEnvTyped1 | eapply IHEnvTyped2]; eassumption.
 Qed.
-
+Hint Resolve maps_to_hole_reflect : core.
 
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
@@ -177,6 +176,13 @@ assert (SetEq (set_union (fv h) (fv d)) (fv g)) by hauto q: on use:fv_fill.
 assert (Subset (set_union (fv h) (fv d)) (fv g)) by sfirstorder.
 split; intros; sfirstorder use: prop_on_contains, prop_on_union.
 Qed.
+
+Lemma prop_on_fill_iff : forall P n h d g,
+  Fill h d g -> (
+    (PropOn P (fv h) n /\ PropOn P (fv d) n) <->
+    PropOn P (fv g) n).
+Proof. intros. apply fv_fill in H. split; sfirstorder. Qed.
+Hint Resolve prop_on_fill_iff : core.
 
 Lemma prop_on_item_weakening : forall P nr nl vs,
   PropOnItem P nr vs ->
@@ -351,7 +357,7 @@ Proof.
   induction Hf; cbn in *; intros; [sinvert Hf'; apply env_typed_weakening; assumption | | | |];
   sinvert Hf'; sinvert Hn; constructor; try (eapply IHHf; eassumption); clear IHHf;
   try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
-  (destruct H5; [left | right]); try (apply prop_on_weakening_alt; assumption); eapply agree_union; eauto.
+  (destruct H5; [left | right]); try (apply prop_on_weakening_alt; eassumption); eapply agree_union; sfirstorder.
 Qed.
 Hint Resolve env_subctx_bind : core.
 

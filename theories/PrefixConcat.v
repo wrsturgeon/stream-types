@@ -101,90 +101,19 @@ Proof.
     eexists. repeat split; constructor; eassumption.
   Unshelve. Abort. (* Two lemmas left *)
 
-Lemma pfx_cat_assoc_l : forall p q r s pq,
+Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->
   PrefixConcat pq r s ->
   exists qr, PrefixConcat p qr s /\ PrefixConcat q r qr.
 Proof.
   intros p q r s pq Hl Hr. generalize dependent r. generalize dependent s. induction Hl; intros; (* sauto lq: on. *)
-  (*
-  - (* PfxEpsEmp *)
-    sinvert Hr. eexists. repeat constructor.
-  - (* PfxOneEmp *)
-    sinvert H; sinvert Hr. { eexists. repeat constructor; assumption. } eexists. repeat constructor.
-  - (* PfxOneFull *)
-    sinvert Hr. eexists. repeat constructor.
-  - (* PfxParPair *)
-    sinvert Hr.
-    specialize (IHHl1 _ _ H1) as [qr1 [Hqr1l Hqr1r]].
-    specialize (IHHl2 _ _ H4) as [qr2 [Hqr2l Hqr2r]].
-    eexists. repeat constructor; eassumption.
-  - (* PfxCatFst *)
-    sinvert Hr; specialize (IHHl _ _ H0) as [qr [Hqr1 Hqr2]]; eexists; repeat constructor; eassumption.
-  - (* PfxCatBoth / PfxCatFst *)
-    sinvert Hr. eexists. repeat constructor; assumption. (* never used the IH--odd *)
-  - (* PfxCatBoth / PfxCatBoth *)
-    sinvert Hr. specialize (IHHl _ _ H3) as [qr [Hqr1 Hqr2]]. eexists. repeat constructor; eassumption.
-  - (* PfxSumEmp *)
-    eexists. repeat constructor. assumption.
-  - (* PfxSumInl *)
-    sinvert Hr. specialize (IHHl _ _ H0) as [qr [Hqr1 Hqr2]]. eexists. repeat constructor; eassumption.
-  - (* PfxSumInr *)
-    sinvert Hr. specialize (IHHl _ _ H0) as [qr [Hqr1 Hqr2]]. eexists. repeat constructor; eassumption.
-  - (* PfxStarEmp *)
-    eexists. repeat constructor. assumption.
-  - (* PfxStarDone *)
-    sinvert Hr. eexists. repeat constructor.
-  - (* PfxStarFirst *)
-    sinvert Hr; specialize (IHHl _ _ H0) as [qr [Hqr1 Hqr2]]; eexists; repeat constructor; eassumption.
-  - (* PfxStarRest / PfxCatBoth *)
-    sinvert Hr. eexists. repeat constructor; assumption. (* Also didn't use the IH *)
-  - (* PfxStarRest / PfxStarRest *)
-    sinvert Hr. specialize (IHHl _ _ H3) as [qr [Hqr1 Hqr2]]. eexists. repeat constructor; eassumption.
-  *)
   try (sinvert H; sinvert Hr; eexists; repeat constructor; assumption);
   try (eexists; repeat constructor; assumption); sinvert Hr; try specialize (IHHl _ _ H0) as [qr1 [Hqr1 Hqr2]];
   try specialize (IHHl _ _ H3) as [qr [Hqr1 Hqr2]]; try (eexists; repeat constructor; eassumption).
   specialize (IHHl1 _ _ H1) as [qr1 [Hqr1l Hqr1r]]. specialize (IHHl2 _ _ H4) as [qr2 [Hqr2l Hqr2r]].
   eexists. repeat constructor; eassumption.
 Qed.
-
-Lemma pfx_cat_assoc_r : forall p q r s qr,
-  PrefixConcat p qr s ->
-  PrefixConcat q r qr ->
-  exists pq, PrefixConcat p q pq /\ PrefixConcat pq r s.
-Proof.
-  intros p q r s pq Hl Hr. generalize dependent r. generalize dependent q. induction Hl; intros.
-  - (* PfxEpsEmp *)
-    (* PrefixConcat q r PfxEpsEmp -> exists pq, PrefixConcat PfxEpsEmp q pq /\ PrefixConcat pq r PfxEpsEmp *)
-    sinvert Hr.
-    + (* q, r both PfxEpsEmp *) sauto lq: on.
-    + (* q PfxOneEmp, r PfxEpsEmp *) sauto lq: on.
-    + (* q PfxSumEmp, r PfxEpsEmp *)
-      (* (no hypotheses) exists pq, PrefixConcat PfxEpsEmp PfxSumEmp pq /\ PrefixConcat pq PfxEpsEmp PfxEpsEmp *)
-      Fail best time: 1000000000000000000. (* stops in < 1 second: probably actually false *)
-Abort.
-
-Lemma oh_shit :
-  ~exists pq, PrefixConcat PfxEpsEmp PfxSumEmp pq /\ PrefixConcat pq PfxEpsEmp PfxEpsEmp.
-Proof. intros [pq [H1 H2]]. sinvert H1. Qed.
-
-Lemma oh_fuck :
-  ~exists pq, PrefixConcat PfxEpsEmp PfxSumEmp pq.
-Proof. intros [pq H]. sinvert H. Qed.
-
-(* TODO: here's the problem ^^^^^ *)
-
-(*
-(* This was incredibly difficult to state, and I'm not sure it's exactly what we want, but I'm confident.
- * Either way, we might need to package it more nicely for downstream use. *)
-Lemma pfx_cat_assoc : forall p q r s,
-  (exists pq, PrefixConcat p q pq /\ PrefixConcat pq r s) <->
-  (exists qr, PrefixConcat p qr s /\ PrefixConcat q r qr).
-Proof.
-  split. { intros [pq [H1 H2]]. eapply pfx_cat_assoc_l; eassumption. } best use: pfx_cat_assoc_r.
-Qed.
-*)
+Hint Resolve pfx_cat_assoc : core.
 
 (* TODO: prefix concatenation and derivatives,*)
 (* TODO: prefix concatenation is associative. *)
