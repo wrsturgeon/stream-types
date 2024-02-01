@@ -30,7 +30,7 @@ Hint Unfold DisjointSets : core.
 (* Argument order matches notation: (Subset a b) === (a is a subset of b) *)
 Definition Subset {T} (little big : set T) : Prop := forall x,
   little x -> big x.
-Arguments Subset {T} little big.
+Arguments Subset {T} little big/.
 Hint Unfold Subset : core.
 
 Definition SetEq {T} (a b : set T) : Prop := forall x,
