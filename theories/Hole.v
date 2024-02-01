@@ -68,6 +68,7 @@ Fixpoint fv_hole h :=
 Theorem fv_hole_plug : forall h,
   SetEq (fv_hole h) (fv (fill h CtxEmpty)).
 Proof. induction h; intros; split; sfirstorder. Qed.
+Hint Resolve fv_hole_plug : core.
 
 Instance fv_hole_inst : FV hole := { fv := fv_hole }.
 
@@ -200,3 +201,80 @@ Proof.
   hauto l: on use: wf_hole_iff.
 Qed.
 Hint Resolve wf_fill : core.
+
+
+Theorem wf_fill_reflect : forall h d hd,
+  Fill h d hd ->
+  WFContext hd <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
+Proof.
+intros.
+eapply reflect_fill in H.
+hauto l: on use: wf_fill.
+Qed.
+Hint Resolve wf_fill_reflect : core.
+
+(* TODO: delete everything below this line *)
+
+Lemma set_minus_fill_cancel : forall G z r,
+  ~fv G z ->
+  SetEq
+    (set_minus (fv (fill G (CtxHasTy z r))) (singleton_set z))
+    (fv G).
+Proof.
+  cbn. intros G z r Hz x. split.
+  - intros [Hfv Hne]. apply fv_fill_fn in Hfv as [H | H]; cbn in H. { contradiction Hne. } assumption.
+  - intro H. split. { apply fv_fill_fn. cbn. right. assumption. } intro. subst. contradiction Hz.
+Qed.
+Hint Resolve set_minus_fill_cancel : core.
+
+(* In plain English:
+ * Given a context G with a hole and a variable z (used to require that z not in G, but not actually necessary),
+ * if you fill G with either (x: s; y: t) or (x: s, y: t),
+ * the resulting free variables are exactly the free variables of G plus x and y.
+ * In other words, **this is just a special case of `fv_fill`.** *)
+Theorem hmm : forall G x y (* z *) s t ctr,
+  (ctr = CtxComma \/ ctr = CtxSemic) ->
+  SetEq
+    (set_union (fv G) (set_union (singleton_set x) (singleton_set y)))
+    (fv (fill G (ctr (CtxHasTy x s) (CtxHasTy y t)))).
+Proof.
+  cbn. intros. remember (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))) as Gxy eqn:E.
+  apply reflect_fill in E. apply fv_fill in E. split; intros.
+  - repeat destruct H0; [eapply E; right; assumption | |];
+    destruct H; subst; apply E; left; try (left; reflexivity); right; reflexivity.
+  - apply E in H0. clear E. destruct H; subst; sfirstorder.
+Qed.
+Hint Resolve hmm : core.
+
+Theorem hmm' : forall G x y z s t r ctr,
+  (ctr = CtxComma \/ ctr = CtxSemic) ->
+  ~(fv G x) ->
+  ~(fv G y) ->
+  x <> y ->
+  WFContext (fill G (CtxHasTy z r)) ->
+  WFContext
+    (fill G (ctr (CtxHasTy x s) (CtxHasTy y t))).
+Proof.
+  intros G x y z s t r ctr Hctr Hx Hy Hxy H. apply wf_fill in H as [H1 [H2 H3]]. sinvert H2. apply wf_fill.
+  repeat split; intros; [eassumption | sauto | |]; destruct Hctr; sfirstorder.
+Qed.
+Hint Resolve hmm' : core.
+
+Theorem hmm'_reflect : forall G Gz Gxy x y z s t r ctr,
+  (ctr = CtxComma \/ ctr = CtxSemic) ->
+  x <> y ->
+  ~(fv G x) ->
+  ~(fv G y) ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (ctr (CtxHasTy x s) (CtxHasTy y t)) Gxy ->
+  WFContext Gz ->
+  WFContext Gxy.
+Proof.
+ intros.
+ eapply reflect_fill in H3.
+ eapply reflect_fill in H4.
+ rewrite -> H3 in *.
+ rewrite -> H4 in *.
+ eapply hmm'; eauto.
+Qed.
+Hint Resolve hmm'_reflect : core.
