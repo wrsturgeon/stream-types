@@ -56,11 +56,6 @@ Inductive Typed : context -> term -> type -> Prop :=
       Fill G D GD ->
       Gxs |- e' \in t ->
       GD |- TmLet x e e' \in t
-  | TDrop : forall G x s t e Ge Gxs,
-      Fill G CtxEmpty Ge ->
-      Fill G (CtxHasTy x s) Gxs ->
-      Ge |- e \in t ->
-      Gxs |- drop x; e \in t
 where "G '|-' x '\in' T" := (Typed G x T).
 Hint Constructors Typed : core.
 
@@ -87,8 +82,6 @@ Proof.
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H'; [| left; assumption]. specialize (IHHt _ H1).
-    eapply fv_fill in IHHt as [IH | IH]; [| | eassumption]. { destruct IH as []. } right. assumption.
 Qed.
 Hint Resolve typed_fv : core.
 
