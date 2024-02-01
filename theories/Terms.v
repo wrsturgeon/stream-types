@@ -62,6 +62,13 @@ Fixpoint fv_term e : set string :=
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 
+Inductive ctx_term : Set :=
+  | CtxTmEmp
+  | CtxTmVarTerm (id : string) (t : type) (tm : term)
+  | CtxTmComma (lhs rhs : ctx_term)
+  | CtxTmSemic (lhs rhs : ctx_term)
+  .
+
 (*
 Inductive WFTerm : set string -> term -> Prop :=
   | WFTmSink : forall s,

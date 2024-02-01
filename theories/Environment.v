@@ -92,6 +92,16 @@ Definition Agree (i : inertness) (n n' : env) (s s' : set string) : Prop :=
 Arguments Agree/ i n n' s s'.
 Hint Unfold Agree : core.
 
+Theorem agree_subset : forall i n s s',
+  Subset s s' ->
+  Agree i n n s' s.
+Proof.
+  intros.
+  unfold Subset in H.
+  sfirstorder.
+Qed.
+Hint Resolve agree_subset : core.
+
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
       EnvTyped n CtxEmpty
@@ -130,8 +140,7 @@ Theorem maps_to_hole : forall n G D,
   EnvTyped n D.
 Proof.
   intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  generalize dependent G. generalize dependent D. induction H; intros; subst; cbn in *;
-  sinvert E; try econstructor; try eassumption; try (eapply IHEnvTyped1; eassumption); eapply IHEnvTyped2; eassumption.
+  eapply maps_to_hole_reflect; eassumption.
 Qed.
 Hint Resolve maps_to_hole : core.
 
@@ -140,6 +149,13 @@ Theorem maps_to_has_type : forall n G x s,
   EnvTyped n (fill G (CtxHasTy x s)) ->
   exists p, (n x = Some p /\ PrefixTyped p s).
 Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
+Hint Resolve maps_to_has_type : core.
+
+Theorem maps_to_has_type_reflect : forall n G x Gx s,
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped n Gx ->
+  exists p, (n x = Some p /\ PrefixTyped p s).
+Proof. intros. assert (A := maps_to_hole_reflect _ _ _ _ H H0). sinvert A. repeat econstructor; eassumption. Qed.
 Hint Resolve maps_to_has_type : core.
 
 Definition NoConflict (n n' : env) := forall x p,
@@ -251,6 +267,46 @@ Proof.
     (eapply prop_on_weakening_alt in Hc; [| eassumption]); [left | right]; assumption.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
+
+(* environment typing smart constructors *)
+Theorem env_typed_singleton : forall x s p,
+  PrefixTyped p s ->
+  EnvTyped (singleton_env x p) (CtxHasTy x s).
+Proof.
+  intros; econstructor; [| eauto]; cbn.
+  unfold singleton_env.
+  hauto lq: on use: eqb_refl.
+Qed.
+Hint Resolve env_typed_singleton : core.
+
+Theorem env_typed_comma: forall n n' g g',
+  DisjointSets (dom n) (dom n') ->
+  EnvTyped n g ->
+  EnvTyped n' g' ->
+  EnvTyped (env_union n n') (CtxComma g g').
+Proof.
+  constructor.
+  + eapply env_typed_weakening_alt; [|eauto]. cbn in *. intros.
+    specialize (H x) as [H _]. contradiction H; eexists; eassumption.
+  + apply env_typed_weakening. assumption.
+Qed.
+Hint Resolve env_typed_comma : core.
+
+Theorem env_typed_semic : forall n n' g g',
+  DisjointSets (dom n) (dom n') ->
+  EnvTyped n g ->
+  EnvTyped n' g' ->
+  EmptyOn (fv g') n' \/ MaximalOn (fv g) n ->
+  EnvTyped (env_union n n') (CtxSemic g g').
+Proof.
+  constructor.
+  + eapply env_typed_weakening_alt; [|eauto]. cbn in *. intros.
+    specialize (H x) as [H _]. contradiction H; eexists; eassumption.
+  + apply env_typed_weakening. assumption.
+  + destruct H2; [left; apply prop_on_weakening | right; apply prop_on_weakening_alt]; try assumption.
+    cbn in *. intros. specialize (H x) as [H _]. contradiction H; eexists; eassumption.
+Qed.
+Hint Resolve env_typed_semic : core.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
 Theorem env_subctx_bind_equal : forall hole plug n n',
