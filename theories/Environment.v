@@ -111,6 +111,19 @@ Inductive EnvTyped : env -> context -> Prop :=
   .
 Hint Constructors EnvTyped : core.
 
+Theorem maps_to_hole_reflect : forall g d gd n,
+  Fill g d gd ->
+  EnvTyped n gd ->
+  EnvTyped n d.
+Proof.
+  intros. generalize dependent g. generalize dependent d. induction H0; cbn in *; intros; subst.
+ - sinvert H. constructor.
+ - sinvert H1. econstructor; eassumption.
+ - sinvert H; [constructor | eapply IHEnvTyped1 | eapply IHEnvTyped2]; eassumption.
+ - sinvert H0; [constructor | eapply IHEnvTyped1 | eapply IHEnvTyped2]; eassumption.
+Qed.
+Hint Resolve maps_to_hole_reflect : core.
+
 (* Theorem B.9 *)
 Theorem maps_to_hole : forall n G D,
   EnvTyped n (fill G D) ->
@@ -150,6 +163,13 @@ Proof.
   destruct Hfv. 2: { apply Hp. apply A. right. assumption. } apply Hp'. assumption.
 Qed.
 Hint Resolve prop_on_fill : core.
+
+Lemma prop_on_fill_iff : forall P n h d g,
+  Fill h d g -> (
+    (PropOn P (fv h) n /\ PropOn P (fv d) n) <->
+    PropOn P (fv g) n).
+Proof. intros. apply fv_fill in H. split; sfirstorder. Qed.
+Hint Resolve prop_on_fill_iff : core.
 
 Lemma prop_on_item_weakening : forall P nr nl vs,
   PropOnItem P nr vs ->
