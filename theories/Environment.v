@@ -12,6 +12,7 @@ From LambdaST Require Import
   Terms
   Types.
 
+(* Definition B.8, part I *)
 Definition env : Set := string -> option prefix.
 Arguments env/.
 Hint Unfold env : core.
@@ -72,10 +73,12 @@ Definition PropOn (P : prefix -> Prop) (s : set string) (n : env) : Prop := fora
 Arguments PropOn/ P s n.
 Hint Unfold PropOn : core.
 
+(* Definition B.7, part I *)
 Definition EmptyOn := PropOn EmptyPrefix.
 Arguments EmptyOn/ s n.
 Hint Unfold EmptyOn : core.
 
+(* Definition B.7, part II *)
 Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ s n.
 Hint Unfold MaximalOn : core.
@@ -92,6 +95,7 @@ Theorem prop_on_union: forall P s s' n,
 Proof. sfirstorder. Qed.
 Hint Resolve prop_on_union : core.
 
+(* Definition B.7, part III, heavily edited *)
 (* Agree Inert means "including empty on agreement";
  * Agree Jumpy means "not including empty on agreement." *)
 Definition Agree (i : inertness) (n n' : env) (s s' : set string) : Prop :=
@@ -110,6 +114,7 @@ Proof.
 Qed.
 Hint Resolve agree_subset : core.
 
+(* Definition B.8, part II *)
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
       EnvTyped n CtxEmpty
@@ -374,8 +379,6 @@ Proof.
   (destruct H5; [left | right]); try (apply prop_on_weakening_alt; eassumption); eapply agree_union; sfirstorder.
 Qed.
 Hint Resolve env_subctx_bind : core.
-
-(* TODO: what's the notation in Theorem B.12? *)
 
 Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
   (P = EmptyPrefix \/ P = MaximalPrefix) ->

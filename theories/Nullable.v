@@ -3,6 +3,7 @@ From LambdaST Require Import
   Prefix
   Types.
 
+(* Definition B.1 *)
 Inductive Nullable : type -> Prop :=
   | NullableTyEps : Nullable TyEps
   | NullableTyPar : forall s t,
