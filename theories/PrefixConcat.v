@@ -50,6 +50,52 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
   .
 Hint Constructors PrefixConcat : core.
 
+Fixpoint pfx_cat (arg_p arg_p' : prefix) : option prefix :=
+  match arg_p, arg_p' with
+  | PfxEpsEmp, PfxEpsEmp =>
+      Some PfxEpsEmp
+  | PfxOneEmp, p =>
+      if pfx_ty p TyOne then Some p else None
+  | PfxOneFull, PfxEpsEmp =>
+      Some PfxOneFull
+  | PfxParPair p1 p2, PfxParPair p1' p2' =>
+      match pfx_cat p1 p1' with None => None | Some p1'' =>
+      match pfx_cat p2 p2' with None => None | Some p2'' =>
+      Some (PfxParPair p1'' p2'') end end
+  | PfxCatFst p, PfxCatFst p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxCatFst p'') end
+  | PfxCatFst p, PfxCatBoth p' p''' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxCatBoth p'' p''') end
+  | PfxCatBoth p p', p'' =>
+      match pfx_cat p' p'' with None => None | Some p''' => Some (PfxCatBoth p p''') end
+  | PfxSumEmp, p =>
+      Some p
+  | PfxSumInl p, p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxSumInl p'') end
+  | PfxSumInr p, p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxSumInr p'') end
+  | PfxStarEmp, p =>
+      Some p
+  | PfxStarDone, PfxEpsEmp =>
+      Some PfxStarDone
+  | PfxStarFirst p, PfxCatFst p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxStarFirst p'') end
+  | PfxStarFirst p, PfxCatBoth p' p''' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxStarRest p'' p''') end
+  | PfxStarRest p p', p'' =>
+      match pfx_cat p' p'' with None => None | Some p''' => Some (PfxStarRest p p''') end
+  | _, _ => None
+  end.
+Arguments pfx_cat p p' : rename.
+
+Theorem reflect_prefix_concat : forall p p' p'',
+  pfx_cat p p' = Some p'' <-> PrefixConcat p p' p''.
+Proof.
+  split; intro H.
+  - generalize dependent p'. generalize dependent p''. induction p; cbn in *; intros; sauto.
+  - induction H; cbn in *; intros; sauto lq: on use: reflect_prefix_typed.
+Qed.
+
 (* Theorem B.21, part I *)
 Theorem pfx_cat_unique : forall p p' p1'' p2'',
   PrefixConcat p p' p1'' ->

@@ -1,3 +1,4 @@
+From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
 From LambdaST Require Import Types.
 
@@ -69,6 +70,31 @@ Inductive MaximalPrefix : prefix -> Prop :=
   .
 Hint Constructors MaximalPrefix : core.
 
+Fixpoint pfx_max (p : prefix) : bool :=
+  (match p with
+  | PfxEpsEmp
+  | PfxOneFull
+  | PfxStarDone =>
+      true
+  | PfxParPair p1 p2
+  | PfxCatBoth p1 p2
+  | PfxStarRest p1 p2 =>
+      pfx_max p1 && pfx_max p2
+  | PfxSumInl p
+  | PfxSumInr p =>
+      pfx_max p
+  | _ => false
+  end)%bool.
+
+Theorem reflect_maximal_prefix : forall p,
+  Bool.reflect (MaximalPrefix p) (pfx_max p).
+Proof.
+  induction p; cbn in *; repeat constructor; try solve [intro C; inversion C];
+  try (sinvert IHp; repeat constructor; try assumption; intro C; sinvert C; tauto);
+  sinvert IHp1; sinvert IHp2; repeat constructor; try assumption; intro C; sinvert C; tauto.
+Qed.
+Hint Resolve reflect_maximal_prefix : core.
+
 (* This is all pretty intuitive once you get the above *)
 Inductive PrefixTyped : prefix -> type -> Prop :=
   | PfxTyEpsEmp :
@@ -111,6 +137,51 @@ Inductive PrefixTyped : prefix -> type -> Prop :=
       PrefixTyped (PfxStarRest p p') (TyStar s)
   .
 Hint Constructors PrefixTyped : core.
+
+Fixpoint pfx_ty (p : prefix) (t : type) : bool :=
+  (match p, t with
+  | PfxEpsEmp, TyEps
+  | PfxOneEmp, TyOne
+  | PfxOneFull, TyOne
+  | PfxSumEmp, TySum _ _
+  | PfxStarEmp, TyStar _
+  | PfxStarDone, TyStar _ =>
+      true
+  | PfxParPair p1 p2, TyPar s t =>
+      pfx_ty p1 s && pfx_ty p2 t
+  | PfxCatFst p, TyDot s t =>
+      pfx_ty p s
+  | PfxCatBoth p1 p2, TyDot s t =>
+      pfx_ty p1 s && pfx_max p1 && pfx_ty p2 t
+  | PfxSumInl p, TySum s t =>
+      pfx_ty p s
+  | PfxSumInr p, TySum s t =>
+      pfx_ty p t
+  | PfxStarFirst p, TyStar s =>
+      pfx_ty p s
+  | PfxStarRest p p', TyStar s =>
+      pfx_ty p s && pfx_max p && pfx_ty p' (TyStar s)
+  | _, _ => false
+  end)%bool.
+
+Theorem reflect_prefix_typed : forall p t,
+  Bool.reflect (PrefixTyped p t) (pfx_ty p t).
+Proof.
+  induction p; cbn in *; intros; try solve [destruct t; repeat constructor; intro C; inversion C];
+  destruct t; try (constructor; intro C; sinvert C).
+  - specialize (IHp1 t1). specialize (IHp2 t2).
+    sinvert IHp1; sinvert IHp2; repeat constructor; try assumption; intro C; sinvert C; tauto.
+  - specialize (IHp t1). sinvert IHp; repeat constructor; try assumption. intro C. sinvert C. tauto.
+  - specialize (IHp1 t1). specialize (IHp2 t2). destruct (reflect_maximal_prefix p1).
+    2: { rewrite Bool.andb_false_r. constructor. intro C. sinvert C. tauto. }
+    sinvert IHp1; sinvert IHp2; repeat constructor; try assumption; intro C; sinvert C; tauto.
+  - specialize (IHp t1). sinvert IHp; repeat constructor; try assumption. intro C. sinvert C. tauto.
+  - specialize (IHp t2). sinvert IHp; repeat constructor; try assumption. intro C. sinvert C. tauto.
+  - specialize (IHp t). sinvert IHp; repeat constructor; try assumption; intro C; sinvert C; tauto.
+  - specialize (IHp1 t). specialize (IHp2 (TyStar t)). destruct (reflect_maximal_prefix p1).
+    2: { rewrite Bool.andb_false_r. constructor. intro C. sinvert C. tauto. }
+    sinvert IHp1; sinvert IHp2; repeat constructor; try assumption; intro C; sinvert C; tauto.
+Qed.
 
 Fixpoint emp ty :=
   match ty with
