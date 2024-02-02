@@ -1,15 +1,18 @@
 From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
+  Context
   Environment
   FV
   Prefix
   Semantics
   Sets
-  Terms.
+  Terms
+  Types
+  Typing.
 
-(* Theorem 3.1, page 11 *)
-Theorem maximal_semantics_aux : forall n e e' p',
+(* Theorem B.45 *)
+Lemma maximal_semantics_aux : forall n e e' p',
   Step n e e' p' ->
   MaximalOn (fv e) n ->
   MaximalPrefix p'.
@@ -69,4 +72,16 @@ Proof.
         intros y Hy. cbn in *. destruct (eqb_spec x y). { subst. eexists. split; [| reflexivity]. assumption. }
         specialize (Hm y). destruct Hm as [pr [H1' H2']]; [right | eexists]; split; eassumption. }
     apply IHHs2. intros y Hy. specialize (A _ Hy) as [e [He1 He2]]. eexists. split; eassumption.
+Qed.
+Hint Resolve maximal_semantics_aux : core.
+
+(* Theorem B.46 *)
+Theorem maximal_semantics : forall n e e' p G s,
+  Step n e e' p ->
+  Typed G e s ->
+  MaximalOn (fv G) n ->
+  MaximalPrefix p.
+Proof.
+  intros n e e' p G s Hs Ht Hm. assert (Hf := typing_fv _ _ _ Ht).
+  eapply maximal_semantics_aux. { eassumption. } eapply prop_on_subset; eassumption.
 Qed.
