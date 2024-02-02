@@ -131,8 +131,3 @@ Proof.
   assert (A := pfx_cat_unique _ _ _ _ Hs2 H1). subst. reflexivity.
 Qed.
 Hint Resolve pfx_cat_assoc_eq : core.
-
-(* TODO: environment concatenation, and the same.
- * Environment concat: n . n' ~ n'' if,
- * for all x in dom(n) and dom(n'),
- * n(x) . n'(x) ~ n''(x) *)

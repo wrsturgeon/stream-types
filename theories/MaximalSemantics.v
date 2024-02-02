@@ -2,9 +2,11 @@ From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
+  EnvConcat
   Environment
   FV
   Prefix
+  PrefixConcat
   Semantics
   Sets
   Terms
@@ -12,7 +14,7 @@ From LambdaST Require Import
   Typing.
 
 (* Theorem B.45 *)
-Lemma maximal_semantics_aux : forall n e e' p',
+Theorem maximal_semantics_aux : forall n e e' p',
   Step n e e' p' ->
   MaximalOn (fv e) n ->
   MaximalPrefix p'.
@@ -86,3 +88,16 @@ Proof.
   eapply maximal_semantics_aux. { eassumption. } eapply prop_on_subset; eassumption.
 Qed.
 Hint Resolve maximal_semantics : core.
+
+(* Theorem B.47 *)
+Theorem maximal_semantics_extn : forall n e e' p n' n'' e'' p',
+  Step n e e' p ->
+  MaximalPrefix p ->
+  EnvConcat n n' n'' ->
+  Step n'' e e'' p' ->
+  p = p'.
+Proof.
+  intros n e e' p n' n'' e'' p' Hs Hm He Hs'. generalize dependent n'. generalize dependent n''.
+  generalize dependent e''. generalize dependent p'. generalize dependent Hm.
+  induction Hs; cbn in *; intros.
+  - sinvert Hs'. Abort.
