@@ -109,6 +109,19 @@ Proof.
 Qed.
 Hint Resolve reflect_not_prefix_concat : core.
 
+Variant DecidePrefixConcat p p' :=
+  | DecPfxCatY p'' (Y : PrefixConcat p p' p'')
+  | DecPfxCatN (N : forall p'', ~PrefixConcat p p' p'')
+  .
+
+Theorem dec_pfx_cat : forall p p',
+  DecidePrefixConcat p p'.
+Proof.
+  intros. destruct (pfx_cat p p') eqn:E.
+  - eapply DecPfxCatY. apply reflect_prefix_concat. eassumption.
+  - apply DecPfxCatN. apply reflect_not_prefix_concat. assumption.
+Qed.
+
 (* Theorem B.21, part I *)
 Theorem pfx_cat_unique : forall p p' p1'' p2'',
   PrefixConcat p p' p1'' ->

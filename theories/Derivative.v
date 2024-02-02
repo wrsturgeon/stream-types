@@ -6,6 +6,7 @@ From LambdaST Require Import
   Types.
 From Hammer Require Import Tactics.
 
+(* Definition B.13 *)
 (* Intuition: things you can append to a thing of type T should have type (its derivative)
  * With jargon, concatenation is meaningful only between a prefix of type T and something of type (its derivative) *)
 Inductive Derivative : prefix -> type -> type -> Prop :=
@@ -113,25 +114,18 @@ Proof.
 Qed.
 Hint Resolve reflect_not_derivative : core.
 
-(* Recurse on all variables in context, use the above relation on each, then put them back exactly where they were *)
-Inductive ContextDerivative : env -> context -> context -> Prop :=
-  | CtxDrvEmpty : forall n,
-      ContextDerivative n CtxEmpty CtxEmpty
-    (* On each variable, "call" the above inductive definition *)
-  | CtxDrvHasTy : forall n x p s s',
-      n x = Some p ->
-      Derivative p s s' ->
-      ContextDerivative n (CtxHasTy x s) (CtxHasTy x s')
-  | CtxDrvComma : forall n G G' D D',
-      ContextDerivative n G G' ->
-      ContextDerivative n D D' ->
-      ContextDerivative n (CtxComma G D) (CtxComma G' D')
-  | CtxDrvSemic : forall n G G' D D',
-      ContextDerivative n G G' ->
-      ContextDerivative n D D' ->
-      ContextDerivative n (CtxSemic G D) (CtxSemic G' D')
+Variant DecideDerivative p s :=
+  | DecDerivY s' (Y : Derivative p s s')
+  | DecDerivN (N : forall s', ~Derivative p s s')
   .
-Hint Constructors ContextDerivative : core.
+
+Theorem dec_deriv : forall p s,
+  DecideDerivative p s.
+Proof.
+  intros. destruct (derivative p s) eqn:E.
+  - eapply DecDerivY. apply reflect_derivative. eassumption.
+  - apply DecDerivN. apply reflect_not_derivative. assumption.
+Qed.
 
 (* Theorem B.15, part I *)
 Theorem derivative_det : forall p s s'1 s'2,
@@ -168,6 +162,91 @@ Theorem derivative_emp : forall s,
   Derivative (emp s) s s.
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve derivative_emp : core.
+
+(* Definition B.14 *)
+(* Recurse on all variables in context, use the above relation on each, then put them back exactly where they were *)
+Inductive ContextDerivative : env -> context -> context -> Prop :=
+  | CtxDrvEmpty : forall n,
+      ContextDerivative n CtxEmpty CtxEmpty
+    (* On each variable, "call" the above inductive definition *)
+  | CtxDrvHasTy : forall n x p s s',
+      n x = Some p ->
+      Derivative p s s' ->
+      ContextDerivative n (CtxHasTy x s) (CtxHasTy x s')
+  | CtxDrvComma : forall n G G' D D',
+      ContextDerivative n G G' ->
+      ContextDerivative n D D' ->
+      ContextDerivative n (CtxComma G D) (CtxComma G' D')
+  | CtxDrvSemic : forall n G G' D D',
+      ContextDerivative n G G' ->
+      ContextDerivative n D D' ->
+      ContextDerivative n (CtxSemic G D) (CtxSemic G' D')
+  .
+Arguments ContextDerivative n G G'.
+Hint Constructors ContextDerivative : core.
+
+Fixpoint ctx_derivative (n : env) (arg_G : context) : option context :=
+  match arg_G with
+  | CtxEmpty =>
+      Some CtxEmpty
+  | CtxHasTy x s =>
+      match n x with None => None | Some p =>
+      match derivative p s with None => None | Some s' =>
+      Some (CtxHasTy x s') end end
+  | CtxComma G D =>
+      match ctx_derivative n G with None => None | Some G' =>
+      match ctx_derivative n D with None => None | Some D' =>
+      Some (CtxComma G' D') end end
+  | CtxSemic G D =>
+      match ctx_derivative n G with None => None | Some G' =>
+      match ctx_derivative n D with None => None | Some D' =>
+      Some (CtxSemic G' D') end end
+  end.
+Arguments ctx_derivative n G : rename.
+
+Theorem reflect_ctx_derivative : forall n G G',
+  ctx_derivative n G = Some G' <-> ContextDerivative n G G'.
+Proof.
+  split; intro H.
+  - generalize dependent n. generalize dependent G'. induction G; cbn in *; intros.
+    + sinvert H. constructor.
+    + destruct (n id) eqn:E; [| discriminate H]. destruct (derivative p ty) eqn:D; [| discriminate H].
+      sinvert H. assert (Hd := D). apply reflect_derivative in Hd. econstructor; eassumption.
+    + destruct (ctx_derivative n G1) eqn:E1; [| discriminate H].
+      destruct (ctx_derivative n G2) eqn:E2; sinvert H.
+      apply IHG1 in E1. apply IHG2 in E2. econstructor; eassumption.
+    + destruct (ctx_derivative n G1) eqn:E1; [| discriminate H].
+      destruct (ctx_derivative n G2) eqn:E2; sinvert H.
+      apply IHG1 in E1. apply IHG2 in E2. econstructor; eassumption.
+  - induction H; cbn in *.
+    + reflexivity.
+    + rewrite H. apply reflect_derivative in H0. rewrite H0. reflexivity.
+    + rewrite IHContextDerivative1. rewrite IHContextDerivative2. reflexivity.
+    + rewrite IHContextDerivative1. rewrite IHContextDerivative2. reflexivity.
+Qed.
+Hint Resolve reflect_ctx_derivative : core.
+
+Theorem reflect_not_ctx_derivative : forall n G,
+  ctx_derivative n G = None <-> forall G', ~ContextDerivative n G G'.
+Proof.
+  intros. split; intros.
+  - intro C. apply reflect_ctx_derivative in C. rewrite H in C. discriminate C.
+  - destruct (ctx_derivative n G) eqn:E; [| reflexivity]. apply reflect_ctx_derivative in E. apply H in E as [].
+Qed.
+Hint Resolve reflect_not_ctx_derivative : core.
+
+Variant DecideContextDerivative n G :=
+  | DecCtxDerivY G' (Y : ContextDerivative n G G')
+  | DecCtxDerivN (N : forall G', ~ContextDerivative n G G')
+  .
+
+Theorem dec_ctx_deriv : forall n G,
+  DecideContextDerivative n G.
+Proof.
+  intros. destruct (ctx_derivative n G) eqn:E.
+  - eapply DecCtxDerivY. apply reflect_ctx_derivative. eassumption.
+  - apply DecCtxDerivN. apply reflect_not_ctx_derivative. assumption.
+Qed.
 
 (* Theorem B.17, part I *)
 Theorem context_derivative_det : forall n G G'1 G'2,

@@ -4,6 +4,7 @@ From LambdaST Require Import
   Eqb
   Types.
 
+(* Definition B.2 *)
 Inductive prefix : Set :=
     (* Expecting a 1, not received yet *)
   | PfxOneEmp
@@ -47,6 +48,7 @@ Hint Unfold prefix_beq : core.
 Hint Resolve prefix_eq_dec : core.
 Hint Resolve eqb_spec_prefix : core.
 
+(* Definition B.3 *)
 Inductive MaximalPrefix : prefix -> Prop :=
     (* If you weren't expecting anything, you've received all the nothing you'll get *)
   | MaxPfxEpsEmp :
@@ -108,7 +110,8 @@ Proof.
 Qed.
 Hint Resolve reflect_maximal_prefix : core.
 
-(* This is all pretty intuitive once you get the above *)
+(* Definition B.4 *)
+(* pretty intuitive once you get the above *)
 Inductive PrefixTyped : prefix -> type -> Prop :=
   | PfxTyEpsEmp :
       PrefixTyped PfxEpsEmp eps
@@ -197,6 +200,7 @@ Proof.
 Qed.
 Hint Resolve reflect_prefix_typed : core.
 
+(* Definition B.5 *)
 Fixpoint emp ty :=
   match ty with
   | TyEps => PfxEpsEmp
@@ -211,6 +215,7 @@ Theorem emp_well_typed : forall s, PrefixTyped (emp s) s.
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve emp_well_typed : core.
 
+(* Definition B.6 *)
 Inductive EmptyPrefix : prefix -> Prop :=
   | EmptyPfxEpsEmp :
       EmptyPrefix PfxEpsEmp
