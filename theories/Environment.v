@@ -13,6 +13,7 @@ From LambdaST Require Import
   Types.
 
 Definition env : Set := string -> option prefix.
+Arguments env/.
 Hint Unfold env : core.
 
 Definition singleton_env (id : string) (p : prefix) : env := fun x =>
@@ -42,6 +43,10 @@ Definition env_drop (n : env) (x : string) : env := fun y =>
   if eqb x y then None else n x.
 Arguments env_drop n x y/.
 Hint Unfold env_drop : core.
+
+Definition EnvEq (n1 n2 : env) := forall x, n1 x = n2 x.
+Arguments EnvEq n1 n2/.
+Hint Unfold EnvEq : core.
 
 (* Theorem B.10, part I *)
 Theorem maps_to_unique_literal : forall p x (n : env),
