@@ -182,6 +182,7 @@ Proof.
     2: { rewrite Bool.andb_false_r. constructor. intro C. sinvert C. tauto. }
     sinvert IHp1; sinvert IHp2; repeat constructor; try assumption; intro C; sinvert C; tauto.
 Qed.
+Hint Resolve reflect_prefix_typed : core.
 
 Fixpoint emp ty :=
   match ty with

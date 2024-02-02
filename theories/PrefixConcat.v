@@ -93,8 +93,9 @@ Theorem reflect_prefix_concat : forall p p' p'',
 Proof.
   split; intro H.
   - generalize dependent p'. generalize dependent p''. induction p; cbn in *; intros; sauto.
-  - induction H; cbn in *; intros; sauto lq: on use: reflect_prefix_typed.
+  - induction H; cbn in *; intros; sauto lq: on.
 Qed.
+Hint Resolve reflect_prefix_concat : core.
 
 (* Theorem B.21, part I *)
 Theorem pfx_cat_unique : forall p p' p1'' p2'',
