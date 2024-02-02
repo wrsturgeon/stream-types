@@ -134,26 +134,15 @@ Definition type_eqb_opt (a b : option type) :=
   | _, _ => false
   end.
 
-(* TODO: name *)
-Theorem important_but_no_good_name_yet : forall p p' p'' s p1,
-  MaximalPrefix p1 ->
-  PrefixTyped p'' s ->
-  PrefixConcat p p1 p'' ->
-  Derivative p'' s p' ->
+Theorem maximal_prefix_concat : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  MaximalPrefix p' ->
+  forall t,
+  PrefixTyped p'' t ->
   MaximalPrefix p''.
 Proof.
-  intros p p' p'' s p1 Hm Ht Hc Hd. generalize dependent p. generalize dependent p'. generalize dependent p1.
-  induction Ht; cbn in *; intros; try solve [constructor].
-  - sauto lq: on.
-  - constructor; sauto l: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - constructor. { assumption. } sinvert Hd. sinvert Hc; sauto.
+  intros p p' p'' Hc Hm t Ht. generalize dependent p. generalize dependent p'.
+  induction Ht; cbn in *; intros; try constructor; try assumption; sauto l: on.
 Qed.
 
 (* Theorem B.21, part II *)
@@ -181,7 +170,7 @@ Proof.
     sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
     + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
     + assert (A := derivative_fun _ _ H5). destruct A as [p' H']. specialize (IHHd _ _ H' H5) as [p'' [Ha [Hb Hc]]].
-      eexists. repeat split; constructor; try eassumption. eapply important_but_no_good_name_yet; eassumption.
+      eexists. repeat split; constructor; try eassumption. eapply maximal_prefix_concat; eassumption.
   - sinvert Hp. specialize (IHHd H5 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
   - sinvert Hp. eexists. repeat econstructor; eassumption.
   - sinvert Hp. specialize (IHHd H1 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
@@ -191,7 +180,7 @@ Proof.
   - sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
     + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
     + assert (A := derivative_fun _ _ H5). destruct A as [p' H']. specialize (IHHd _ _ H' H5) as [p'' [Ha [Hb Hc]]].
-      eexists. repeat split; constructor; try eassumption. eapply important_but_no_good_name_yet; eassumption.
+      eexists. repeat split; constructor; try eassumption. eapply maximal_prefix_concat; eassumption.
   - sinvert Hp. specialize (IHHd H4 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]].
     eexists. repeat split; constructor; eassumption.
 Qed.
