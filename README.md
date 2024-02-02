@@ -29,11 +29,3 @@ Open a terminal in this folder and run `make`.
 
 To locate the proof of a named theorem from Appendix B (e.g. "B.11"), search the source code in `theories/`.
 Directly above each proof of a named theorem is a comment naming it: e.g., `(* Theorem B.11 *)`.
-
-Currently, we have proven up to **B.33**, except those mentioned below.
-
-## Issues
-
-- Theorem B.19 (notation unclear)
-- Theorems B.21-30 on prefix concatenation (clarify that the original `Inl` rule was a typo)
-- Definition B.33 (not sure how to read it)

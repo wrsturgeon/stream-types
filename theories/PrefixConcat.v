@@ -196,6 +196,32 @@ Proof.
     eexists. repeat split; constructor; eassumption.
 Qed.
 
+(* Theorem B.22, part I *)
+Theorem pfx_cat_empty_l : forall p s,
+  PrefixTyped p s ->
+  PrefixConcat (emp s) p p.
+Proof. intros. induction H; sfirstorder. Qed.
+
+(* Theorem B.22, part II *)
+Theorem pfx_cat_empty_r : forall p s dps,
+  Derivative p s dps ->
+  PrefixTyped p s ->
+  PrefixConcat p (emp dps) p.
+Proof. intros p s dps Hd H. generalize dependent dps. induction H; sauto lq: on. Qed.
+
+(* Theorem B.23, part I *)
+Theorem max_pfx_concat_iff : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  (MaximalPrefix p'' <-> (MaximalPrefix p \/ MaximalPrefix p'')).
+Proof. intros. induction H; sauto lq: on. Qed.
+
+(* Theorem B.23, part I *)
+Theorem max_pfx_concat_eq : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  MaximalPrefix p ->
+  p = p''.
+Proof. intros p p' p'' H. induction H; sauto lq: on rew: off. Qed.
+
 Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->
   PrefixConcat pq r s ->
@@ -210,6 +236,7 @@ Proof.
 Qed.
 Hint Resolve pfx_cat_assoc : core.
 
+(* Theorem B.24 *)
 (* NOTE: Joe, this is what you said you needed last time--it was a pretty easy corollary of the above *)
 Lemma pfx_cat_assoc_eq : forall p q r pq qr s1 s2,
   PrefixConcat p q pq ->
