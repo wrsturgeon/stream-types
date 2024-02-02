@@ -82,7 +82,7 @@ Proof.
   intros n G D He Hs. generalize dependent n. induction Hs; intros.
   - assert (A := maps_to_hole_reflect _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
     + eapply fill_preserves_env; [ | eassumption | | eassumption | ]; try eassumption. apply IHHs.
-    + split; intros; (eapply prop_on_contains; [| eassumption]);
+    + split; intros; (eapply prop_on_subset; [| eassumption]);
       apply subcontext_fv_subset; econstructor; eassumption.
   - repeat split; intros; eassumption.
   - sinvert He. repeat split; sfirstorder.

@@ -40,6 +40,7 @@ Hint Unfold env_subst : core.
 
 Definition env_drop (n : env) (x : string) : env := fun y =>
   if eqb x y then None else n x.
+Arguments env_drop n x y/.
 Hint Unfold env_drop : core.
 
 (* Theorem B.10, part I *)
@@ -59,7 +60,7 @@ Hint Resolve maps_to_unique : core.
 (* Generalization of `emptyOn` and `maximalOn` from the paper *)
 Definition PropOnItem (P : prefix -> Prop) (n : env) (x : string) : Prop :=
   exists p, n x = Some p /\ P p.
-Arguments PropOnItem P n x/.
+Arguments PropOnItem/ P n x.
 Hint Unfold PropOnItem : core.
 
 Definition PropOn (P : prefix -> Prop) (s : set string) (n : env) : Prop := forall x, s x -> PropOnItem P n x.
@@ -74,15 +75,17 @@ Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ s n.
 Hint Unfold MaximalOn : core.
 
-Theorem prop_on_contains : forall P s s' n,
+Theorem prop_on_subset : forall P s s' n,
   Subset s' s ->
   PropOn P s n ->
   PropOn P s' n.
 Proof. sfirstorder. Qed.
+Hint Resolve prop_on_subset : core.
 
 Theorem prop_on_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
 Proof. sfirstorder. Qed.
+Hint Resolve prop_on_union : core.
 
 (* Agree Inert means "including empty on agreement";
  * Agree Jumpy means "not including empty on agreement." *)
@@ -318,7 +321,7 @@ Proof.
   intros hole plug n n' Hc Hn Hn'.
   remember (fill hole plug) as ctx eqn:Ef. assert (Hf := Ef). apply reflect_fill in Hf.
   generalize dependent n. generalize dependent n'. generalize dependent Ef.
-  induction Hf; sfirstorder.
+  induction Hf; hauto l: on.
 Qed.
 Hint Resolve env_subctx_bind_equal : core.
 
