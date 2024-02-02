@@ -85,3 +85,4 @@ Proof.
   intros n e e' p G s Hs Ht Hm. assert (Hf := typing_fv _ _ _ Ht).
   eapply maximal_semantics_aux. { eassumption. } eapply prop_on_subset; eassumption.
 Qed.
+Hint Resolve maximal_semantics : core.
