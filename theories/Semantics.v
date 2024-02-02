@@ -42,12 +42,10 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step n TmSink TmSink PfxEpsEmp
   | SOneR : forall n,
       Step n TmUnit TmSink PfxOneFull
-  (* TODO: major theoretical changes?
   | SCut : forall n x e1 e2 e1' e2' p p',
       Step n e1 e1' p ->
       Step (env_union n (singleton_env x p)) e2 e2' p' ->
       Step n (TmLet x e1 e2) (TmLet x e1' e2') p'
-  *)
   .
 Arguments Step n e e' p.
 Hint Constructors Step : core.

@@ -9,7 +9,7 @@ From LambdaST Require Import
   Terms.
 
 (* Theorem 3.1, page 11 *)
-Theorem maximal_semantics : forall n e e' p',
+Theorem maximal_semantics_aux : forall n e e' p',
   Step n e e' p' ->
   MaximalOn (fv e) n ->
   MaximalPrefix p'.
@@ -56,8 +56,17 @@ Proof.
         edestruct Hm as [p [Hp1 Hp2]]. { right. repeat split; eassumption. } exists p. split; assumption. }
     apply IHHs. (* proof proceeds by IH *)
     cbn. intros s Hfv. specialize (A _ Hfv) as [p [Hp1 Hp2]]. exists p. split; assumption.
-  - (* S-Eps-R *)
+  - (* S-Eps-R (case 2) *)
     constructor.
-  - (* S-One-R *)
+  - (* S-One-R (case 3) *)
     constructor.
+  - (* S-Cut (case 22) *)
+    assert (Hp : MaximalPrefix p). {
+      clear Hs1 Hs2 IHHs2. cbn in *. apply IHHs1. clear IHHs1. intros x' H'. apply Hm. left. assumption. }
+    assert (A : forall y, fv e2 y -> exists p',
+      MaximalPrefix p' /\
+      env_union n (singleton_env x p) y = Some p'). {
+        intros y Hy. cbn in *. destruct (eqb_spec x y). { subst. eexists. split; [| reflexivity]. assumption. }
+        specialize (Hm y). destruct Hm as [pr [H1' H2']]; [right | eexists]; split; eassumption. }
+    apply IHHs2. intros y Hy. specialize (A _ Hy) as [e [He1 He2]]. eexists. split; eassumption.
 Qed.
