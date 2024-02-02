@@ -12,6 +12,25 @@ Definition EnvConcat (n n' n'' : env) : Prop := forall x p p' p'',
 Arguments EnvConcat n n' n''/.
 Hint Unfold EnvConcat : core.
 
+Definition env_cat (n n' : env) : env := fun x =>
+  match n x with
+  | None => None
+  | Some nx =>
+      match n' x with
+      | None => None
+      | Some n'x =>
+          pfx_cat nx n'x
+      end
+  end.
+Arguments env_cat n n'/ x.
+
+Theorem reflect_env_concat : forall n n',
+  EnvConcat n n' (env_cat n n').
+Proof.
+  cbn. intros n n' x p p' p'' Hp E E'. rewrite E. rewrite E'.
+  apply reflect_prefix_concat. assumption.
+Qed.
+
 (* Theorem B.26, part I *)
 Theorem env_concat_unique : forall n n' n1,
   EnvConcat n n' n1 ->
