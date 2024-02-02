@@ -15,7 +15,7 @@ clean: $(MCOQ)
 	find . -name '*.aux' -o -name '*.glob' -o -name '*.swp' -o -name '*.vo' -o -name '*.vok' -o -name '*.vos' | xargs -r rm
 
 $(MCOQ): _CoqProject
-	$(COQBIN)coq_makefile -f $< -o $@ $(SOURCES)
+	coq_makefile -f $< -o $@ $(SOURCES)
 
 _CoqProject: $(SRCDIR) Makefile
 	echo '-Q $(SRCDIR) LambdaST' > $@
