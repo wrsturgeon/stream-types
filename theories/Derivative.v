@@ -58,7 +58,60 @@ Inductive Derivative : prefix -> type -> type -> Prop :=
       Derivative p' (TyStar s) s' ->
       Derivative (PfxStarRest p p') (TyStar s) s'
   .
+Arguments Derivative p s s'.
 Hint Constructors Derivative : core.
+
+Fixpoint derivative (arg_p : prefix) (arg_s : type) : option type :=
+  match arg_p, arg_s with
+  | PfxEpsEmp, TyEps =>
+      Some TyEps
+  | PfxOneEmp, TyOne =>
+      Some TyOne
+  | PfxOneFull, TyOne =>
+      Some TyEps
+  | PfxParPair p1 p2, TyPar s t =>
+      match derivative p1 s with None => None | Some s' =>
+      match derivative p2 t with None => None | Some t' =>
+      Some (TyPar s' t') end end
+  | PfxCatFst p, TyDot s t =>
+      match derivative p s with None => None | Some s' => Some (TyDot s' t) end
+  | PfxCatBoth p1 p2, TyDot s t =>
+      derivative p2 t
+  | PfxSumEmp, TySum s t =>
+      Some (TySum s t)
+  | PfxSumInl p, TySum s t =>
+      derivative p s
+  | PfxSumInr p, TySum s t =>
+      derivative p t
+  | PfxStarEmp, TyStar s =>
+      Some (TyStar s)
+  | PfxStarDone, TyStar s =>
+      Some TyEps
+  | PfxStarFirst p, TyStar s =>
+      match derivative p s with None => None | Some s' => Some (TyDot s' (TyStar s)) end
+  | PfxStarRest p p', TyStar s =>
+      derivative p' (TyStar s)
+  | _, _ => None
+  end.
+Arguments derivative p s : rename.
+
+Theorem reflect_derivative : forall p s s',
+  derivative p s = Some s' <-> Derivative p s s'.
+Proof.
+  split; intro H.
+  - generalize dependent s. generalize dependent s'. induction p; hauto drew: off.
+  - induction H; qauto l: on.
+Qed.
+Hint Resolve reflect_derivative : core.
+
+Theorem reflect_not_derivative : forall p s,
+  derivative p s = None <-> forall s', ~Derivative p s s'.
+Proof.
+  intros. split; intros.
+  - intro C. apply reflect_derivative in C. rewrite H in C. discriminate C.
+  - destruct (derivative p s) eqn:E; [| reflexivity]. apply reflect_derivative in E. apply H in E as [].
+Qed.
+Hint Resolve reflect_not_derivative : core.
 
 (* Recurse on all variables in context, use the above relation on each, then put them back exactly where they were *)
 Inductive ContextDerivative : env -> context -> context -> Prop :=
@@ -86,11 +139,8 @@ Theorem derivative_det : forall p s s'1 s'2,
   Derivative p s s'2 ->
   s'1 = s'2.
 Proof.
-  intros p s s'1 s'2 H1 H2. generalize dependent s'2. induction H1; intros;
-  sinvert H2; try reflexivity; auto.
-  - apply IHDerivative1 in H5. apply IHDerivative2 in H6. subst. reflexivity.
-  - apply IHDerivative in H5. subst. reflexivity.
-  - apply IHDerivative in H3. subst. reflexivity.
+  intros p s s'1 s'2 H1 H2. apply reflect_derivative in H1. apply reflect_derivative in H2.
+  rewrite H1 in H2. sinvert H2. reflexivity.
 Qed.
 Hint Resolve derivative_det : core.
 
@@ -166,76 +216,3 @@ Proof.
   apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
 Qed.
 Hint Resolve nullable_prefix_empty : core.
-
-Fixpoint maybe_derivative p s : option type :=
-  match p, s with
-  | PfxEpsEmp, TyEps => Some TyEps
-  | PfxOneEmp, TyOne => Some TyOne
-  | PfxOneFull, TyOne => Some TyEps
-  | PfxParPair p1 p2, TyPar s t =>
-      match maybe_derivative p1 s, maybe_derivative p2 t with
-      | Some a, Some b => Some (TyPar a b)
-      | _, _ => None
-      end
-  | PfxCatFst p, TyDot s t => match maybe_derivative p s with Some s' => Some (TyDot s' t) | None => None end
-  | PfxCatBoth p1 p2, TyDot s t => maybe_derivative p2 t
-  | PfxSumEmp, TySum s t => Some (TySum s t)
-  | PfxSumInl p, TySum s t => maybe_derivative p s
-  | PfxSumInr p, TySum s t => maybe_derivative p t
-  | PfxStarEmp, TyStar s => Some (TyStar s)
-  | PfxStarDone, TyStar s => Some TyEps
-  | PfxStarFirst p, TyStar s => match maybe_derivative p s with Some s' => Some (TyDot s' (TyStar s)) | None => None end
-  | PfxStarRest p p', TyStar s => maybe_derivative p' (TyStar s)
-  | _, _ => None
-  end.
-
-Theorem reflect_derivative : forall p s s',
-  Derivative p s s' <-> maybe_derivative p s = Some s'.
-Proof.
-  split; intros.
-  - induction H; cbn in *;
-    try rewrite IHDerivative1;
-    try rewrite IHDerivative2;
-    try rewrite IHDerivative;
-    reflexivity.
-  - generalize dependent s. generalize dependent s'. induction p; intros;
-    try solve [destruct s; sinvert H; constructor];
-    destruct s; try discriminate H;
-    cbn in *.
-    + destruct (maybe_derivative p1 s1) eqn:E1; try discriminate H.
-      destruct (maybe_derivative p2 s2) eqn:E2; try discriminate H.
-      apply IHp1 in E1. apply IHp2 in E2.
-      sinvert H. constructor; assumption.
-    + destruct (maybe_derivative p s1) eqn:E; try discriminate H.
-      apply IHp in E. sinvert H. constructor. assumption.
-    + apply IHp2 in H. constructor. assumption.
-    + apply IHp in H. constructor. assumption.
-    + apply IHp in H. constructor. assumption.
-    + destruct (maybe_derivative p s) eqn:E; try discriminate H.
-      apply IHp in E. sinvert H. constructor. assumption.
-    + apply IHp2 in H. constructor. assumption.
-Qed.
-Hint Resolve reflect_derivative : core.
-
-Theorem reflect_no_derivative : forall p s,
-  maybe_derivative p s = None ->
-  ~exists s', Derivative p s s'.
-Proof.
-  intros p s H [s' C]. generalize dependent H. induction C; cbn; intros;
-  try destruct (maybe_derivative p s);
-  try destruct (maybe_derivative p1 s);
-  try destruct (maybe_derivative p2 t);
-  try solve [apply IHC; assumption];
-  try solve [apply IHC1; assumption];
-  try solve [apply IHC2; assumption];
-  discriminate H.
-Qed.
-Hint Resolve reflect_no_derivative : core.
-
-Definition derivative : forall p s, PrefixTyped p s -> type.
-Proof.
-  intros p s H. destruct (maybe_derivative p s) as [d |] eqn:E. { apply d. }
-  apply derivative_fun in H.
-  apply reflect_no_derivative in E.
-  apply E in H. destruct H.
-Qed.

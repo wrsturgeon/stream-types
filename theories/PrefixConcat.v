@@ -1,6 +1,7 @@
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Derivative
+  Eqb
   Prefix
   Types.
 
@@ -97,20 +98,63 @@ Proof.
 Qed.
 Hint Resolve reflect_prefix_concat : core.
 
+Theorem reflect_not_prefix_concat : forall p p',
+  pfx_cat p p' = None <-> forall p'', ~PrefixConcat p p' p''.
+Proof.
+  intros. destruct (pfx_cat p p') eqn:E; split; intros.
+  - discriminate H.
+  - apply reflect_prefix_concat in E. apply H in E as [].
+  - intro C. apply reflect_prefix_concat in C. rewrite E in C. discriminate C.
+  - reflexivity.
+Qed.
+Hint Resolve reflect_not_prefix_concat : core.
+
 (* Theorem B.21, part I *)
 Theorem pfx_cat_unique : forall p p' p1'' p2'',
   PrefixConcat p p' p1'' ->
   PrefixConcat p p' p2'' ->
   p1'' = p2''.
 Proof.
-  intros p p' p1'' p2'' H1 H2. generalize dependent p2''. induction H1; intros; sinvert H2;
-  try apply IHPrefixConcat in H3;
-  try apply IHPrefixConcat in H5;
-  try apply IHPrefixConcat in H0;
-  subst; try reflexivity.
-  f_equal; [apply IHPrefixConcat1 | apply IHPrefixConcat2]; assumption.
+  intros p p' p1'' p2'' H1 H2. apply reflect_prefix_concat in H1. apply reflect_prefix_concat in H2.
+  rewrite H1 in H2. sinvert H2. reflexivity.
 Qed.
 Hint Resolve pfx_cat_unique : core.
+
+Definition pfx_eqb_opt (a b : option prefix) :=
+  match a, b with
+  | None, None => true
+  | Some a', Some b' => eqb a' b'
+  | _, _ => false
+  end.
+
+Definition type_eqb_opt (a b : option type) :=
+  match a, b with
+  | None, None => true
+  | Some a', Some b' => eqb a' b'
+  | _, _ => false
+  end.
+
+(* TODO: name *)
+Theorem important_but_no_good_name_yet : forall p p' p'' s p1,
+  MaximalPrefix p1 ->
+  PrefixTyped p'' s ->
+  PrefixConcat p p1 p'' ->
+  Derivative p'' s p' ->
+  MaximalPrefix p''.
+Proof.
+  intros p p' p'' s p1 Hm Ht Hc Hd. generalize dependent p. generalize dependent p'. generalize dependent p1.
+  induction Ht; cbn in *; intros; try solve [constructor].
+  - sauto lq: on.
+  - constructor; sauto l: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - constructor. { assumption. } sinvert Hd. sinvert Hc; sauto.
+Qed.
 
 (* Theorem B.21, part II *)
 Theorem pfx_cat_exists_when_typed : forall p p' s dps dp'dps,
@@ -123,8 +167,9 @@ Theorem pfx_cat_exists_when_typed : forall p p' s dps dp'dps,
   PrefixTyped p'' s /\
   Derivative p'' s dp'dps.
 Proof.
-  intros p p' s dps dp'dps Hd Hd' Hp Hp'. generalize dependent p'. generalize dependent dp'dps.
-  generalize dependent Hp. induction Hd; intros; simpl in *.
+  intros p p' s dps dp'dps Hd Hd' Hp Hp'. (* remember (pfx_cat p p') as reflected eqn:R. *)
+  generalize dependent p'. generalize dependent dp'dps. generalize dependent Hp.
+  induction Hd; intros.
   - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor.
   - sinvert Hp. eexists. split; [constructor | split]; assumption.
   - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor.
@@ -132,9 +177,11 @@ Proof.
     specialize (IHHd1 H2 _ _ H3 H5) as [p1'' [Hp1a [Hp1b Hp1c]]].
     specialize (IHHd2 H4 _ _ H6 H8) as [p2'' [Hp2a [Hp2b Hp2c]]].
     eexists. repeat constructor; eassumption.
-  - sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
+  - (* DrvCatFst *)
+    sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
     + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-    + shelve.
+    + assert (A := derivative_fun _ _ H5). destruct A as [p' H']. specialize (IHHd _ _ H' H5) as [p'' [Ha [Hb Hc]]].
+      eexists. repeat split; constructor; try eassumption. eapply important_but_no_good_name_yet; eassumption.
   - sinvert Hp. specialize (IHHd H5 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
   - sinvert Hp. eexists. repeat econstructor; eassumption.
   - sinvert Hp. specialize (IHHd H1 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
@@ -143,12 +190,11 @@ Proof.
   - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor; eassumption.
   - sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
     + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-    + shelve.
+    + assert (A := derivative_fun _ _ H5). destruct A as [p' H']. specialize (IHHd _ _ H' H5) as [p'' [Ha [Hb Hc]]].
+      eexists. repeat split; constructor; try eassumption. eapply important_but_no_good_name_yet; eassumption.
   - sinvert Hp. specialize (IHHd H4 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]].
     eexists. repeat split; constructor; eassumption.
-  Unshelve. Abort. (* TODO: two lemmas left *)
-
-(* TODO: prefix concatenation and derivatives,*)
+Qed.
 
 Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->

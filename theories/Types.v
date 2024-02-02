@@ -1,4 +1,6 @@
+From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
+From LambdaST Require Import Eqb.
 
 Inductive type : Set :=
   | TyEps
@@ -25,3 +27,14 @@ Notation "'(' lhs '.' rhs ')'" := (TyDot lhs rhs) : stream_type_scope.
 Notation "'(' lhs '||' rhs ')'" := (TyPar lhs rhs) : stream_type_scope.
 Notation "'(' lhs '+' rhs ')'" := (TySum lhs rhs) : stream_type_scope.
 Notation "a '*'" := (TyStar a) (at level 1, left associativity) : stream_type_scope.
+
+Scheme Equality for type.
+Theorem eqb_spec_type : forall a b : type, Bool.reflect (a = b) (type_beq a b).
+Proof.
+  intros. destruct (type_beq a b) eqn:E; constructor;
+  sfirstorder use: internal_type_dec_bl, internal_type_dec_lb.
+Qed.
+Instance eqb_type : Eqb type := { eqb := type_beq; eq_dec := type_eq_dec; eqb_spec := eqb_spec_type }.
+Hint Unfold type_beq : core.
+Hint Resolve type_eq_dec : core.
+Hint Resolve eqb_spec_type : core.

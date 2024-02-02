@@ -1,6 +1,8 @@
 From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
-From LambdaST Require Import Types.
+From LambdaST Require Import
+  Eqb
+  Types.
 
 Inductive prefix : Set :=
     (* Expecting a 1, not received yet *)
@@ -33,6 +35,17 @@ Inductive prefix : Set :=
 Hint Constructors prefix : core.
 Derive Show for prefix.
 Derive Arbitrary for prefix.
+
+Scheme Equality for prefix.
+Theorem eqb_spec_prefix : forall a b : prefix, Bool.reflect (a = b) (prefix_beq a b).
+Proof.
+  intros. destruct (prefix_beq a b) eqn:E; constructor;
+  sfirstorder use: internal_prefix_dec_bl, internal_prefix_dec_lb.
+Qed.
+Instance eqb_prefix : Eqb prefix := { eqb := prefix_beq; eq_dec := prefix_eq_dec; eqb_spec := eqb_spec_prefix }.
+Hint Unfold prefix_beq : core.
+Hint Resolve prefix_eq_dec : core.
+Hint Resolve eqb_spec_prefix : core.
 
 Inductive MaximalPrefix : prefix -> Prop :=
     (* If you weren't expecting anything, you've received all the nothing you'll get *)
