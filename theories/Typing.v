@@ -9,6 +9,7 @@ From LambdaST Require Import
   Terms
   Types.
 
+(* TODO: Revise according to B.39 *)
 Inductive Typed : context -> term -> type -> Prop :=
   | TParR : forall G e1 e2 s t,
       Typed G e1 s ->

@@ -1,3 +1,4 @@
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Environment
   Prefix
@@ -5,6 +6,7 @@ From LambdaST Require Import
   Subst
   Terms.
 
+(* Definition B.44 *)
 (* Meaning of (Step n e e' p) is
  *  "running the core term `e` on the input environment `n`
  *   yields the output prefix `p` and steps to `e'`."
@@ -49,3 +51,24 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
   .
 Arguments Step n e e' p.
 Hint Constructors Step : core.
+
+(* Theorem B.48 *)
+Theorem step_det : forall n e e' p',
+  Step n e e' p' ->
+  forall e'' p'',
+  Step n e e'' p'' ->
+  e' = e'' /\ p' = p''.
+Proof.
+  intros n e e' p' Hs e'' p'' Hs'. generalize dependent e''. generalize dependent p''.
+  induction Hs; cbn in *; intros.
+  - sinvert Hs'. sfirstorder.
+  - sinvert Hs'. hauto lq: on rew: off.
+  - sinvert Hs'. hauto l: on.
+  - sinvert Hs'; sfirstorder.
+  - sinvert Hs'. { sfirstorder. } sauto lq: on rew: off.
+  - sinvert Hs'; [| scongruence]. hauto l: on.
+  - sinvert Hs'. { scongruence. } hauto l: on.
+  - sinvert Hs'. sfirstorder.
+  - sinvert Hs'. sfirstorder.
+  - sinvert Hs'. hauto lq: on.
+Qed.
