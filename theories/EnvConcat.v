@@ -54,7 +54,7 @@ Hint Resolve env_concat_unique : core.
 
 (* Theorem B.26 part II is trivial: environment concatenation is universal in the revised definition *)
 
-(* skipping B.27-29, since I'm not sure what changed with the definition *)
+(* skipping B.27, B.28, and B.29, since I'm not sure what changed with the definition *)
 
 (* Theorem B.30 *)
 Theorem env_cat_assoc : forall n n' n'' n01 n12 z1 z2,
