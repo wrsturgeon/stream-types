@@ -2,6 +2,7 @@ From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
+  Derivative
   Environment
   FV
   Hole
@@ -12,11 +13,6 @@ From LambdaST Require Import
 (* Definition B.34 *)
 (* Argument order designed for notation: (Subcontext A B) === (A <: B) *)
 Inductive Subcontext : context -> context -> Prop :=
-  | SubCong : forall d d' g gd gd',
-      Fill g d gd ->
-      Fill g d' gd' ->
-      Subcontext d d' ->
-      Subcontext gd gd'
   | SubRefl : forall g,
       Subcontext g g
   | SubCommaExc : forall g d,
@@ -34,6 +30,11 @@ Inductive Subcontext : context -> context -> Prop :=
       Subcontext g (CtxSemic g CtxEmpty)
   | SubSemicUnit2 : forall g,
       Subcontext g (CtxSemic CtxEmpty g)
+  | SubCong : forall d d' g gd gd',
+      Fill g d gd ->
+      Fill g d' gd' ->
+      Subcontext d d' ->
+      Subcontext gd gd'
   .
 Hint Constructors Subcontext : core.
 
@@ -41,7 +42,7 @@ Theorem subcontext_fv_subset : forall g g',
   Subcontext g g' ->
   Subset (fv g') (fv g).
 Proof.
-  intros. induction H; cbn in *; intros; [shelve | | | | | | | |]; sfirstorder.
+  intros. induction H; cbn in *; intros; [| | | | | | | | shelve]; sfirstorder.
   (* Only interesting case is `Fill`, covered below: *)
   Unshelve. eapply fv_fill; [eassumption |]. apply fv_fill in H. apply fv_fill in H0. cbn in *.
   apply H0 in H2. destruct H2; [| right; assumption]. left. apply IHSubcontext. assumption.
@@ -80,10 +81,6 @@ Theorem sub_preserves_env : forall n G D,
   EnvTyped n D /\ Agree Inert n n (fv G) (fv D).
 Proof.
   intros n G D He Hs. generalize dependent n. induction Hs; intros.
-  - assert (A := maps_to_hole_reflect _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
-    + eapply fill_preserves_env; [ | eassumption | | eassumption | ]; try eassumption. apply IHHs.
-    + split; intros; (eapply prop_on_subset; [| eassumption]);
-      apply subcontext_fv_subset; econstructor; eassumption.
   - repeat split; intros; eassumption.
   - sinvert He. repeat split; sfirstorder.
   - sinvert He. repeat split; sfirstorder.
@@ -92,4 +89,36 @@ Proof.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
+  - assert (A := maps_to_hole_reflect _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
+    + eapply fill_preserves_env; [ | eassumption | | eassumption | ]; try eassumption. apply IHHs.
+    + split; intros; (eapply prop_on_subset; [| eassumption]);
+      apply subcontext_fv_subset; econstructor; eassumption.
+Qed.
+
+(* Theorem B.36 *)
+Theorem deriv_subctx : forall G D,
+  Subcontext G D ->
+  forall n G' D',
+  ContextDerivative n G G' ->
+  ContextDerivative n D D' ->
+  Subcontext G' D'.
+Proof.
+  intros G D Hs n G' D' HG HD. generalize dependent n.
+  generalize dependent G'. generalize dependent D'. induction Hs; cbn in *; intros.
+  - assert (E := context_derivative_det _ _ _ _ HG HD). subst. constructor.
+  - sinvert HG. sinvert HD. assert (E := context_derivative_det _ _ _ _ H2 H6). subst.
+    assert (E := context_derivative_det _ _ _ _ H3 H4). subst. constructor.
+  - sinvert HG. assert (E := context_derivative_det _ _ _ _ HD H2). subst. constructor.
+  - sinvert HG. assert (E := context_derivative_det _ _ _ _ HD H2). subst. constructor.
+  - sinvert HG. assert (E := context_derivative_det _ _ _ _ HD H4). subst. constructor.
+  - sinvert HD. sinvert H4. assert (E := context_derivative_det _ _ _ _ HG H2). subst. constructor.
+  - sinvert HD. sinvert H4. assert (E := context_derivative_det _ _ _ _ HG H2). subst. constructor.
+  - sinvert HD. sinvert H2. assert (E := context_derivative_det _ _ _ _ HG H4). subst. constructor.
+  - generalize dependent d. generalize dependent d'. generalize dependent gd.
+    generalize dependent gd'. generalize dependent D'. generalize dependent G'.
+    generalize dependent n. induction g; cbn in *; intros; sinvert H0; sinvert H;
+    [eapply IHHs; eassumption | | | |]; sinvert HD; sinvert HG;
+    try (assert (E := context_derivative_det _ _ _ _ H6 H8));
+    try (assert (E := context_derivative_det _ _ _ _ H2 H3));
+    subst; sauto lq: on.
 Qed.
