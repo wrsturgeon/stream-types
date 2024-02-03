@@ -94,6 +94,7 @@ Proof.
     + split; intros; (eapply prop_on_subset; [| eassumption]);
       apply subcontext_fv_subset; econstructor; eassumption.
 Qed.
+Hint Resolve sub_preserves_env : core.
 
 (* Theorem B.36 *)
 Theorem deriv_subctx : forall G D,
@@ -122,3 +123,4 @@ Proof.
     try (assert (E := context_derivative_det _ _ _ _ H2 H3));
     subst; sauto lq: on.
 Qed.
+Hint Resolve deriv_subctx : core.
