@@ -30,3 +30,14 @@ jobs:
         for f in $(find . -name '*.v'); do if grep -q ${MATCH} ${f}; then grep -Rnw theories -e ${MATCH}; exit 1; fi; done
     - name: Check for trailing whitespace
       run: for f in $(find . -name '*.v'); do if grep -q '.* $' ${f}; then grep -Rnw theories -e '.* $'; exit 1; fi; done
+    - name: Check for missing theorems
+      run: |
+        make clean
+        grep -Rn theories -e "B.1 " || echo "B.1 NOT FOUND"
+        grep -Rn theories -e "B.2 " || echo "B.2 NOT FOUND"
+        grep -Rn theories -e "B.3 " || echo "B.3 NOT FOUND"
+        grep -Rn theories -e "B.4 " || echo "B.4 NOT FOUND"
+        grep -Rn theories -e "B.5 " || echo "B.5 NOT FOUND"
+        grep -Rn theories -e "B.6 " || echo "B.6 NOT FOUND"
+        grep -Rn theories -e "B.7," || echo "B.7 NOT FOUND"
+        for i in $(seq 8 77); do grep -Rn theories -e "B.${i}" || echo "B.${i} NOT FOUND"; done
