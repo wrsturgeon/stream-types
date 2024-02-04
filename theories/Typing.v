@@ -54,8 +54,27 @@ Inductive Typed : context -> term -> type -> Prop :=
       Fill G D GD ->
       Typed Gxs e' t ->
       Typed GD (TmLet x e e') t
-  .
+   | TRec : forall g e g' eargs s,
+      ArgsTyped g eargs g' ->
+      Typed g e s
+
+with ArgsTyped : context -> argsterm -> context -> Prop :=
+  | T_ATmEmpty : forall g, ArgsTyped g ATmEmpty CtxEmpty
+  | T_ATmSng : forall g e s x,
+      Typed g e s ->
+      ArgsTyped g (ATmSng e) (CtxHasTy x s)
+  | T_ATmComma : forall g g1 g2 e1 e2,
+      ArgsTyped g e1 g1 ->
+      ArgsTyped g e2 g2 ->
+      ArgsTyped g (ATmComma e1 e2) (CtxComma g1 g2)
+  | T_ATmSemic : forall g1 g2 g1' g2' e1 e2,
+      ArgsTyped g1 e1 g1' ->
+      ArgsTyped g2 e2 g2' ->
+      ArgsTyped (CtxSemic g1 g2) (ATmSemic e1 e2) (CtxSemic g1' g2')
+.
+
 Hint Constructors Typed : core.
+Hint Constructors ArgsTyped : core.
 
 (* TODO:
 Theorem typed_wf_term : forall G x T,
@@ -86,5 +105,17 @@ Proof.
   - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
     cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
-Qed.
+  -
+Admitted.
 Hint Resolve typing_fv : core.
+
+Theorem argstyping_fv : forall g e g',
+  ArgsTyped g e g' ->
+  forall x,
+  fv e x ->
+  fv g x.
+Proof.
+  intros.
+  generalize dependent x.
+  induction H; hauto l:on use:fv_term.
+Qed.

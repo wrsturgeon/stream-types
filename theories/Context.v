@@ -16,7 +16,7 @@ Inductive context : Set :=
   .
 Hint Constructors context : core.
 Derive Show for context.
-Derive Arbitrary for context.
+(* Derive Arbitrary for context. *)
 
 Fixpoint fv_ctx ctx : set string :=
   match ctx with

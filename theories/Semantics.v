@@ -1,8 +1,12 @@
+
 From LambdaST Require Import
   Environment
   Prefix
   SinkTerm
   Subst
+  Context
+  FV
+  Derivative
   Terms.
 
 Inductive Step : env -> term -> term -> prefix -> Prop :=
@@ -42,7 +46,44 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step eta e1 e1' p ->
       Step (env_subst x p eta) e2 e2' p' ->
       Step eta (TmLet x e1 e2) (TmLet x e1' e2') p'
-  .
+with
+ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
+  | SATmEmpty : forall eta,
+        ArgsStep eta CtxEmpty ATmEmpty ATmEmpty CtxEmpty empty_env
+  | SATmSng : forall eta x s s' e e' p,
+        Step eta e e' p ->
+        Derivative p s s' ->
+        ArgsStep eta (CtxHasTy x s) (ATmSng e) (ATmSng e') (CtxHasTy x s') (singleton_env x p)
+  | SATmComma : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
+        ArgsStep eta g1 e1 e1' g1' eta1 ->
+        ArgsStep eta g2 e2 e2' g2' eta2 ->
+        ArgsStep eta (CtxComma g1 g2) (ATmComma e1 e2) (ATmComma e1' e2') (CtxComma g1' g2') (env_union eta1 eta2)
+  | SATmSemic1 : forall eta g1 g1' g2 e1 e2 e1' eta1,
+        ArgsStep eta g1 e1 e1' g1' eta1 ->
+        ~(MaximalOn (fv g1) eta1) ->
+        ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2) (CtxSemic g1' g2) (env_union eta1 (empty_env_for g2))
+  | SATmSemic2 : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
+        ArgsStep eta g1 e1 e1' g1' eta1 ->
+        MaximalOn (fv g1) eta1 ->
+        ArgsStep eta g2 e2 e2' g2' eta2 ->
+        ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
+.
+
+(* evalArgs (SemicCtx g1 g2) (SemicCtx e1 e2) = do
+    (env1,g1',e1') <- evalArgs g1 e1
+    if env1 `maximalOn` g1 then do
+        (env2,g2',e2') <- evalArgs g2 e2
+        env <- reThrow (\(x,p,p') -> UnionEnvError x p p') (unionDisjointEnv env1 env2)
+        return (env,SemicCtx g1' g2', SemicCtx e1' e2')
+    else do
+        let env2 = emptyEnvFor g2
+        env <- reThrow (\(x,p,p') -> UnionEnvError x p p') (unionDisjointEnv env1 env2)
+        return (env,SemicCtx g1' g2, SemicCtx e1' e2)
+        where
+            env `maximalOn` g = all (\(CE x _) -> isJust (lookupEnv x env >>= Values.maximalLift)) g
+            emptyEnvFor g = foldr (\(CE x s) rho -> bindEnv x (emptyPrefix s) rho) emptyEnv g *)
+
+
 (* TODO: FINISH DEFINITION *)
 Arguments Step n e e' p.
 Hint Constructors Step : core.

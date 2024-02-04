@@ -16,12 +16,16 @@ Inductive term : Set :=
   | TmLet (bind : string) (bound body : term)
   | TmLetPar (lhs rhs bound : string) (body : term) (* Note that the bound term is NOT really a term, but we can w.l.o.g. surround it with another `let` *)
   | TmLetCat (t : type) (lhs rhs bound : string) (body : term)
-  .
+with
+argsterm : Set :=
+  | ATmEmpty
+  | ATmSng (e : term)
+  | ATmComma (e1 : argsterm) (e2 : argsterm)
+  | ATmSemic (e1 : argsterm) (e2 : argsterm)
+.
+
+
 Hint Constructors term : core.
-Derive Show for term.
-Derive Arbitrary for ascii.
-Derive Arbitrary for string.
-Derive Arbitrary for term.
 
 Declare Scope term_scope.
 Bind Scope term_scope with term.
@@ -37,7 +41,7 @@ Notation "'let' '(' lhs ',' rhs ')' '=' both 'in' body" :=
 Notation "'let' '(' lhs ';' rhs ')' '=' both 'in' body" :=
   (TmLetCat lhs rhs both body) (at level 97, right associativity) : term_scope.
 
-Scheme Equality for term.
+(* Scheme Equality for term.
 Theorem eqb_spec_term : forall a b : term, Bool.reflect (a = b) (term_beq a b).
 Proof.
   intros. destruct (term_beq a b) eqn:E; constructor;
@@ -47,7 +51,7 @@ Instance eqb_term : Eqb term := { eqb := term_beq; eq_dec := term_eq_dec; eqb_sp
 Hint Unfold term_beq : core.
 Hint Resolve term_eq_dec : core.
 Hint Resolve eqb_spec_term : core.
-
+ *)
 Fixpoint fv_term e : set string :=
   match e with
   | TmSink | TmUnit => empty_set
@@ -60,7 +64,18 @@ Fixpoint fv_term e : set string :=
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 
-Inductive ctx_term : Set :=
+
+
+Fixpoint fv_argsterm e : set string :=
+  match e with
+  | ATmEmpty => empty_set
+  | ATmSng e => fv_term e
+  | ATmComma e1 e2 | ATmSemic e1 e2 => set_union (fv_argsterm e1) (fv_argsterm e2)
+  end.
+
+Instance fv_argsterm_inst : FV argsterm := { fv := fv_argsterm }.
+
+(* Inductive ctx_term : Set :=
   | CtxTmEmp
   | CtxTmVarTerm (id : string) (t : type) (tm : term)
   | CtxTmComma (lhs rhs : ctx_term)
@@ -69,7 +84,7 @@ Inductive ctx_term : Set :=
 Hint Constructors ctx_term : core.
 Derive Show for ctx_term.
 Derive Arbitrary for ctx_term.
-
+ *)
 (*
 Inductive WFTerm : set string -> term -> Prop :=
   | WFTmSink : forall s,

@@ -160,8 +160,8 @@ Proof.
   intros.
   generalize dependent G.
   generalize dependent s.
-  induction H5; intros s G H00. 
-  - dependent induction H00; sfirstorder.
+  induction H5; intros s G H00; admit.
+  (* - dependent induction H00; sfirstorder.
   - admit.
   - dependent induction H00; sfirstorder.
   - dependent induction H00; sfirstorder.
@@ -172,5 +172,5 @@ Proof.
     + eapply H; sfirstorder.
   - admit.
   - admit.
-  - admit.
+  - admit. *)
 Admitted.

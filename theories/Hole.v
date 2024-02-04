@@ -14,7 +14,7 @@ Inductive hole : Set :=
   .
 Hint Constructors hole : core.
 Derive Show for hole.
-Derive Arbitrary for hole.
+(* Derive Arbitrary for hole. *)
 
 Fixpoint fill h D :=
   match h with

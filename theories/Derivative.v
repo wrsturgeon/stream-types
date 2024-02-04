@@ -1,8 +1,10 @@
+From Coq Require Import String.
 From LambdaST Require Import
   Context
   Environment
   Nullable
   Prefix
+  FV
   Types.
 From Hammer Require Import Tactics.
 
@@ -119,6 +121,16 @@ Theorem derivative_emp : forall s,
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve derivative_emp : core.
 
+Theorem derivative_emp' : forall s s' p,
+  EmptyPrefix p ->
+  Derivative p s s' ->
+  s' = s .
+Proof.
+  intros.
+  induction H0; sauto lq: on rew: off.
+Qed.
+
+
 (* Theorem B.17, part I *)
 Theorem context_derivative_det : forall n G G'1 G'2,
   ContextDerivative n G G'1 ->
@@ -145,6 +157,31 @@ Proof.
 Qed.
 Hint Resolve context_derivative_fun : core.
 
+Theorem context_derivative_emp' : forall g g' eta,
+  EmptyOn (fv g) eta ->
+  ContextDerivative eta g g' ->
+  g = g'.
+Proof.
+induction g; intros.
+- best.
+- cbn in H. specialize (H id (ltac:(auto))).
+  edestruct H as [p [A B]].
+  sinvert H0.
+  destruct (ltac:(scongruence) : p = p0).
+  sfirstorder use:derivative_emp'.
+- sinvert H0.
+  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_union.
+  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_union.
+  hauto lq: on.
+- sinvert H0.
+  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_union.
+  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_union.
+  hauto lq: on.
+Qed.
+
+Hint Resolve derivative_emp : core.
+
+
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
   Derivative p s s' ->
@@ -167,7 +204,7 @@ Proof.
 Qed.
 Hint Resolve nullable_prefix_empty : core.
 
-Fixpoint maybe_derivative p s : option type :=
+(* Fixpoint maybe_derivative p s : option type :=
   match p, s with
   | PfxEpsEmp, TyEps => Some TyEps
   | PfxOneEmp, TyOne => Some TyOne
@@ -238,4 +275,4 @@ Proof.
   apply derivative_fun in H.
   apply reflect_no_derivative in E.
   apply E in H. destruct H.
-Qed.
+Qed. *)

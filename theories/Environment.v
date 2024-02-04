@@ -15,15 +15,14 @@ From LambdaST Require Import
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
 
+Definition empty_env : env := fun x => None.
+Arguments empty_env/.
+Hint Unfold empty_env : core.
+
 Definition singleton_env (id : string) (p : prefix) : env := fun x =>
   if eqb id x then Some p else None.
 Arguments singleton_env id p x/.
 Hint Unfold singleton_env : core.
-
-Definition dom (n : env) : set string :=
-  fun x => exists p, n x = Some p.
-Arguments dom n x/.
-Hint Unfold dom : core.
 
 Definition env_union (n n' : env) : env := fun x =>
   match n' x with
@@ -41,6 +40,27 @@ Hint Unfold env_subst : core.
 Definition env_drop (n : env) (x : string) : env := fun y =>
   if eqb x y then None else n x.
 Hint Unfold env_drop : core.
+
+Definition dom (n : env) : set string :=
+  fun x => exists p, n x = Some p.
+Arguments dom n x/.
+Hint Unfold dom : core.
+
+Theorem dom_singleton : forall x p, SetEq (dom (singleton_env x p)) (singleton_set x).
+Proof.
+Admitted.
+
+Theorem dom_union : forall env1 env2, SetEq (dom (env_union env1 env2)) (set_union (dom env1) (dom env2)).
+Proof.
+Admitted.
+
+Theorem dom_subst : forall env x p, SetEq (dom (env_subst x p env)) (set_union (dom env) (singleton_set x)).
+Proof.
+Admitted.
+
+
+
+
 
 (* Theorem B.10, part I *)
 Theorem maps_to_unique_literal : forall p x (n : env),
@@ -102,6 +122,7 @@ Proof.
 Qed.
 Hint Resolve agree_subset : core.
 
+
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
       EnvTyped n CtxEmpty
@@ -120,6 +141,26 @@ Inductive EnvTyped : env -> context -> Prop :=
       EnvTyped n (CtxSemic G D)
   .
 Hint Constructors EnvTyped : core.
+
+Theorem envtyped_dom : forall eta g,
+  EnvTyped eta g -> Subset (fv g) (dom eta).
+Proof.
+intros; induction H; hauto q: on use:dom_union.
+Qed.
+
+
+Fixpoint empty_env_for (g : context) : env :=
+  match g with
+  | CtxEmpty => empty_env
+  | CtxHasTy x s => singleton_env x (emp s)
+  | CtxComma g1 g2 | CtxSemic g1 g2 => env_union (empty_env_for g1) (empty_env_for g2)
+  end.
+
+(* use the above smart constructors (dom_union, dom_singleton). *)
+Theorem empty_env_for_dom : forall g, SetEq (dom (empty_env_for g)) (fv g).
+Proof.
+Admitted.
+
 
 Theorem maps_to_hole_reflect : forall g d gd n,
   Fill g d gd ->
@@ -307,6 +348,24 @@ Proof.
     cbn in *. intros. specialize (H x) as [H _]. contradiction H; eexists; eassumption.
 Qed.
 Hint Resolve env_typed_semic : core.
+
+
+(* need to use the empty_env_dom theorem, otherwise easy. *)
+Theorem empty_env_for_typed : forall g, EnvTyped (empty_env_for g) g.
+Proof.
+intros.
+induction g.
+Admitted.
+
+Theorem empty_env_for_empty : forall g, EmptyOn (fv g) (empty_env_for g).
+Proof.
+intros.
+induction g.
+Admitted.
+
+
+
+(* substitution lemmas *)
 
 (* A version of B.11 more specific than agreement: the exact same term *)
 Theorem env_subctx_bind_equal : forall hole plug n n',
