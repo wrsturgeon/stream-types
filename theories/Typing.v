@@ -7,61 +7,64 @@ From LambdaST Require Import
   Sets
   Subcontext
   Terms
+  Inert
+  Nullable
   Types.
 
-Inductive Typed : context -> term -> type -> Prop :=
-  | TParR : forall G e1 e2 s t,
-      Typed G e1 s ->
-      Typed G e2 t ->
-      Typed G (e1, e2) (TyPar s t)
-  | TParL : forall G x y z s t e r Gxsyt Gzst,
+
+Inductive Typed : context -> term -> type -> inertness -> Prop :=
+  | TParR : forall G e1 e2 s t i1 i2 i3,
+      Typed G e1 s i1 ->
+      Typed G e2 t i2 ->
+      i_ub i1 i2 i3 ->
+      Typed G (e1, e2) (TyPar s t) i3
+  | TParL : forall G x y z s t e r Gxsyt Gzst i,
       x <> y ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyPar s t)) Gzst ->
-      Typed Gxsyt e r ->
-      Typed Gzst (TmLetPar x y z e) r
-  | TCatR : forall G D e1 e2 s t,
-      Typed G e1 s ->
-      Typed D e2 t ->
-      (* TODO: Should this have been removed? *)
-      (* DisjointSets (fv G) (fv D) -> *)
-      Typed (CtxSemic G D) (e1; e2) (TyDot s t)
-  | TCatL : forall G x y z s t e r Gxsyt Gzst,
+      Typed Gxsyt e r i ->
+      Typed Gzst (TmLetPar x y z e) r i
+  | TCatR : forall G D e1 e2 s t i1 i2 i3,
+      Typed G e1 s i1 ->
+      Typed D e2 t i2 ->
+      inert_guard (i1 = Inert /\ ~(Nullable s)) i3 ->
+      Typed (CtxSemic G D) (e1; e2) (TyDot s t) i3
+  | TCatL : forall G x y z s t e r Gxsyt Gzst i,
       x <> y ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyDot s t)) Gzst ->
-      Typed Gxsyt e r ->
-      Typed Gzst (TmLetCat t x y z e) r
-  | TEpsR : forall G,
-      Typed G TmSink TyEps
+      Typed Gxsyt e r i ->
+      Typed Gzst (TmLetCat t x y z e) r i
+  | TEpsR : forall G i,
+      Typed G TmSink TyEps i
   | TOneR : forall G,
-      Typed G TmUnit TyOne
-  | TVar : forall G x s Gxs,
+      Typed G TmUnit TyOne Jumpy
+  | TVar : forall G x s Gxs i,
       Fill G (CtxHasTy x s) Gxs ->
-      Typed Gxs (TmVar x) s
-  | TSubCtx : forall G G' e s,
+      Typed Gxs (TmVar x) s i
+  | TSubCtx : forall G G' e s i,
       Subcontext G G' ->
-      Typed G' e s ->
-      Typed G e s
-  | TLet : forall G D x e e' s t Gxs GD,
+      Typed G' e s i ->
+      Typed G e s i
+  | TLet : forall G D x e e' s t Gxs GD i,
       ~fv G x ->
-      Typed D e s ->
+      Typed D e s Inert ->
       Fill G (CtxHasTy x s) Gxs ->
       Fill G D GD ->
-      Typed Gxs e' t ->
-      Typed GD (TmLet x e e') t
-   | TRec : forall g e g' eargs s,
-      ArgsTyped g eargs g' ->
-      Typed g e s
+      Typed Gxs e' t i ->
+      Typed GD (TmLet x e e') t i
+   (* | TRec : forall g e g' eargs s, *)
+      (* ArgsTyped g eargs g' -> *)
+      (* Typed g e s *)
 
 with ArgsTyped : context -> argsterm -> context -> Prop :=
   | T_ATmEmpty : forall g, ArgsTyped g ATmEmpty CtxEmpty
-  | T_ATmSng : forall g e s x,
-      Typed g e s ->
+  | T_ATmSng : forall g e s x i,
+      Typed g e s i ->
       ArgsTyped g (ATmSng e) (CtxHasTy x s)
   | T_ATmComma : forall g g1 g2 e1 e2,
       ArgsTyped g e1 g1 ->
@@ -76,36 +79,37 @@ with ArgsTyped : context -> argsterm -> context -> Prop :=
 Hint Constructors Typed : core.
 Hint Constructors ArgsTyped : core.
 
+Theorem typing_sub_inert : forall g e s i,
+  Typed g e s i ->
+  Typed g e s Jumpy
+.
+Proof.
+intros.
+induction H; intros.
+- econstructor; sauto.
+- econstructor; eauto.
+- hfcrush.
+- sfirstorder.
+- hauto l: on.
+- sauto lq: on.
+- sfirstorder.
+- best.
+- best.
+Qed.
+
+
 (* TODO:
 Theorem typed_wf_term : forall G x T,
   G |- x \in T ->
   WFTerm (fv G) x.
 *)
 
-Theorem typing_fv : forall G e s,
-  Typed G e s ->
+Theorem typing_fv : forall G e s i,
+  Typed G e s i ->
   forall x,
   fv e x ->
   fv G x.
 Proof.
-  intros G e s Ht x Hfv. generalize dependent x. (* just for naming *)
-  induction Ht; try rename x into x' (* hands off my `x`! *); intros x H'; cbn in *.
-  - destruct H'; [apply IHHt1 | apply IHHt2]; assumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
-    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
-    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
-  - destruct H'; [left; apply IHHt1 | right; apply IHHt2]; assumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
-    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
-    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
-  - destruct H' as [].
-  - destruct H' as [].
-  - eapply fv_fill. { eassumption. } cbn. left. assumption.
-  - eapply subcontext_fv_subset; [| apply IHHt]; eassumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
-    specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
-    cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
-  -
 Admitted.
 Hint Resolve typing_fv : core.
 

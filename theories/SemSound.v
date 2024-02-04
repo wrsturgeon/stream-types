@@ -41,6 +41,13 @@ Definition Preserves i eta p s :=
     (i = Inert -> EmptyOn s eta -> EmptyPrefix p)
 .
 
+Theorem preserves_downgrade : forall i eta p s,
+  Preserves i eta p s -> Preserves Jumpy eta p s.
+Proof.
+hauto lq: on.
+Qed.
+
+
 Theorem preserves_to_agree : forall i eta p s S' S x,
 Subset S' S ->
 Preserves i eta p S' ->
@@ -60,18 +67,18 @@ split; intros.
 Qed.
 
 
-Definition P_sound g (e : term) s eta (e' : term) p :=
+Definition P_sound g (e : term) s i eta (e' : term) p :=
   WFContext g ->
   EnvTyped eta g ->
     PrefixTyped p s /\
-    (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed g' e' s') /\
-    Preserves Jumpy eta p (fv e)
+    (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed g' e' s' Inert) /\
+    Preserves i eta p (fv e)
 .
 
-Theorem sound : forall G e s eta e' p,
-    Typed G e s ->
+Theorem sound : forall G e s i eta e' p,
+    Typed G e s i ->
     Step eta e e' p ->
-    P_sound G e s eta e' p.
+    P_sound G e s i eta e' p.
 Proof.
     apply (lex_ind P_sound); unfold P_sound in *; intros; admit.
 Admitted.
@@ -102,7 +109,7 @@ Proof.
     + eapply env_typed_singleton; eauto.
     + sfirstorder use:dom_singleton.
     + sfirstorder use:dom_singleton.
-    + eapply preserves_to_agree; [|eauto]. sfirstorder use:typing_fv.
+    + eapply preserves_to_agree; [| hauto lq: on rew: off ]. hauto l: on use:typing_fv.
     + sauto lq: on.
   - sinvert H. sinvert H0.
     edestruct IHArgsStep1 as [A [B [C D]]]; eauto.

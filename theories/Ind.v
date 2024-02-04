@@ -14,6 +14,7 @@ From LambdaST Require Import
   Subcontext
   Terms
   Types
+  Inert
   Typing.
 
 (*
@@ -111,51 +112,52 @@ Step_ind
 
 
 Theorem lex_ind :
-    forall P : context -> term -> type -> env -> term -> prefix -> Prop,
+    forall P : context -> term -> type -> inertness -> env -> term -> prefix -> Prop,
 
-    (forall (G G' : context) (e : term) (s : type) eta e' p,
+    (forall (G G' : context) (e : term) (s : type) eta e' p i,
         Step eta e e' p ->
-        Subcontext G G' -> Typed G' e s -> P G' e s eta e' p -> P G e s eta e' p) ->
+        Subcontext G G' -> Typed G' e s i -> P G' e s i eta e' p -> P G e s i eta e' p) ->
       
-    (forall G n, P G TmSink TyEps n TmSink PfxEpsEmp) ->
+    (forall G n i, P G TmSink TyEps n i TmSink PfxEpsEmp) ->
 
-    (forall G x s Gxs n p,
+    (forall G x s Gxs i n p,
       Fill G (CtxHasTy x s) Gxs ->
       n x = Some p ->
-      P Gxs (TmVar x) s n (TmVar x) p
+      P Gxs (TmVar x) s i n (TmVar x) p
     ) ->
 
-    (forall G (n : env) (e1 e1' e2 e2' : term) (p1 p2 : prefix) s t,
+    (forall G (n : env) (e1 e1' e2 e2' : term) (p1 p2 : prefix) s t i1 i2 i3,
         Step n e1 e1' p1 ->
-        Typed G e1 s ->
-        
+        Typed G e1 s i1 ->
 
         Step n e2 e2' p2 ->
-        Typed G e2 t ->
+        Typed G e2 t i2 ->
 
-        forall IHe1 : P G e1 s n e1' p1,
-        forall IHe2 : P G e2 t n e2' p2,
+        i_ub i1 i2 i3 ->
 
-        P G (TmComma e1 e2) (TyPar s t) n (TmComma e1' e2') (PfxParPair p1 p2)) ->
+        forall IHe1 : P G e1 s i1 n e1' p1,
+        forall IHe2 : P G e2 t i2 n e2' p2,
+
+        P G (TmComma e1 e2) (TyPar s t) i3 n (TmComma e1' e2') (PfxParPair p1 p2)) ->
     
-    (forall G Gxsyt Gzst x y z s t r e n e' p1 p2 p',
+    (forall G Gxsyt Gzst x y z s t r e n e' p1 p2 p' i,
 
         x <> y ->
         ~ fv G x ->
         ~ fv G y ->
         Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
         Fill G (CtxHasTy z (TyPar s t)) Gzst ->
-        Typed Gxsyt e r -> 
+        Typed Gxsyt e r i -> 
 
         n z = Some (PfxParPair p1 p2) ->
         Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
 
-        forall IHe : P Gxsyt e r (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e' p',
+        forall IHe : P Gxsyt e r i (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e' p',
 
-        P Gzst (TmLetPar x y z e) r n (TmLetPar x y z e') p'
+        P Gzst (TmLetPar x y z e) r i n (TmLetPar x y z e') p'
     ) ->
 
-    (forall G e s eta e' p, Typed G e s -> Step eta e e' p -> P G e s eta e' p).
+    (forall G e s i eta e' p, Typed G e s i -> Step eta e e' p -> P G e s i eta e' p).
 Proof.
   intros.
   generalize dependent G.

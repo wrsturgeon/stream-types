@@ -2,6 +2,7 @@ From Hammer Require Import Tactics.
 From LambdaST Require Import
   Derivative
   Prefix
+  Environment
   Types.
 
 (* Definition B.20 *)
@@ -66,17 +67,18 @@ Qed.
 Hint Resolve pfx_cat_unique : core.
 
 (* Theorem B.21, part II *)
-Theorem pfx_cat_exists_when_typed : forall p p' s dps dp'dps,
+Theorem pfx_cat_exists_when_typed : forall p p' s dps,
   Derivative p s dps -> (* i.e., d_p(s) = `dps`. difficult to write in ASCII *)
-  Derivative p' dps dp'dps -> (* i.e. d_{p'}(d_p(s)) = `dp'dps` *)
   PrefixTyped p s ->
   PrefixTyped p' dps ->
   exists p'',
   PrefixConcat p p' p'' /\ (* from "such a p'' exists" *)
   PrefixTyped p'' s /\
-  Derivative p'' s dp'dps.
+  (forall dp'dps, Derivative p' dps dp'dps -> (* i.e. d_{p'}(d_p(s)) = `dp'dps` *)
+    Derivative p'' s dp'dps).
 Proof.
-  intros p p' s dps dp'dps Hd Hd' Hp Hp'. generalize dependent p'. generalize dependent dp'dps.
+Admitted.
+  (* intros p p' s dps dp'dps Hd Hd' Hp Hp'. generalize dependent p'. generalize dependent dp'dps.
   generalize dependent Hp. induction Hd; intros; simpl in *.
   - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor.
   - sinvert Hp. eexists. split; [constructor | split]; assumption.
@@ -98,8 +100,8 @@ Proof.
     + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
     + shelve.
   - sinvert Hp. specialize (IHHd H4 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]].
-    eexists. repeat split; constructor; eassumption.
-  Unshelve. Abort. (* TODO: two lemmas left *)
+    eexists. repeat split; constructor; eassumption. *)
+  (* Unshelve. Abort. TODO: two lemmas left *)
 
 (* TODO: prefix concatenation and derivatives,*)
 
@@ -136,3 +138,21 @@ Hint Resolve pfx_cat_assoc_eq : core.
  * Environment concat: n . n' ~ n'' if,
  * for all x in dom(n) and dom(n'),
  * n(x) . n'(x) ~ n''(x) *)
+
+Definition EnvConcat (n : env) (n' : env) (n'' : env) : Prop :=
+  forall x p p', n x = Some p -> n' x = Some p' -> (exists p'', n'' x = Some p'' /\ PrefixConcat p p' p'').
+
+Theorem env_cat_exists_when_typed : forall eta eta' g g',
+  ContextDerivative eta g g'-> (* i.e., d_p(s) = `dps`. difficult to write in ASCII *)
+  EnvTyped eta g ->
+  EnvTyped eta' g' ->
+  exists eta'',
+  EnvConcat eta eta' eta'' /\
+  EnvTyped eta'' g /\
+  (forall g'', ContextDerivative eta' g' g'' ->
+    ContextDerivative eta'' g g'').
+Proof.
+intros.
+  
+
+Admitted.
