@@ -51,6 +51,16 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
   .
 Hint Constructors PrefixConcat : core.
 
+(* not sure if we need boht directions. *)
+Theorem pfx_cat_maximal : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  MaximalPrefix p \/ MaximalPrefix p' <-> MaximalPrefix p''.
+Proof.
+intros.
+induction H.
+Admitted.
+
+
 (* Theorem B.21, part I *)
 Theorem pfx_cat_unique : forall p p' p1'' p2'',
   PrefixConcat p p' p1'' ->
@@ -140,7 +150,34 @@ Hint Resolve pfx_cat_assoc_eq : core.
  * n(x) . n'(x) ~ n''(x) *)
 
 Definition EnvConcat (n : env) (n' : env) (n'' : env) : Prop :=
-  forall x p p', n x = Some p -> n' x = Some p' -> (exists p'', n'' x = Some p'' /\ PrefixConcat p p' p'').
+  (forall x p p', n x = Some p -> n' x = Some p' -> (exists p'', n'' x = Some p'' /\ PrefixConcat p p' p''))
+  /\
+  (forall x, n x = None \/ n' x = None -> n'' x = None) (* to ensure that n'' is unique, we need to restrict the domain. *)
+.
+
+Hint Unfold EnvConcat : core.
+
+(* fuck it, i want this theorem to hold on the nose.  *)
+Axiom functional_extensionality: forall {A B} (f g:A->B) , (forall x, f x = g x) -> f = g.
+
+
+Theorem  env_cat_unique : forall n n' n1 n2,
+  EnvConcat n n' n1 -> 
+  EnvConcat n n' n2 -> 
+  n1 = n2.
+Proof.
+  intros; eapply functional_extensionality; intros.
+  unfold EnvConcat in *.
+  destruct H as [A B].
+  destruct H0 as [A' B'].
+  remember (n x) as nx.
+  remember (n' x) as n'x.
+  destruct nx.
+  - destruct n'x; [|sauto lq: on].
+    hauto lq: on use:pfx_cat_unique.
+  - sauto lq: on.
+Qed.
+
 
 Theorem env_cat_exists_when_typed : forall eta eta' g g',
   ContextDerivative eta g g'-> (* i.e., d_p(s) = `dps`. difficult to write in ASCII *)
@@ -153,6 +190,5 @@ Theorem env_cat_exists_when_typed : forall eta eta' g g',
     ContextDerivative eta'' g g'').
 Proof.
 intros.
-  
 
 Admitted.

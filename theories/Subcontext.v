@@ -1,3 +1,4 @@
+Require Import Coq.Program.Equality.
 From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
@@ -37,6 +38,9 @@ Inductive Subcontext : context -> context -> Prop :=
   .
 Hint Constructors Subcontext : core.
 
+
+
+
 Theorem subcontext_fv_subset : forall g g',
   Subcontext g g' ->
   Subset (fv g') (fv g).
@@ -47,6 +51,24 @@ Proof.
   apply H0 in H2. destruct H2; [| right; assumption]. left. apply IHSubcontext. assumption.
 Qed.
 Hint Resolve subcontext_fv_subset : core.
+
+Theorem subtcontext_wf : forall g g',
+  Subcontext g g' -> WFContext g -> WFContext g'.
+Proof.
+intros.
+dependent induction H.
+- eapply wf_fill_reflect in H.
+  eapply wf_fill_reflect. eauto. sfirstorder use:subcontext_fv_subset.
+- sauto.
+- sauto.
+- sauto.
+- sauto.
+- sauto.
+- sauto.
+- sauto.
+- sauto.
+Qed.
+
 
 Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
   Fill g d gd ->

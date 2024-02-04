@@ -69,6 +69,15 @@ ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
         ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
 .
 
+Theorem Step_det : forall eta e e1 e2 p1 p2,
+    Step eta e e1 p1 ->
+    Step eta e e2 p2 ->
+    e1 = e2 /\ p1 = p2
+.
+Proof.
+Admitted.
+
+
 (* evalArgs (SemicCtx g1 g2) (SemicCtx e1 e2) = do
     (env1,g1',e1') <- evalArgs g1 e1
     if env1 `maximalOn` g1 then do
