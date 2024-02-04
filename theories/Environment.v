@@ -49,6 +49,11 @@ Definition EnvEq (n1 n2 : env) := forall x, n1 x = n2 x.
 Arguments EnvEq n1 n2/.
 Hint Unfold EnvEq : core.
 
+(* Argument order matches notation: (EnvSub n1 n2) === (n1 <= n2) *)
+Definition EnvSub (n1 n2 : env) := forall x n1x, n1 x = Some n1x -> n2 x = Some n1x.
+Arguments EnvSub n1 n2/.
+Hint Unfold EnvSub : core.
+
 (* Theorem B.10, part I *)
 Theorem maps_to_unique_literal : forall p x (n : env),
   n x = Some p ->
@@ -82,6 +87,9 @@ Hint Unfold EmptyOn : core.
 Definition MaximalOn := PropOn MaximalPrefix.
 Arguments MaximalOn/ s n.
 Hint Unfold MaximalOn : core.
+
+Definition B7 := PropOn.
+Arguments B7/ P s n.
 
 Theorem prop_on_subset : forall P s s' n,
   Subset s' s ->
@@ -132,9 +140,14 @@ Inductive EnvTyped : env -> context -> Prop :=
       (EmptyOn (fv D) n \/ MaximalOn (fv G) n) ->
       EnvTyped n (CtxSemic G D)
   .
+Arguments EnvTyped n G.
 Hint Constructors EnvTyped : core.
 
-Theorem maps_to_hole_reflect : forall g d gd n,
+Definition B8 := EnvTyped.
+Arguments B8/ n G.
+
+(* Theorem B.9 *)
+Theorem maps_to_hole : forall g d gd n,
   Fill g d gd ->
   EnvTyped n gd ->
   EnvTyped n d.
@@ -145,31 +158,39 @@ Proof.
  - sinvert H; [constructor | eapply IHEnvTyped1 | eapply IHEnvTyped2]; eassumption.
  - sinvert H0; [constructor | eapply IHEnvTyped1 | eapply IHEnvTyped2]; eassumption.
 Qed.
-Hint Resolve maps_to_hole_reflect : core.
+Hint Resolve maps_to_hole : core.
 
-(* Theorem B.9 *)
-Theorem maps_to_hole : forall n G D,
+Definition B9 := maps_to_hole.
+Arguments B9/.
+
+Theorem maps_to_hole_fn : forall n G D,
   EnvTyped n (fill G D) ->
   EnvTyped n D.
 Proof.
   intros. remember (fill G D) as GD eqn:E. apply reflect_fill in E.
-  eapply maps_to_hole_reflect; eassumption.
+  eapply maps_to_hole; eassumption.
 Qed.
-Hint Resolve maps_to_hole : core.
+Hint Resolve maps_to_hole_fn : core.
 
 (* Theorem B.10, part II *)
-Theorem maps_to_has_type : forall n G x s,
-  EnvTyped n (fill G (CtxHasTy x s)) ->
+Theorem maps_to_has_type : forall n G x Gxs s,
+  Fill G (CtxHasTy x s) Gxs ->
+  EnvTyped n Gxs ->
   exists p, (n x = Some p /\ PrefixTyped p s).
-Proof. intros. assert (A := maps_to_hole _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
+Proof.
+  intros. assert (A := maps_to_hole _ _ _ _ H H0).
+  sinvert A. repeat econstructor; eassumption.
+Qed.
 Hint Resolve maps_to_has_type : core.
 
-Theorem maps_to_has_type_reflect : forall n G x Gx s,
-  Fill G (CtxHasTy x s) Gx ->
-  EnvTyped n Gx ->
+Definition B10 := maps_to_has_type.
+Arguments B10/.
+
+Theorem maps_to_has_type_fn : forall n G x s,
+  EnvTyped n (fill G (CtxHasTy x s)) ->
   exists p, (n x = Some p /\ PrefixTyped p s).
-Proof. intros. assert (A := maps_to_hole_reflect _ _ _ _ H H0). sinvert A. repeat econstructor; eassumption. Qed.
-Hint Resolve maps_to_has_type : core.
+Proof. intros. assert (A := maps_to_hole_fn _ _ _ H). sinvert A. eexists. split; eassumption. Qed.
+Hint Resolve maps_to_has_type_fn : core.
 
 Definition NoConflict (n n' : env) := forall x p,
   n x = Some p ->
@@ -379,6 +400,9 @@ Proof.
   (destruct H5; [left | right]); try (apply prop_on_weakening_alt; eassumption); eapply agree_union; sfirstorder.
 Qed.
 Hint Resolve env_subctx_bind : core.
+
+Definition B11 := env_subctx_bind.
+Arguments B11/.
 
 Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
   (P = EmptyPrefix \/ P = MaximalPrefix) ->

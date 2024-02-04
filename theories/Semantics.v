@@ -52,6 +52,9 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
 Arguments Step n e e' p.
 Hint Constructors Step : core.
 
+Definition B44 := Step.
+Arguments B44/ n e e' p.
+
 (* Theorem B.48 *)
 Theorem step_det : forall n e e' p',
   Step n e e' p' ->
@@ -72,3 +75,8 @@ Proof.
   - sinvert Hs'. sfirstorder.
   - sinvert Hs'. hauto lq: on.
 Qed.
+
+Definition B48 := step_det.
+Arguments B48/.
+
+(* Theorem B.49 seems irrelevant since we no longer count steps *)

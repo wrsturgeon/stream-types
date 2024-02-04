@@ -11,7 +11,11 @@ Inductive Nullable : type -> Prop :=
       Nullable t ->
       Nullable (TyPar s t)
   .
+Arguments Nullable t.
 Hint Constructors Nullable : core.
+
+Definition B1 := Nullable.
+Arguments B1/ t.
 
 Inductive NullableCtx : context -> Prop :=
   | NullableCtxEmpty : NullableCtx CtxEmpty

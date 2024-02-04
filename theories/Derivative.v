@@ -1,8 +1,10 @@
 From LambdaST Require Import
   Context
   Environment
+  FV
   Nullable
   Prefix
+  Sets
   Types.
 From Hammer Require Import Tactics.
 
@@ -61,6 +63,9 @@ Inductive Derivative : prefix -> type -> type -> Prop :=
   .
 Arguments Derivative p s s'.
 Hint Constructors Derivative : core.
+
+Definition B13 := Derivative.
+Arguments B13/ p s s'.
 
 Fixpoint derivative (arg_p : prefix) (arg_s : type) : option type :=
   match arg_p, arg_s with
@@ -157,11 +162,17 @@ Proof.
 Qed.
 Hint Resolve derivative_fun : core.
 
+Definition B15 := derivative_fun.
+Arguments B15/.
+
 (* Theorem B.16 *)
 Theorem derivative_emp : forall s,
   Derivative (emp s) s s.
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve derivative_emp : core.
+
+Definition B16 := derivative_emp.
+Arguments B16/.
 
 (* Definition B.14 *)
 (* Recurse on all variables in context, use the above relation on each, then put them back exactly where they were *)
@@ -184,6 +195,9 @@ Inductive ContextDerivative : env -> context -> context -> Prop :=
   .
 Arguments ContextDerivative n G G'.
 Hint Constructors ContextDerivative : core.
+
+Definition B14 := ContextDerivative.
+Arguments B14/ n G G'.
 
 Fixpoint ctx_derivative (n : env) (arg_G : context) : option context :=
   match arg_G with
@@ -274,6 +288,9 @@ Proof.
 Qed.
 Hint Resolve context_derivative_fun : core.
 
+Definition B17 := context_derivative_fun.
+Arguments B17/.
+
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
   Derivative p s s' ->
@@ -285,6 +302,9 @@ Proof.
 Qed.
 Hint Resolve maximal_derivative_nullable : core.
 
+Definition B18 := maximal_derivative_nullable.
+Arguments B18/.
+
 (* Theorem B.19 *)
 Theorem nullable_prefix_empty : forall p s,
   PrefixTyped p s ->
@@ -295,3 +315,12 @@ Proof.
   apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
 Qed.
 Hint Resolve nullable_prefix_empty : core.
+
+Definition B19 := nullable_prefix_empty.
+Arguments B19/.
+
+Theorem ctx_deriv_fv : forall n G G',
+  ContextDerivative n G G' ->
+  SetEq (fv G) (fv G').
+Proof. intros. induction H; sfirstorder. Qed.
+Hint Resolve ctx_deriv_fv : core.

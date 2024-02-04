@@ -18,6 +18,9 @@ Definition EnvConcat (n n' n'' : env) : Prop := forall x p p' p'',
 Arguments EnvConcat n n' n''/.
 Hint Unfold EnvConcat : core.
 
+Definition B25 := EnvConcat.
+Arguments B25/ n n' n''.
+
 Definition env_cat (n n' : env) : env := fun x =>
   match n x with
   | None => None
@@ -54,6 +57,9 @@ Hint Resolve env_concat_unique : core.
 
 (* Theorem B.26 part II is trivial: environment concatenation is universal in the revised definition *)
 
+Definition B26 := env_concat_unique.
+Arguments B26/.
+
 (* skipping B.27, B.28, and B.29, since I'm not sure what changed with the definition *)
 
 (* Theorem B.30 *)
@@ -80,8 +86,11 @@ Proof.
 Qed.
 Hint Resolve env_cat_assoc : core.
 
+Definition B30 := env_cat_assoc.
+Arguments B30/.
+
 (* Theorem B.12 *)
-Theorem env_subctx_bind_deriv : forall G D GD,
+Conjecture env_subctx_bind_deriv : forall G D GD,
   Fill G D GD ->
   forall n G0,
   ContextDerivative n GD G0 ->
@@ -95,7 +104,12 @@ Theorem env_subctx_bind_deriv : forall G D GD,
   Fill G' D'' G'D'' ->
   ContextDerivative nn' GD' G'D''.
   (* a behemoth *)
+(*
 Proof.
   intros G D GD Hf n G0 Hd. generalize dependent G. generalize dependent D. induction Hd; intros.
   - sinvert Hf. eexists. intros D' D'' n' Hd Ha nn' GD' G'D'' Hc Hf' Hf''. sinvert Hf'. simpl (fv CtxEmpty) in Ha.
     (* TODO: this is really not going well *) Abort.
+*)
+
+Definition B12 := env_subctx_bind_deriv.
+Arguments B12/.
