@@ -90,7 +90,7 @@ Definition B30 := env_cat_assoc.
 Arguments B30/.
 
 (* Theorem B.12 *)
-Conjecture env_subctx_bind_deriv : forall G D GD,
+Theorem env_subctx_bind_deriv : forall G D GD,
   Fill G D GD ->
   forall n G0,
   ContextDerivative n GD G0 ->
@@ -104,12 +104,12 @@ Conjecture env_subctx_bind_deriv : forall G D GD,
   Fill G' D'' G'D'' ->
   ContextDerivative nn' GD' G'D''.
   (* a behemoth *)
-(*
 Proof.
   intros G D GD Hf n G0 Hd. generalize dependent G. generalize dependent D. induction Hd; intros.
   - sinvert Hf. eexists. intros D' D'' n' Hd Ha nn' GD' G'D'' Hc Hf' Hf''. sinvert Hf'. simpl (fv CtxEmpty) in Ha.
     (* TODO: this is really not going well *) Abort.
-*)
 
+(*
 Definition B12 := env_subctx_bind_deriv.
 Arguments B12/.
+*)

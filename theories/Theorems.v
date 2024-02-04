@@ -24,7 +24,7 @@ Check B8.
 Check B9.
 Check B10.
 Check B11.
-Check B12.
+(* Check B12. *)
 Check B13.
 Check B14.
 Check B15.
