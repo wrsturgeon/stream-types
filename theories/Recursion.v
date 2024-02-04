@@ -13,6 +13,9 @@ Variant rec_sig : Set :=
 (* Notation "H '|' G '->' s" := (RecSigRecur H G s) (at level 97, right associativity). *)
 Hint Constructors rec_sig : core.
 
+Definition B37 := rec_sig.
+Arguments B37/.
+
 Inductive tree (T : Type) :=
   | TreeEmpty
   | TreeComma (lhs rhs : tree T)
@@ -40,5 +43,10 @@ Inductive RecursiveArgs (H : hist_ctx) : context -> tree term -> context -> Prop
       RecursiveArgs H G e' D' ->
       RecursiveArgs H G (TreeSemic e e') (CtxSemic D D')
   .
+Arguments RecursiveArgs H G e D.
+Hint Constructors RecursiveArgs : core.
+
+Definition B38 := RecursiveArgs.
+Arguments B38/.
 
 (* TODO: B.43 *)

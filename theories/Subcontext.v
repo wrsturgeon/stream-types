@@ -36,9 +36,13 @@ Inductive Subcontext : context -> context -> Prop :=
       Subcontext d d' ->
       Subcontext gd gd'
   .
+Arguments Subcontext G D.
 Hint Constructors Subcontext : core.
 
-Theorem subcontext_fv_subset : forall g g',
+Definition B34 := Subcontext.
+Arguments B34/ G D.
+
+Theorem subctx_fv_subset : forall g g',
   Subcontext g g' ->
   Subset (fv g') (fv g).
 Proof.
@@ -47,7 +51,7 @@ Proof.
   Unshelve. eapply fv_fill; [eassumption |]. apply fv_fill in H. apply fv_fill in H0. cbn in *.
   apply H0 in H2. destruct H2; [| right; assumption]. left. apply IHSubcontext. assumption.
 Qed.
-Hint Resolve subcontext_fv_subset : core.
+Hint Resolve subctx_fv_subset : core.
 
 Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
   Fill g d gd ->
@@ -89,12 +93,37 @@ Proof.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
-  - assert (A := maps_to_hole_reflect _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
+  - assert (A := maps_to_hole _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
     + eapply fill_preserves_env; [ | eassumption | | eassumption | ]; try eassumption. apply IHHs.
     + split; intros; (eapply prop_on_subset; [| eassumption]);
-      apply subcontext_fv_subset; econstructor; eassumption.
+      apply subctx_fv_subset; econstructor; eassumption.
 Qed.
 Hint Resolve sub_preserves_env : core.
+
+Definition B35 := sub_preserves_env.
+Arguments B35/.
+
+Theorem sub_preserves_wf : forall G D,
+  Subcontext G D ->
+  WFContext G ->
+  WFContext D.
+Proof.
+  intros G D Hs Hwf. generalize dependent Hwf. induction Hs; cbn in *; intros.
+  - assumption.
+  - sinvert Hwf. apply disjoint_comm in H3. constructor; eassumption.
+  - sinvert Hwf. assumption.
+  - sinvert Hwf. assumption.
+  - sinvert Hwf. assumption.
+  - constructor; [assumption | constructor |]. intro x. split. { intros _ []. } intros [].
+  - constructor; [assumption | constructor |]. intro x. split. { intros _ []. } intros [].
+  - constructor; [constructor | assumption |]. intro x. split. { intros []. } intros _ [].
+  - assert (Hd := wf_ctx_plug _ Hwf _ _ H). assert (Hg := wf_ctx_hole _ Hwf _ _ H).
+    specialize (IHHs Hd). apply subctx_fv_subset in Hs.
+    eapply wf_ctx_fill; try eassumption.
+    eapply wf_hole_iff in Hwf as [_ [_ Hgd]]; [| eassumption].
+    sfirstorder.
+Qed.
+Hint Resolve sub_preserves_wf : core.
 
 (* Theorem B.36 *)
 Theorem deriv_subctx : forall G D,
@@ -105,7 +134,7 @@ Theorem deriv_subctx : forall G D,
   Subcontext G' D'.
 Proof.
   intros G D Hs n G' D' HG HD. generalize dependent n.
-  generalize dependent G'. generalize dependent D'. induction Hs; cbn in *; intros.
+  generalize dependent G'. generalize dependent D'. induction Hs; intros.
   - assert (E := context_derivative_det _ _ _ _ HG HD). subst. constructor.
   - sinvert HG. sinvert HD. assert (E := context_derivative_det _ _ _ _ H2 H6). subst.
     assert (E := context_derivative_det _ _ _ _ H3 H4). subst. constructor.
@@ -121,6 +150,12 @@ Proof.
     [eapply IHHs; eassumption | | | |]; sinvert HD; sinvert HG;
     try (assert (E := context_derivative_det _ _ _ _ H6 H8));
     try (assert (E := context_derivative_det _ _ _ _ H2 H3));
-    subst; sauto lq: on.
+    subst; econstructor; [
+      apply FillCommaL | | | apply FillCommaR | | |
+      apply FillSemicL | | | apply FillSemicR | |];
+    sfirstorder.
 Qed.
 Hint Resolve deriv_subctx : core.
+
+Definition B36 := deriv_subctx.
+Arguments B36/.

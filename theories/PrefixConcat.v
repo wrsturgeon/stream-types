@@ -49,7 +49,11 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
       PrefixConcat p' p'' p''' ->
       PrefixConcat (PfxStarRest p p') p'' (PfxStarRest p p''')
   .
+Arguments PrefixConcat p p' p''.
 Hint Constructors PrefixConcat : core.
+
+Definition B20 := PrefixConcat.
+Arguments B20/ p p' p''.
 
 Fixpoint pfx_cat (arg_p arg_p' : prefix) : option prefix :=
   match arg_p, arg_p' with
@@ -198,6 +202,9 @@ Proof.
     eexists. repeat split; constructor; eassumption.
 Qed.
 
+Definition B21 := pfx_cat_exists_when_typed.
+Arguments B21/.
+
 (* Theorem B.22, part I *)
 Theorem pfx_cat_empty_l : forall p s,
   PrefixTyped p s ->
@@ -211,6 +218,13 @@ Theorem pfx_cat_empty_r : forall p s dps,
   PrefixConcat p (emp dps) p.
 Proof. intros p s dps Hd H. generalize dependent dps. induction H; sauto lq: on. Qed.
 
+Theorem pfx_cat_empty : forall p s,
+  PrefixTyped p s ->
+  (PrefixConcat (emp s) p p /\ forall dps, Derivative p s dps -> PrefixConcat p (emp dps) p).
+Proof. split; [apply pfx_cat_empty_l | intros; eapply pfx_cat_empty_r]; eassumption. Qed.
+
+Definition B22 := pfx_cat_empty.
+
 (* Theorem B.23, part I *)
 Theorem max_pfx_concat_iff : forall p p' p'',
   PrefixConcat p p' p'' ->
@@ -223,6 +237,14 @@ Theorem max_pfx_concat_eq : forall p p' p'',
   MaximalPrefix p ->
   p = p''.
 Proof. intros p p' p'' H. induction H; sauto lq: on rew: off. Qed.
+
+Theorem max_pfx_concat : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  ((MaximalPrefix p'' <-> (MaximalPrefix p \/ MaximalPrefix p'')) /\ (MaximalPrefix p -> p = p'')).
+Proof. split; [eapply max_pfx_concat_iff | eapply max_pfx_concat_eq]; eassumption. Qed.
+
+Definition B23 := max_pfx_concat.
+Arguments B23/.
 
 Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->
@@ -253,3 +275,6 @@ Proof.
   assert (A := pfx_cat_unique _ _ _ _ Hs2 H1). subst. reflexivity.
 Qed.
 Hint Resolve pfx_cat_assoc_eq : core.
+
+Definition B24 := pfx_cat_assoc_eq.
+Arguments B24/.

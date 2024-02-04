@@ -37,6 +37,9 @@ Hint Constructors prefix : core.
 Derive Show for prefix.
 Derive Arbitrary for prefix.
 
+Definition B2 := prefix.
+Arguments B2/.
+
 Scheme Equality for prefix.
 Theorem eqb_spec_prefix : forall a b : prefix, Bool.reflect (a = b) (prefix_beq a b).
 Proof.
@@ -83,7 +86,11 @@ Inductive MaximalPrefix : prefix -> Prop :=
       MaximalPrefix p' ->
       MaximalPrefix (PfxStarRest p p')
   .
+Arguments MaximalPrefix p.
 Hint Constructors MaximalPrefix : core.
+
+Definition B3 := MaximalPrefix.
+Arguments B3/ p.
 
 Fixpoint pfx_max (p : prefix) : bool :=
   (match p with
@@ -152,7 +159,11 @@ Inductive PrefixTyped : prefix -> type -> Prop :=
       PrefixTyped p' (TyStar s) ->
       PrefixTyped (PfxStarRest p p') (TyStar s)
   .
+Arguments PrefixTyped p t.
 Hint Constructors PrefixTyped : core.
+
+Definition B4 := PrefixTyped.
+Arguments B4/ p t.
 
 Fixpoint pfx_ty (p : prefix) (t : type) : bool :=
   (match p, t with
@@ -211,6 +222,9 @@ Fixpoint emp ty :=
   | TyStar _ => PfxStarEmp
   end.
 
+Definition B5 := emp.
+Arguments B5/ ty.
+
 Theorem emp_well_typed : forall s, PrefixTyped (emp s) s.
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve emp_well_typed : core.
@@ -231,4 +245,8 @@ Inductive EmptyPrefix : prefix -> Prop :=
   | EmptyPfxSumEmp :
       EmptyPrefix PfxSumEmp
   .
+Arguments EmptyPrefix p.
 Hint Constructors EmptyPrefix : core.
+
+Definition B6 := EmptyPrefix.
+Arguments B6/ p.

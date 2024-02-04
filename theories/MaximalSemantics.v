@@ -77,6 +77,9 @@ Proof.
 Qed.
 Hint Resolve maximal_semantics_aux : core.
 
+Definition B45 := maximal_semantics_aux.
+Arguments B45/.
+
 (* Theorem B.46 *)
 Theorem maximal_semantics : forall n e e' p G s,
   Step n e e' p ->
@@ -88,6 +91,9 @@ Proof.
   eapply maximal_semantics_aux. { eassumption. } eapply prop_on_subset; eassumption.
 Qed.
 Hint Resolve maximal_semantics : core.
+
+Definition B46 := maximal_semantics.
+Arguments B46/.
 
 (* Theorem B.47 *)
 Theorem maximal_semantics_extn : forall n e e' p n' n'' e'' p',
@@ -101,3 +107,8 @@ Proof.
   generalize dependent e''. generalize dependent p'. generalize dependent Hm.
   induction Hs; cbn in *; intros.
   - sinvert Hs'. Abort.
+
+(*
+Definition B47 := maximal_semantics_extn.
+Arguments B47/.
+*)
