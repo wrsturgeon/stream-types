@@ -328,7 +328,20 @@ Lemma env_typed_weakening_alt' : forall n n' g,
   EnvTyped n g ->
   EnvTyped (env_union n n') g.
 Proof.
-Admitted.
+  intros. generalize dependent n'. induction H0; cbn in *; intros.
+  - constructor.
+  - econstructor; [| eassumption]. cbn. destruct (n' x) eqn:E; [| assumption].
+    f_equal. symmetry. eapply H1; [reflexivity | |]; assumption.
+  - constructor; [apply IHEnvTyped1 | apply IHEnvTyped2];
+    intros; (eapply H; [| eassumption | assumption]);
+    [left | right]; assumption.
+  - constructor; [apply IHEnvTyped1 | apply IHEnvTyped2 | shelve];
+    intros; (eapply H0; [| eassumption | assumption]);
+    [left | right]; assumption. Unshelve.
+    destruct H; [left | right]; cbn; intros x Hx; specialize (H x Hx) as [p [Ep Hp]];
+    exists p; (split; [| apply Hp]); (destruct (n' x) eqn:E; [| assumption]);
+    f_equal; symmetry; (eapply H0; [| eassumption | eassumption]); [right | left]; assumption.
+Qed.
 Hint Resolve env_typed_weakening_alt' : core.
 
 (* environment typing smart constructors *)
