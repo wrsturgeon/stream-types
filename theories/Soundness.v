@@ -19,8 +19,6 @@ From LambdaST Require Import
   Types
   Typing.
 
-Ltac subctx := best use: sub_preserves_wf, sub_preserves_env.
-
 (*
 Theorem soundout : forall G,
   WFContext G ->
@@ -116,6 +114,8 @@ Proof.
       split; repeat constructor; sfirstorder. }
     specialize (IHHt Hwxsyt). edestruct IHHt as [IHp IHm]; clear IHHt; [admit | eassumption |].
     split. { assumption. } intro Hm. apply IHm; clear IHm. intros test Htest. cbn.
+Abort.
+(*
     destruct (eqb_spec y test). best use: maximal_semantics, maximal_semantics_aux.
     clear H H0 H1 H2 H3 Ht Hw He H11 H12 H7 H9 HG Hwxsyt IHp Hm.
 
@@ -178,6 +178,7 @@ Proof.
     (*
     best time: 100 use: B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, (* B12, *) B13, B14, B15, B16, B17, B18, B19, B20, B21, B22, B23, B24, B25, B26, (* B27, B28, B29, *) B30, B31, B32, (* B33, *) B34, B35, B36, B37, B38, (* B39 *) B40, (* B41 *) B42, (* B43 *) B44, B45, B46, (* B47 *) B48.
     *)
+*)
 
 (*
 (* Theorem B.50 *)
