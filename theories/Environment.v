@@ -322,7 +322,6 @@ Proof.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
 
-(* TODO, will *)
 Lemma env_typed_weakening_alt' : forall n n' g,
   NoConflictOn n n' (fv g) ->
   EnvTyped n g ->
@@ -493,12 +492,17 @@ Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
     (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
     Gxy.
 Proof.
-  intros.
-  eapply env_subctx_bind'; [ | | | eauto | | ]; [eauto | eauto | | | ].
-  - admit.
-  - eapply env_typed_comma; [admit | |]; eapply env_typed_singleton; eauto.
-  - admit.
-Admitted.
+  cbn. intros. eapply env_subctx_bind'; [| eassumption | | eassumption | |]. { eassumption. }
+  - cbn. intros test p p' Htest Etest. destruct (eqb_spec y test). { congruence. }
+    destruct (eqb_spec x test). { congruence. } intro C; discriminate C.
+  - apply eqb_neq in H. rewrite eqb_sym in H. constructor;
+    (econstructor; [cbn; rewrite eqb_refl; try rewrite H; reflexivity |]); assumption.
+  - split; [intros HH | intros _ HH]; specialize (HH _ eq_refl) as [p [Ep Hp]];
+    rewrite H2 in Ep; sinvert Ep; sinvert Hp; intros test Htest; cbn;
+    (destruct (eqb_spec y test); [eexists; split; [reflexivity | assumption] |]);
+    (destruct (eqb_spec x test); [eexists; split; [reflexivity | assumption] |]);
+    cbn in Htest; destruct Htest; tauto.
+Qed.
 
 (* TODO: will *)
 Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
