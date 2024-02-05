@@ -115,8 +115,27 @@ Fixpoint typecheck (G : context) (e : term) (s : type) : bool :=
         (negb (lcontains x (fv_hole_li G))) &&
         typecheck D e1 t &&
         typecheck (fill G (CtxHasTy x t)) e2 s)%bool
-  | _ =>
-      (* TODO *) false
+  | TmLetPar x y z e =>
+      match poke G z with
+      | Some (pair (TyPar tx ty) G) =>
+          let fvG := fv_hole_li G in (
+            (negb (eqb x y)) &&
+            (negb (lcontains x fvG)) &&
+            (negb (lcontains y fvG)) &&
+            typecheck (fill G (CtxComma (CtxHasTy x tx) (CtxHasTy y ty))) e s)%bool
+      | _ => false
+      end
+  | TmLetCat t x y z e =>
+      match poke G z with
+      | Some (pair (TyDot tx ty) G) => (
+          eqb ty t &&
+          let fvG := fv_hole_li G in (
+            (negb (eqb x y)) &&
+            (negb (lcontains x fvG)) &&
+            (negb (lcontains y fvG)) &&
+            typecheck (fill G (CtxSemic (CtxHasTy x tx) (CtxHasTy y ty))) e s))%bool
+      | _ => false
+      end
   end.
 
 Theorem typecheck_not_wrong : forall G,
@@ -143,8 +162,24 @@ Proof.
       eapply wf_hole_iff. { apply reflect_fill. reflexivity. } split. { eapply wf_ctx_hole; eassumption. }
       split. { constructor. } assert (A := fv_fill _ _ _ Hf). split; congruence. }
     econstructor; [eassumption | eassumption | | assumption | eassumption]. apply reflect_fill. reflexivity.
-  - discriminate H.
-  - discriminate H.
+  - destruct (poke G bound) as [[h z] |] eqn:Ep; [| discriminate H].
+    destruct h; try discriminate H. repeat apply Bool.andb_true_iff in H as [H].
+    destruct (String.eqb_spec lhs rhs); sinvert H.
+    destruct (reflect_fv_hole z lhs); sinvert H2.
+    destruct (reflect_fv_hole z rhs); sinvert H1.
+    assert (Hf := poke_fill _ _ _ _ Ep). econstructor; try eassumption. { apply reflect_fill. reflexivity. }
+    apply IHe; [| assumption]. eapply wf_hole_iff. { apply reflect_fill. reflexivity. }
+    split. { eapply wf_ctx_hole; eassumption. } split. { repeat constructor; congruence. } split; hauto q: on.
+  - destruct (poke G bound) as [[h z] |] eqn:Ep; [| discriminate H]. destruct h; try discriminate H.
+    apply Bool.andb_true_iff in H as [He H]. apply Bool.andb_true_iff in H as [H Ht].
+    apply Bool.andb_true_iff in H as [H Hr]. apply Bool.andb_true_iff in H as [Hn Hl].
+    destruct (String.eqb_spec lhs rhs); sinvert Hn.
+    destruct (reflect_fv_hole z lhs); sinvert Hl.
+    destruct (reflect_fv_hole z rhs); sinvert Hr.
+    destruct (eqb_spec_type h2 t); sinvert He.
+    assert (Hf := poke_fill _ _ _ _ Ep). econstructor; try eassumption. { apply reflect_fill. reflexivity. }
+    apply IHe; [| assumption]. eapply wf_hole_iff. { apply reflect_fill. reflexivity. }
+    split. { eapply wf_ctx_hole; eassumption. } split. { repeat constructor; congruence. } split; hauto q: on.
 Qed.
 
 Theorem typecheck_complete : forall G,
@@ -153,9 +188,9 @@ Theorem typecheck_complete : forall G,
   Typed G e s ->
   typecheck G e s = true.
 Proof.
-  intros G Hw e s Ht. generalize dependent Hw. induction Ht; cbn in *; intros.
-  - rewrite IHHt1; [rewrite IHHt2 |]; [reflexivity | |]; assumption.
-  - Abort.
+  intros G Hw e s Ht. generalize dependent Hw. induction Ht; intros.
+  - cbn. rewrite IHHt1; [rewrite IHHt2 |]; [reflexivity | |]; assumption.
+  - cbn. destruct (poke Gzst z) as [[zt h] |] eqn:Ep. admit.
 
 Theorem typecheck_correct : forall G,
   WFContext G ->
