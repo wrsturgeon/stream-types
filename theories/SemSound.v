@@ -80,7 +80,31 @@ Theorem sound : forall G e s i eta e' p,
     Step eta e e' p ->
     P_sound G e s i eta e' p.
 Proof.
-    apply (lex_ind P_sound); unfold P_sound in *; intros; admit.
+    apply (lex_ind P_sound); unfold P_sound in *; intros.
+    - admit.
+    - admit.
+    - split; try split.
+      + best use:maps_to_has_type_reflect.
+      + intros. edestruct fill_derivative as [h [d' [A [B C]]]]; eauto.
+        sinvert A.
+        assert (p = p0) by scongruence.
+        assert (s' = s'0) by sfirstorder use:derivative_det.
+        sfirstorder.
+      + qauto l: on.
+    - admit.
+    - admit.
+    - admit.
+    - assert (Ht : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by best use:maps_to_has_type_reflect.
+      sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply parlenvtyped; [ eauto | | eauto | eauto | eauto | eauto | eauto | eauto ]. unfold NoConflictOn. admit. (* clearly doable, push this into  parlenvtyped. *)
+      split; try split.
+      + sfirstorder.
+      + intros. edestruct fill_derivative as [G' [zst' [A' [B' C']]]]; eauto.
+        sinvert A'.
+        sinvert H18.
+        destruct (ltac:(scongruence) : p1 = p0).
+        destruct (ltac:(scongruence) : p2 = p3).
+        econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | | ]; admit.
+      + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
 Admitted.
 
 Definition P_sound_args g_in (e : argsterm) g_out eta_in (e' : argsterm) g_out' eta_out :=

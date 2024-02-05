@@ -465,10 +465,11 @@ Proof.
 Qed.
 Hint Resolve empty_or_maximal_pfx_par_pair : core.
 
-
+(* TODO: will *)
 Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
   x <> y ->
-  NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
+  (~ fv G x) ->
+  (~ fv G y) ->
   n z = Some (PfxParPair p1 p2) ->
   PrefixTyped p1 s ->
   PrefixTyped p2 t ->
@@ -481,13 +482,16 @@ Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
 Proof.
   intros.
   eapply env_subctx_bind'; [ | | | eauto | | ]; [eauto | eauto | | | ].
-  - sfirstorder.
+  - admit.
   - eapply env_typed_comma; [admit | |]; eapply env_typed_singleton; eauto.
   - admit.
 Admitted.
 
+(* TODO: will *)
 Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
   x <> y ->
+  (~ fv G x) ->
+  (~ fv G y) ->
   eta z = Some (PfxCatFst p1) ->
   PrefixTyped p1 s ->
   Fill G (CtxHasTy z r) Gz ->
@@ -502,8 +506,11 @@ Proof.
   eapply env_subctx_bind'; eauto.
 Admitted.
 
+(* TODO: will *)
 Theorem catrenvtyped2 :  forall G Gz Gxy x y z p1 p2 s t r eta,
   x <> y ->
+  (~ fv G x) ->
+  (~ fv G y) ->
   eta z = Some (PfxCatBoth p1 p2) ->
   PrefixTyped p1 s ->
   PrefixTyped p2 t ->
@@ -518,6 +525,7 @@ Theorem catrenvtyped2 :  forall G Gz Gxy x y z p1 p2 s t r eta,
 Proof.
 Admitted.
 
+(* TODO: will *)
 Theorem letenvtyped :  forall G D GD Gx x p s eta,
   Agree Inert eta (singleton_env x p) (fv D) (singleton_set x) ->
   PrefixTyped p s ->
@@ -528,6 +536,7 @@ Theorem letenvtyped :  forall G D GD Gx x p s eta,
 Proof.
 Admitted.
 
+(* TODO: will *)
 Theorem dropenvtyped :  forall G Gx GE x s eta,
   Fill G (CtxHasTy x s) Gx ->
   Fill G CtxEmpty GE ->

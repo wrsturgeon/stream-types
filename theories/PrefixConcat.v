@@ -52,6 +52,11 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
 Hint Constructors PrefixConcat : core.
 
 (* not sure if we need boht directions. *)
+(* TODO: will, and figure out what the version of this for environments should be.
+Probably:
+EnvConcat eta eta' eta'' ->
+MaximalOn S eta \/ MaximalOn S eta' <-> MaximalOn S eta''.
+*)
 Theorem pfx_cat_maximal : forall p p' p'',
   PrefixConcat p p' p'' ->
   MaximalPrefix p \/ MaximalPrefix p' <-> MaximalPrefix p''.
@@ -180,7 +185,6 @@ Qed.
 
 
 (* TODO: will. *)
-
 Theorem env_cat_exists_when_typed : forall eta eta' g g',
   ContextDerivative eta g g'->
   EnvTyped eta g ->

@@ -3,6 +3,8 @@ From LambdaST Require Import
   Context
   Environment
   Nullable
+  Sets
+  Hole
   Prefix
   FV
   Types.
@@ -83,19 +85,28 @@ Inductive ContextDerivative : env -> context -> context -> Prop :=
 Hint Constructors ContextDerivative : core.
 
 Inductive HoleDerivative : env -> hole -> hole -> Prop :=
-    (* On each variable, "call" the above inductive definition *)
   | HoleDrvHere : forall eta,
-      HoleDerivative eta (CtxHasTy x s) (CtxHasTy x s')
-  | CtxDrvComma : forall n G G' D D',
-      ContextDerivative n G G' ->
-      ContextDerivative n D D' ->
-      ContextDerivative n (CtxComma G D) (CtxComma G' D')
-  | CtxDrvSemic : forall n G G' D D',
-      ContextDerivative n G G' ->
-      ContextDerivative n D D' ->
-      ContextDerivative n (CtxSemic G D) (CtxSemic G' D')
+      HoleDerivative eta HoleHere HoleHere
+  | HoleDrvCommaL : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleCommaL h g) (HoleCommaL h' g')
+  | HoleDrvCommaR : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleCommaR g h) (HoleCommaR g' h')
+  | HoleDrvSemicL : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleSemicL h g) (HoleSemicL h' g')
+  | HoleDrvSemicR : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleSemicR g h) (HoleSemicR g' h')
   .
 Hint Constructors ContextDerivative : core.
+
+
 
 (* Theorem B.15, part I *)
 Theorem derivative_det : forall p s s'1 s'2,
@@ -172,6 +183,29 @@ Proof.
 Qed.
 Hint Resolve context_derivative_fun : core.
 
+(* TODO: will *)
+Theorem fv_context_derivative : forall eta g g',
+  ContextDerivative eta g g' ->
+  SetEq (fv g) (fv g').
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem fv_hole_derivative : forall eta h h',
+  HoleDerivative eta h h ->
+  SetEq (fv h) (fv h').
+Proof.
+Admitted.
+
+
+(* TODO: will *)
+Theorem context_derivative_wf : forall eta g g',
+  WFContext g ->
+  ContextDerivative eta g g' ->
+  WFContext g'.
+Proof.
+Admitted.
+
 Theorem context_derivative_emp' : forall g g' eta,
   EmptyOn (fv g) eta ->
   ContextDerivative eta g g' ->
@@ -196,6 +230,32 @@ Qed.
 
 Hint Resolve derivative_emp : core.
 
+(* TODO: will *)
+Theorem hole_derivative_fun : forall eta h d hd,
+  Fill h d hd ->
+  EnvTyped eta hd ->
+  exists h', HoleDerivative eta h h'.
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem hole_derivative_det : forall eta h h' h'',
+  HoleDerivative eta h h' ->
+  HoleDerivative eta h h'' ->
+  h' = h''.
+Proof.
+Admitted.
+
+(* TODO: will, and it'll need to be strengthened. *)
+Theorem fill_derivative : forall eta h d hd hd',
+  Fill h d hd ->
+  ContextDerivative eta hd hd' ->
+  exists h' d',
+    ContextDerivative eta d d' /\
+    HoleDerivative eta h h' /\
+    Fill h' d' hd'.
+Proof.
+Admitted.
 
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
