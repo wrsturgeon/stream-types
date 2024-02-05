@@ -261,7 +261,9 @@ Proof.
 Admitted.
 
 
-(* TODO: will. Other cases should go through just like this one. *)
+(* TODO: will. Other cases should go through just like this one.
+Ask me if you want to talk about this one, it's kind of big.
+*)
 Theorem fill_derivative : forall eta h d hd d_hd,
   Fill h d hd ->
   ContextDerivative eta hd d_hd ->
