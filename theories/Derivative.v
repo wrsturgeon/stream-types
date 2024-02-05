@@ -206,6 +206,14 @@ Theorem context_derivative_wf : forall eta g g',
 Proof.
 Admitted.
 
+(* TODO: will *)
+Theorem hole_derivative_wf : forall eta h h',
+  WFHole h ->
+  HoleDerivative eta h h' ->
+  WFHole h'.
+Proof.
+Admitted.
+
 Theorem context_derivative_emp' : forall g g' eta,
   EmptyOn (fv g) eta ->
   ContextDerivative eta g g' ->
@@ -289,6 +297,14 @@ Admitted.
 
 (* TODO: will. Other cases should go through just like this one.
 Ask me if you want to talk about this one, it's kind of big.
+
+
+d_eta (fill h d) = fill (d_eta h) (d_eta d)
+
+d_{eta u eta'} (fill h d') = fill (d_eta h) (d_eta' d')
+
+requires :NoConflictOn eta eta' (fv h)
+
 *)
 Theorem fill_derivative : forall eta h d hd d_hd,
   Fill h d hd ->

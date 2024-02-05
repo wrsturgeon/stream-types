@@ -41,7 +41,7 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
   | SCatL2 : forall t n x y z e e' p1 p2 p',
       n z = Some (PfxCatBoth p1 p2) ->
       Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
-      Step n (TmLetCat t x y z e) (TmLet x (sink_tm p1) (subst_var e z y)) p'
+      Step n (TmLetCat t x y z e) (TmLet x (sink_tm p1) (subst_var e' z y)) p'
   | SLet : forall eta x e1 e2 e1' e2' p p',
       Step eta e1 e1' p ->
       Step (env_subst x p eta) e2 e2' p' ->
@@ -69,6 +69,9 @@ ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
         ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
 .
 
+(* todo: will 
+stronger version: eta eta', noconflict on fv(e).
+*)
 Theorem Step_det : forall eta e e1 e2 p1 p2,
     Step eta e e1 p1 ->
     Step eta e e2 p2 ->

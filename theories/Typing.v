@@ -145,6 +145,14 @@ Proof.
 best use:subst_not_fv.
 Qed.
 
+
+(*
+
+If G(x : s) |- e : t
+then G(y : s) |- e[y/x] : t
+
+*)
+
 (* Todo: will. *)
 Theorem typing_subst : forall h e x y s t i gx gy,
   Typed gx e t i ->

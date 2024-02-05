@@ -133,11 +133,14 @@ Proof.
       specialize (B u s').
       edestruct (fill_reflect_fun G' (CtxSemic CtxEmpty (CtxHasTy z s'0))) as [g''].
       eapply (TSubCtx g' g''); [ eapply (SubCong G'); eauto |].
+
       eapply (TLet (hole_compose G' (HoleSemicL HoleHere (CtxHasTy z s'0))) CtxEmpty (fill G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)))).
         admit. (* todo: will: theorem about hole compose free variables should be union. *)
         best use:sink_tm_typing.
         best use:hole_compose_fill,reflect_fill.
         best use:hole_compose_fill.
+        eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
+    + admit.
 Admitted.
 
 (*
@@ -215,20 +218,3 @@ Proof.
     + admit.
     + sauto q: on.
 Admitted.
-
-(* let x = e in e' | *)
-
-(*
-(x : s, y : s) |- fix(x:s,y:s). rec(x+1,x) : s
-|->
-cut x = x+1 in y = x in rec(x+1,x)
-WRONG!!
-
-We need a real multicut for unfolding recursive calls.
-
-
-y : bool |- 3 : int             x : int ; u : int |= (x;u)
-----------------------------------------------------
-x : int ; y : bool |- let u = 3 in (x;u) : int . int
-
-*)

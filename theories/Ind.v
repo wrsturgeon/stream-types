@@ -207,7 +207,7 @@ Theorem lex_ind :
         n z = Some (PfxCatBoth p1 p2) ->
         Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
         
-        P Gzst (TmLetCat t x y z e) r i n (TmLet x (sink_tm p1) (Subst.subst_var e z y)) p'
+        P Gzst (TmLetCat t x y z e) r i n (TmLet x (sink_tm p1) (Subst.subst_var e' z y)) p'
   ) ->
 
   (* (forall (t : type) (n : string -> option prefix) 
