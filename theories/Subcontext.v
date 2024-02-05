@@ -7,6 +7,7 @@ From LambdaST Require Import
   FV
   Hole
   Inert
+  Derivative
   Prefix
   Sets.
 
@@ -95,7 +96,6 @@ Qed.
 Hint Resolve fill_preserves_env : core.
 
 (* Theorem B.35 *)
-(* NOTE: had to strengthen this to, carry along the agreement. *)
 Theorem sub_preserves_env : forall n G D,
   EnvTyped n G ->
   Subcontext G D ->
@@ -115,3 +115,13 @@ Proof.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
 Qed.
+
+(* TODO: will. this shouldn't need any extra assumptions, but if it does, figure out the minimal ones. *)
+Theorem subctx_deriv : forall eta g1 g2 g1' g2',
+  Subcontext g1 g2 ->
+  ContextDerivative eta g1 g1' ->
+  ContextDerivative eta g2 g2' ->
+  Subcontext g1' g2'.
+Proof.
+Admitted.
+  

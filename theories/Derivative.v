@@ -82,6 +82,21 @@ Inductive ContextDerivative : env -> context -> context -> Prop :=
   .
 Hint Constructors ContextDerivative : core.
 
+Inductive HoleDerivative : env -> hole -> hole -> Prop :=
+    (* On each variable, "call" the above inductive definition *)
+  | HoleDrvHere : forall eta,
+      HoleDerivative eta (CtxHasTy x s) (CtxHasTy x s')
+  | CtxDrvComma : forall n G G' D D',
+      ContextDerivative n G G' ->
+      ContextDerivative n D D' ->
+      ContextDerivative n (CtxComma G D) (CtxComma G' D')
+  | CtxDrvSemic : forall n G G' D D',
+      ContextDerivative n G G' ->
+      ContextDerivative n D D' ->
+      ContextDerivative n (CtxSemic G D) (CtxSemic G' D')
+  .
+Hint Constructors ContextDerivative : core.
+
 (* Theorem B.15, part I *)
 Theorem derivative_det : forall p s s'1 s'2,
   Derivative p s s'1 ->

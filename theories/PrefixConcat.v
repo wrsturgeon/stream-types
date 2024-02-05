@@ -179,8 +179,10 @@ Proof.
 Qed.
 
 
+(* TODO: will. *)
+
 Theorem env_cat_exists_when_typed : forall eta eta' g g',
-  ContextDerivative eta g g'-> (* i.e., d_p(s) = `dps`. difficult to write in ASCII *)
+  ContextDerivative eta g g'->
   EnvTyped eta g ->
   EnvTyped eta' g' ->
   exists eta'',

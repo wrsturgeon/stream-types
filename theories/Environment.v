@@ -322,6 +322,7 @@ Proof.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
 
+(* TODO, will *)
 Lemma env_typed_weakening_alt' : forall n n' g,
   NoConflictOn n n' (fv g) ->
   EnvTyped n g ->
@@ -386,28 +387,6 @@ Admitted.
 
 
 
-(* substitution lemmas *)
-
-(* A version of B.11 more specific than agreement: the exact same term *)
-Theorem env_subctx_bind_equal : forall hole plug n n',
-  NoConflict n n' ->
-  EnvTyped n (fill hole plug) ->
-  EnvTyped n' plug ->
-  EnvTyped (env_union n n') (fill hole plug).
-Proof.
-  intros hole plug n n' Hc Hn Hn'.
-  remember (fill hole plug) as ctx eqn:Ef. assert (Hf := Ef). apply reflect_fill in Hf.
-  generalize dependent n. generalize dependent n'. generalize dependent Ef.
-  induction Hf; sfirstorder.
-Qed.
-Hint Resolve env_subctx_bind_equal : core.
-
-Lemma or_hyp : forall P Q R,
-  ((P \/ Q) -> R) ->
-  ((P -> R) /\ (Q -> R)).
-Proof. sfirstorder. Qed.
-Hint Resolve or_hyp : core.
-
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
   (PropOn P (fv D) n -> PropOn P (fv D') n') ->
@@ -426,26 +405,6 @@ Proof.
 Qed.
 Hint Resolve agree_union : core.
 
-(* Theorem B.11 *)
-(* The only reason this is difficult is the extra disjunction in the environment-typing rule for semicolon contexts,
- * and that's why we need the `agree_union` lemma. *)
-Theorem env_subctx_bind : forall hole plug plug' n n',
-  NoConflict n n' ->
-  EnvTyped n (fill hole plug) ->
-  EnvTyped n' plug' ->
-  Agree Inert n n' (fv plug) (fv plug') ->
-  EnvTyped (env_union n n') (fill hole plug').
-Proof.
-  intros hole plug plug' n n' Hc Hn Hn' [Ham Hae].
-  remember (fill hole plug) as ctx eqn:Hf. apply reflect_fill in Hf.
-  remember (fill hole plug') as ctx' eqn:Hf'. apply reflect_fill in Hf'.
-  generalize dependent plug'. generalize dependent n. generalize dependent n'. generalize dependent ctx'.
-  induction Hf; cbn in *; intros; [sinvert Hf'; apply env_typed_weakening; assumption | | | |];
-  sinvert Hf'; sinvert Hn; constructor; try (eapply IHHf; eassumption); clear IHHf;
-  try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
-  (destruct H5; [left | right]); try (apply prop_on_weakening_alt; eassumption); eapply agree_union; sfirstorder.
-Qed.
-Hint Resolve env_subctx_bind : core.
 
 Theorem env_subctx_bind' : forall h d d' hd hd' eta eta',
   Fill h d hd ->
@@ -489,10 +448,6 @@ Proof.
       exists p. hauto q: on.
 Qed.
 
-(* TODO: what's the notation in Theorem B.12? *)
-
-(*TODO: Fix uses of fill.*)
-
 Lemma empty_or_maximal_pfx_par_pair : forall P x y z n p1 p2,
   (P = EmptyPrefix \/ P = MaximalPrefix) ->
   x <> y ->
@@ -525,10 +480,10 @@ Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
     Gxy.
 Proof.
   intros.
-  eapply env_subctx_bind'; [ | | | eauto |  | eauto | | ]; [eauto | | | | ]
-  - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
-    destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
-  - split. eapply empty_or_maximal_pfx_par_pair; eauto. intro. eapply empty_or_maximal_pfx_par_pair;eauto.
+  eapply env_subctx_bind'; [ | | | eauto | | ]; [eauto | eauto | | | ].
+  - sfirstorder.
+  - eapply env_typed_comma; [admit | |]; eapply env_typed_singleton; eauto.
+  - admit.
 Admitted.
 
 Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
@@ -543,6 +498,8 @@ Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
      (env_union (singleton_env x p1) (singleton_env y (emp t))))
   Gxy.
 Proof.
+  intros.
+  eapply env_subctx_bind'; eauto.
 Admitted.
 
 Theorem catrenvtyped2 :  forall G Gz Gxy x y z p1 p2 s t r eta,
