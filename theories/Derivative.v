@@ -253,10 +253,36 @@ Theorem context_derivative_overwrite : forall eta eta' g g',
 Proof.
 Admitted.
 
+(* TODO: will *)
 Theorem context_derivative_noconflict : forall eta eta' g g',
   NoConflictOn eta eta' (fv g) ->
   ContextDerivative eta g g' ->
   ContextDerivative (env_union eta eta') g g'.
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem context_derivative_sng: forall x p s s',
+  Derivative p s s' ->
+  ContextDerivative (singleton_env x p) (CtxHasTy x s) (CtxHasTy x s').
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem context_derivative_comma: forall eta eta' g1 g2 g1' g2',
+  DisjointSets (dom eta) (dom eta') ->
+  ContextDerivative eta g1 g1' ->
+  ContextDerivative eta' g2 g2' ->
+  ContextDerivative (env_union eta eta') (CtxComma g1 g2) (CtxComma g1' g2').
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem context_derivative_semic: forall eta eta' g1 g2 g1' g2',
+  DisjointSets (dom eta) (dom eta') ->
+  ContextDerivative eta g1 g1' ->
+  ContextDerivative eta' g2 g2' ->
+  ContextDerivative (env_union eta eta') (CtxSemic g1 g2) (CtxSemic g1' g2').
 Proof.
 Admitted.
 

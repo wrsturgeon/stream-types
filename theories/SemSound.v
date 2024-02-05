@@ -104,7 +104,7 @@ Proof.
         destruct (ltac:(scongruence) : p1 = p0).
         destruct (ltac:(scongruence) : p2 = p3).
         specialize (D' (CtxComma (CtxHasTy x s) (CtxHasTy y t)) (CtxComma (CtxHasTy x s'1) (CtxHasTy y t')) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
-        edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) admit. (* TODO: will derivative smart constructors, like the ones for env_typed_comma, etc *)
+        edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) eapply context_derivative_comma; [admit | | ]; eapply context_derivative_sng; eauto. (* todo: will: check out this admit. for some reason the automation isn't working to establish this, but it should.*)
         econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
       + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
 Admitted.
