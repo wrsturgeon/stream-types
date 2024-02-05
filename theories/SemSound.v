@@ -95,15 +95,17 @@ Proof.
     - admit.
     - admit.
     - assert (Ht : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by best use:maps_to_has_type_reflect.
-      sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply parlenvtyped; [ eauto | | eauto | eauto | eauto | eauto | eauto | eauto ]. unfold NoConflictOn. admit. (* clearly doable, push this into  parlenvtyped. *)
+      sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply parlenvtyped; eauto.
       split; try split.
       + sfirstorder.
-      + intros. edestruct fill_derivative as [G' [zst' [A' [B' C']]]]; eauto.
+      + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
         sinvert A'.
         sinvert H18.
         destruct (ltac:(scongruence) : p1 = p0).
         destruct (ltac:(scongruence) : p2 = p3).
-        econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | | ]; admit.
+        specialize (D' (CtxComma (CtxHasTy x s) (CtxHasTy y t)) (CtxComma (CtxHasTy x s'1) (CtxHasTy y t')) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
+        edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) admit. (* TODO: will derivative smart constructors, like the ones for env_typed_comma, etc *)
+        econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
       + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
 Admitted.
 

@@ -246,15 +246,56 @@ Theorem hole_derivative_det : forall eta h h' h'',
 Proof.
 Admitted.
 
-(* TODO: will, and it'll need to be strengthened. *)
-Theorem fill_derivative : forall eta h d hd hd',
-  Fill h d hd ->
-  ContextDerivative eta hd hd' ->
-  exists h' d',
-    ContextDerivative eta d d' /\
-    HoleDerivative eta h h' /\
-    Fill h' d' hd'.
+(* TODO: will. *)
+Theorem context_derivative_overwrite : forall eta eta' g g',
+  ContextDerivative eta' g g' ->
+  ContextDerivative (env_union eta eta') g g'.
 Proof.
+Admitted.
+
+Theorem context_derivative_noconflict : forall eta eta' g g',
+  NoConflictOn eta eta' (fv g) ->
+  ContextDerivative eta g g' ->
+  ContextDerivative (env_union eta eta') g g'.
+Proof.
+Admitted.
+
+
+(* TODO: will. Other cases should go through just like this one. *)
+Theorem fill_derivative : forall eta h d hd d_hd,
+  Fill h d hd ->
+  ContextDerivative eta hd d_hd ->
+  exists d_h d_d,
+    ContextDerivative eta d d_d /\
+    HoleDerivative eta h d_h /\
+    Fill d_h d_d d_hd /\
+    (forall d0 d_d0 hd0 eta0,
+      Fill h d0 hd0 ->
+      NoConflictOn eta eta0 (fv h) -> (* a weaker condition here would likely suffice... *)
+      ContextDerivative eta0 d0 d_d0 ->
+      exists d_hd0, Fill d_h d_d0 d_hd0 /\ ContextDerivative (env_union eta eta0) hd0 d_hd0
+    ).
+Proof.
+intros.
+generalize dependent d_hd.
+generalize dependent eta.
+induction H; intros.
+- exists HoleHere. exists d_hd. split; try split; try split; [eauto | sauto lq: on rew: off | sauto lq: on rew: off | ].
+  intros. sinvert H. exists d_d0. split; [sfirstorder |].
+  clear H1. best use:context_derivative_overwrite.
+- sinvert H0. edestruct IHFill as [d_h [d_d [A [B [C D]]]]]; eauto.
+  exists (HoleCommaL d_h D'). exists d_d; split; try split; try split.
+  + sfirstorder.
+  + sauto lq: on.
+  + sfirstorder.
+  + intros. 
+    sinvert H0.
+    specialize (D d0 d_d0 hd1 eta0).
+    edestruct D as [d_hd0 [A' B']]; eauto. sfirstorder.
+    exists (CtxComma d_hd0 D'); hauto drew: off use: context_derivative_noconflict.
+- admit.
+- admit.
+- admit.
 Admitted.
 
 (* Theorem B.18 *)
