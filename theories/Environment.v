@@ -9,7 +9,7 @@ From LambdaST Require Import
   Inert
   Prefix
   Sets
-  Terms
+  (* Terms *)
   Types.
 
 Definition env : Set := string -> option prefix.

@@ -2,7 +2,6 @@ From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Sets
   FV
-  Terms
   Types.
 From Coq Require Import
   List

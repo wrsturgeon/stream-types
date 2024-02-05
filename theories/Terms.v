@@ -5,6 +5,7 @@ From LambdaST Require Import
   Eqb
   FV
   Sets
+  Environment
   Types.
 
 Inductive term : Set :=
@@ -16,6 +17,9 @@ Inductive term : Set :=
   | TmLet (bind : string) (bound body : term)
   | TmLetPar (lhs rhs bound : string) (body : term) (* Note that the bound term is NOT really a term, but we can w.l.o.g. surround it with another `let` *)
   | TmLetCat (t : type) (lhs rhs bound : string) (body : term)
+  | TmInl (e : term)
+  | TmInr (e : term)
+  | TmPlusCase (eta : env) (r : type) (z : string) (x : string) (e1 : term) (y : string) (e2 : term)
 with
 argsterm : Set :=
   | ATmEmpty
@@ -60,6 +64,8 @@ Fixpoint fv_term e : set string :=
   | TmLetPar x y z e | TmLetCat _ x y z e => set_union (singleton_set z) (
       set_minus (set_minus (fv_term e) (singleton_set x)) (singleton_set y))
   | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
+  | TmInl e | TmInr e => fv_term e
+  | TmPlusCase _ _ z x e1 y e2 => set_union (singleton_set z) (set_union (set_minus (fv_term e1) (singleton_set x)) (set_minus (fv_term e2) (singleton_set y)))
   end.
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
