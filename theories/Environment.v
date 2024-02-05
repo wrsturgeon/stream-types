@@ -449,8 +449,6 @@ Hint Resolve env_subctx_bind : core.
 
 Theorem env_subctx_bind' : forall h d d' hd hd' eta eta',
   Fill h d hd ->
-  WFContext hd ->
-  WFContext hd' ->
   Fill h d' hd' ->
   NoConflictOn eta eta' (fv h) ->
   EnvTyped eta hd ->
@@ -463,31 +461,30 @@ Proof.
   generalize dependent hd'.
   generalize dependent eta'.
   generalize dependent eta.
-  generalize dependent H0.
   induction H; intros.
   - sauto l: on.
-  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; [hauto l: on | hauto l:on use: env_typed_weakening_alt'].
-  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; hauto l: on.
-  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; [qauto l:on | hauto l:on |].
-    destruct H14; [left | right].
-    + unfold NoConflictOn in H3. unfold EmptyOn in *. unfold PropOn in *.
+  - sinvert H0; sinvert H2; econstructor; [hauto l: on | hauto l:on use: env_typed_weakening_alt'].
+  - sinvert H0; sinvert H2; econstructor; hauto l: on.
+  - sinvert H0; sinvert H2; econstructor; [qauto l:on | hauto l:on |].
+    destruct H10; [left | right].
+    + unfold NoConflictOn in H1. unfold EmptyOn in *. unfold PropOn in *.
       intros. edestruct H0 as [p]; eauto. 
       exists p. hauto q: on.
-    + unfold NoConflictOn in H3. unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
+    + unfold NoConflictOn in H0. unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
       intros.
       assert (fv h x \/ fv d' x) by hauto q: on use:fv_fill.
-      destruct H2.
+      destruct H5.
       * edestruct H0 as [p]. qauto l: on use:fv_fill. exists p; hauto q: on.
-      * assert (MaximalOn (fv d') eta') by qauto l:on use:fv_fill; edestruct H14 as [p]; eauto; exists p; hauto q: on.
-  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; [hauto l:on | qauto l:on |].
-    destruct H14; [left | right].
-    + unfold NoConflictOn in H3. unfold EmptyOn in *. unfold PropOn in *.
+      * assert (MaximalOn (fv d') eta') by qauto l:on use:fv_fill; edestruct H7 as [p]; eauto; exists p; hauto q: on.
+  - sinvert H0; sinvert H2; econstructor; [hauto l:on | qauto l:on |].
+    destruct H10; [left | right].
+    + unfold NoConflictOn in H1. unfold EmptyOn in *. unfold PropOn in *.
       intros. 
       assert (fv h x \/ fv d' x) by hauto q: on use:fv_fill.
-      destruct H2.
+      destruct H5.
       * edestruct H0 as [p]. qauto l: on use:fv_fill. exists p; hauto q: on.
-      * assert (EmptyOn (fv d') eta') by qauto l:on use:fv_fill; edestruct H14 as [p]; eauto; exists p; hauto q: on.
-    + unfold NoConflictOn in H3. unfold MaximalOn in *. unfold PropOn in *.
+      * assert (EmptyOn (fv d') eta') by qauto l:on use:fv_fill; edestruct H7 as [p]; eauto; exists p; hauto q: on.
+    + unfold NoConflictOn in H1. unfold MaximalOn in *. unfold PropOn in *.
       intros. edestruct H0 as [p]; eauto. 
       exists p. hauto q: on.
 Qed.
@@ -527,11 +524,11 @@ Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
     (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
     Gxy.
 Proof.
-  (* intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
-  eapply env_subctx_bind; [eassumption | eassumption | |].
+  intros.
+  eapply env_subctx_bind'; [ | | | eauto |  | eauto | | ]; [eauto | | | | ]
   - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
     destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
-  - split. eapply empty_or_maximal_pfx_par_pair; eauto. intro. eapply empty_or_maximal_pfx_par_pair;eauto.  *)
+  - split. eapply empty_or_maximal_pfx_par_pair; eauto. intro. eapply empty_or_maximal_pfx_par_pair;eauto.
 Admitted.
 
 Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
