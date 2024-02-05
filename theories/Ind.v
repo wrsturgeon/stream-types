@@ -44,27 +44,8 @@ Step_ind
           e e' p' ->
         P (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
           e e' p' -> P n (TmLetPar x y z e) (TmLetPar x y z e') p') ->
-       (forall (t : type) (n : string -> option prefix) 
-          (x y z : string) (e e' : term) (p p' : prefix),
-        n z = Some (PfxCatFst p) ->
-        Step
-          (env_union n
-             (env_union (singleton_env x p) (singleton_env y (emp t)))) e e'
-          p' ->
-        P
-          (env_union n
-             (env_union (singleton_env x p) (singleton_env y (emp t)))) e e'
-          p' -> P n (TmLetCat t x y z e) (TmLetCat t x y z e') p') ->
-       (forall (t : type) (n : string -> option prefix) 
-          (x y z : string) (e e' : term) (p1 p2 p' : prefix),
-        n z = Some (PfxCatBoth p1 p2) ->
-        Step
-          (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
-          e e' p' ->
-        P (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
-          e e' p' ->
-        P n (TmLetCat t x y z e)
-          (TmLet x (sink_tm p1) (Subst.subst_var e z y)) p') ->
+        ->
+        ->
        (forall (eta : env) (x : string) (e1 e2 e1' e2' : term)
           (p p' : prefix),
         Step eta e1 e1' p ->
@@ -97,15 +78,7 @@ Typed_ind
         Fill G (CtxHasTy z (s || t)) Gzst ->
         Typed Gxsyt e r i -> P Gxsyt e r i -> P Gzst (TmLetPar x y z e) r i) ->
         ->
-       (forall (G : hole) (x y z : string) (s t : type) 
-          (e : term) (r : type) (Gxsyt Gzst : context) 
-          (i : inertness),
-        x <> y ->
-        ~ fv G x ->
-        ~ fv G y ->
-        Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
-        Fill G (CtxHasTy z (s . t)) Gzst ->
-        Typed Gxsyt e r i -> P Gxsyt e r i -> P Gzst (TmLetCat t x y z e) r i) ->
+        ->
        (forall (G : context) (i : inertness), P G TmSink TyEps i) ->
        (forall G : context, P G TmUnit TyOne Jumpy) ->
        (forall (G : hole) (x : string) (s : type) 
@@ -205,13 +178,67 @@ Theorem lex_ind :
         P Gzst (TmLetPar x y z e) r i n (TmLetPar x y z e') p'
     ) ->
 
+  (forall G Gxsyt Gzst s t r i (n : string -> option prefix) (x y z : string) (e e' : term) (p p' : prefix),
+        x <> y ->
+        ~ fv G x ->
+        ~ fv G y ->
+        Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
+        Fill G (CtxHasTy z (TyDot s t)) Gzst ->
+
+        Typed Gxsyt e r i ->
+        forall IHe : P Gxsyt e r i (env_union n (env_union (singleton_env x p) (singleton_env y (emp t)))) e' p',
+
+        n z = Some (PfxCatFst p) ->
+        Step (env_union n (env_union (singleton_env x p) (singleton_env y (emp t)))) e e' p' ->
+        
+        P Gzst (TmLetCat t x y z e) r i n (TmLetCat t x y z e') p'
+  ) ->
+
+  (forall G Gxsyt Gzst s t r i (n : string -> option prefix) (x y z : string) (e e' : term) (p1 p2 p' : prefix),
+        x <> y ->
+        ~ fv G x ->
+        ~ fv G y ->
+        Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
+        Fill G (CtxHasTy z (TyDot s t)) Gzst ->
+
+        Typed Gxsyt e r i ->
+        forall IHe : P Gxsyt e r i (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e' p',
+
+        n z = Some (PfxCatBoth p1 p2) ->
+        Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
+        
+        P Gzst (TmLetCat t x y z e) r i n (TmLet x (sink_tm p1) (Subst.subst_var e z y)) p'
+  ) ->
+
+  (* (forall (t : type) (n : string -> option prefix) 
+          (x y z : string) (e e' : term) (p1 p2 p' : prefix),
+        n z = Some (PfxCatBoth p1 p2) ->
+        Step
+          (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
+          e e' p' ->
+        P (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
+          e e' p' ->
+        P n (TmLetCat t x y z e)
+           p') *)
+
+(* (forall (G : hole) (x y z : string) (s t : type) 
+          (e : term) (r : type) (Gxsyt Gzst : context) 
+          (i : inertness),
+        x <> y ->
+        ~ fv G x ->
+        ~ fv G y ->
+        Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
+        Fill G (CtxHasTy z (s . t)) Gzst ->
+        Typed Gxsyt e r i -> P Gxsyt e r i -> P Gzst (TmLetCat t x y z e) r i) *)
+
+
     (forall G e s i eta e' p, Typed G e s i -> Step eta e e' p -> P G e s i eta e' p).
 Proof.
   intros.
   generalize dependent G.
   generalize dependent s.
   generalize dependent i.
-  induction H7; intros s G i H00.
+  induction H9; intros s G i H00.
   - admit.
   - admit.
   - admit.
@@ -219,6 +246,11 @@ Proof.
   - dependent induction H00.
     + hauto l: on.
     + sfirstorder.
+  - admit.
+  - admit.
+  - dependent induction H00.
+    + sauto lq: on rew: off.
+    + eapply H; eauto.
   (* - dependent induction H00; sfirstorder.
   - admit.
   - dependent induction H00; sfirstorder.

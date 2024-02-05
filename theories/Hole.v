@@ -43,6 +43,7 @@ Inductive Fill : hole -> context -> context -> Prop :=
 Hint Constructors Fill : core.
 (* Notation "G '(' D ')' 'is' GD" := (Fill G D GD) (at level 97, no associativity). *) (* Coq prints this oddly; better off without *)
 
+
 Theorem reflect_fill : forall h y c,
   c = fill h y <-> Fill h y c.
 Proof.
@@ -51,6 +52,29 @@ Proof.
   - induction H; cbn; try rewrite IHFill; reflexivity.
 Qed.
 Hint Resolve reflect_fill : core.
+
+Theorem fill_reflect_fun : forall h d, exists hd, Fill h d hd.
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem fill_reflect_inj : forall h d d' hd,
+  Fill h d hd ->
+  Fill h d' hd ->
+  d = d'.
+Proof.
+Admitted.
+
+(* TODO: will. This one is cute: if your context is well formed,
+there is at most one way to arrive at it by filling a hole with x.
+I'm pretty sure this fact, for all variables is equivalent to WFContext! *)
+Theorem fill_reflect_var_localize : forall h h' hd x s s',
+  WFContext hd ->
+  Fill h (CtxHasTy x s) hd ->
+  Fill h' (CtxHasTy x s') hd ->
+  h = h' /\ s = s'.
+Proof.
+Admitted.
 
 Fixpoint fv_hole h :=
   match h with
@@ -276,3 +300,19 @@ Proof.
  eapply hmm'; eauto.
 Qed.
 Hint Resolve hmm'_reflect : core.
+
+Fixpoint hole_compose (h : hole) (h' : hole) : hole :=
+  match h with
+  | HoleHere => h'
+  | HoleCommaL lhs rhs => HoleCommaL (hole_compose lhs h') rhs
+  | HoleCommaR lhs rhs => HoleCommaR lhs (hole_compose rhs h')
+  | HoleSemicL lhs rhs => HoleSemicL (hole_compose lhs h') rhs
+  | HoleSemicR lhs rhs => HoleSemicR lhs (hole_compose rhs h')
+  end.
+
+(* TODO: will *) (* this will also need another tehorem about its derivatives, unfortunately. *)
+(* todo: low priority. *)
+Theorem hole_compose_fill : forall h h' d hh'd,
+  Fill (hole_compose h h') d hh'd <-> (exists h'd, Fill h' d h'd /\ Fill h h'd hh'd).
+Proof.
+Admitted.

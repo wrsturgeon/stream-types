@@ -10,6 +10,7 @@ From LambdaST Require Import
   Inert
   Nullable
   Prefix
+  Subcontext
   Semantics
   SinkTerm
   Sets
@@ -107,7 +108,47 @@ Proof.
         edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) eapply context_derivative_comma; [admit | | ]; eapply context_derivative_sng; eauto. (* todo: will: check out this admit. for some reason the automation isn't working to establish this, but it should.*)
         econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
       + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
+  - assert (Ht : PrefixTyped (PfxCatFst p) (TyDot s t)) by best use:maps_to_has_type_reflect.
+    sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply catrenvtyped1; eauto.
+    split; try split.
+    + sfirstorder.
+    + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
+      sinvert A'. destruct (ltac:(scongruence) : (PfxCatFst p) = p0).
+      sinvert H17.
+      specialize (D' (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'1) (CtxHasTy y t)) Gxsyt (env_union (singleton_env x p) (singleton_env y (emp t)))).
+      edestruct D' as [u [A'' B'']]. eauto. admit. eapply context_derivative_semic; [admit | |]; eapply context_derivative_sng; [ eauto | sfirstorder use:derivative_emp].
+      econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
+    + admit.
+  - assert (Ht : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
+    sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply catrenvtyped2; eauto.
+    split; try split.
+    + sfirstorder.
+    + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
+      sinvert A'.
+      destruct (ltac:(scongruence) : (PfxCatBoth p1 p2) = p).
+      sinvert H19.
+      edestruct (derivative_fun p1 s) as [s'']; eauto.
+      specialize (D' (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
+      edestruct D' as [u [A'' B'']]. eauto. admit. eapply context_derivative_semic; [admit | |]; eapply context_derivative_sng; eauto.
+      specialize (B u s').
+      edestruct (fill_reflect_fun G' (CtxSemic CtxEmpty (CtxHasTy z s'0))) as [g''].
+      eapply (TSubCtx g' g''); [ eapply (SubCong G'); eauto |].
+      eapply (TLet (hole_compose G' (HoleSemicL HoleHere (CtxHasTy z s'0))) CtxEmpty (fill G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)))).
+        admit. (* todo: will: theorem about hole compose free variables should be union. *)
+        best use:sink_tm_typing.
+        best use:hole_compose_fill,reflect_fill.
+        best use:hole_compose_fill.
 Admitted.
+
+(*
+G'(x : s'; y :t') |- e : r'
+---------------------------
+G'(x : s'; z : t') |- e[z/y] : r'      . |- sinktm : s'
+--------------------------------------------
+G'(.;z : t') |- let x = sinktm in e[z/y] : r'       G'(z : t') <: G'(.;z : t')
+---------------------------------------------------------
+G'(z : t') |- let x = sinktm in e[z/y] : r
+*)
 
 Definition P_sound_args g_in (e : argsterm) g_out eta_in (e' : argsterm) g_out' eta_out :=
   WFContext g_out ->

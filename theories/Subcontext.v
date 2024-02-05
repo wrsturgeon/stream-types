@@ -14,7 +14,7 @@ From LambdaST Require Import
 (* Definition B.34 *)
 (* Argument order designed for notation: (Subcontext A B) === (A <: B) *)
 Inductive Subcontext : context -> context -> Prop :=
-  | SubCong : forall d d' g gd gd',
+  | SubCong : forall g d d' gd gd',
       Fill g d gd ->
       Fill g d' gd' ->
       Subcontext d d' ->

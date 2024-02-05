@@ -7,8 +7,12 @@ From LambdaST Require Import
   Sets
   Subcontext
   Terms
+  Prefix
+  Subst
+  SinkTerm
   Inert
   Nullable
+  Derivative
   Types.
 
 
@@ -50,7 +54,7 @@ Inductive Typed : context -> term -> type -> inertness -> Prop :=
       Subcontext G G' ->
       Typed G' e s i ->
       Typed G e s i
-  | TLet : forall G D x e e' s t Gxs GD i,
+  | TLet : forall G D Gxs x e e' s t GD i,
       ~fv G x ->
       Typed D e s Inert ->
       Fill G (CtxHasTy x s) Gxs ->
@@ -123,3 +127,52 @@ Proof.
   generalize dependent x.
   induction H; hauto l:on use:fv_term.
 Qed.
+
+(* TODO: will *)
+Theorem sink_tm_typing : forall g p s s',
+  PrefixTyped p s ->
+  MaximalPrefix p ->
+  Derivative p s s' ->
+  Typed g (sink_tm p) s' Inert.
+Proof.
+Admitted.
+
+Theorem typing_subst_nofv : forall e x g t i y,
+  ~ fv e x ->
+  Typed g e t i ->
+  Typed g (subst_var e y x) t i.
+Proof.
+best use:subst_not_fv.
+Qed.
+
+(* Todo: will. *)
+Theorem typing_subst : forall h e x y s t i gx gy,
+  Typed gx e t i ->
+  WFContext gx ->
+  ~ fv h y ->
+  Fill h (CtxHasTy x s) gx ->
+  Fill h (CtxHasTy y s) gy ->
+  Typed gy (subst_var e y x) t i.
+Proof.
+  intros.
+  generalize dependent x.
+  generalize dependent y.
+  generalize dependent gy.
+  generalize dependent h.
+  generalize dependent s.
+  induction H; intros.
+  - admit.
+  - admit.
+  - assert (subst_var (TmSemic e1 e2) y x = TmSemic (subst_var e1 y x) (subst_var e2 y x)) by best.
+    rewrite -> H6 in *.
+    admit.
+  - admit.
+  - best.
+  - best.
+  - cbn in *. 
+    destruct (string_dec x x0).
+    + rewrite -> e. assert (eqb x0 x0 = true) by best use:eqb_refl. rewrite -> H4. 
+      assert (h = G /\ s = s0) by best use:fill_reflect_var_localize.
+      best.
+    + admit.
+Admitted.
