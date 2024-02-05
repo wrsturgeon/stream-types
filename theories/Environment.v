@@ -343,18 +343,15 @@ Qed.
 Hint Resolve env_typed_semic : core.
 
 (* A version of B.11 more specific than agreement: the exact same term *)
-Theorem env_subctx_bind_equal : forall hole plug n n',
+Theorem env_subctx_bind_eq : forall G D GD,
+  Fill G D GD ->
+  forall n n',
   NoConflict n n' ->
-  EnvTyped n (fill hole plug) ->
-  EnvTyped n' plug ->
-  EnvTyped (env_union n n') (fill hole plug).
-Proof.
-  intros hole plug n n' Hc Hn Hn'.
-  remember (fill hole plug) as ctx eqn:Ef. assert (Hf := Ef). apply reflect_fill in Hf.
-  generalize dependent n. generalize dependent n'. generalize dependent Ef.
-  induction Hf; hauto l: on.
-Qed.
-Hint Resolve env_subctx_bind_equal : core.
+  EnvTyped n GD ->
+  EnvTyped n' D ->
+  EnvTyped (env_union n n') GD.
+Proof. intros G D GD Hf n n' Hc He He'. induction Hf; sfirstorder. Qed.
+Hint Resolve env_subctx_bind_eq : core.
 
 Lemma or_hyp : forall P Q R,
   ((P \/ Q) -> R) ->
@@ -383,19 +380,30 @@ Hint Resolve agree_union : core.
 (* Theorem B.11 *)
 (* The only reason this is difficult is the extra disjunction in the environment-typing rule for semicolon contexts,
  * and that's why we need the `agree_union` lemma. *)
+Theorem env_subctx_bind : forall G D GD,
+  Fill G D GD ->
+  forall D' GD',
+  Fill G D' GD' ->
+  forall n,
+  EnvTyped n GD ->
+  forall n',
+  EnvTyped n' D' ->
+  NoConflict n n' ->
+  Agree Inert n n' (fv D) (fv D') ->
+  EnvTyped (env_union n n') GD'.
+(*
 Theorem env_subctx_bind : forall hole plug plug' n n',
   NoConflict n n' ->
   EnvTyped n (fill hole plug) ->
   EnvTyped n' plug' ->
   Agree Inert n n' (fv plug) (fv plug') ->
   EnvTyped (env_union n n') (fill hole plug').
+*)
 Proof.
-  intros hole plug plug' n n' Hc Hn Hn' [Ham Hae].
-  remember (fill hole plug) as ctx eqn:Hf. apply reflect_fill in Hf.
-  remember (fill hole plug') as ctx' eqn:Hf'. apply reflect_fill in Hf'.
-  generalize dependent plug'. generalize dependent n. generalize dependent n'. generalize dependent ctx'.
+  intros G D GD Hf D' GD' Hf' n He n' He' Hn [Ham Hae]. specialize (Hae eq_refl).
+  generalize dependent D'. generalize dependent GD'. generalize dependent n. generalize dependent n'.
   induction Hf; cbn in *; intros; [sinvert Hf'; apply env_typed_weakening; assumption | | | |];
-  sinvert Hf'; sinvert Hn; constructor; try (eapply IHHf; eassumption); clear IHHf;
+  sinvert Hf'; sinvert He; constructor; try (eapply IHHf; eassumption); clear IHHf;
   try (apply env_typed_weakening_alt; assumption); (* everything from here on is just the extra disjunction *)
   (destruct H5; [left | right]); try (apply prop_on_weakening_alt; eassumption); eapply agree_union; sfirstorder.
 Qed.
@@ -420,22 +428,3 @@ Proof.
     rewrite eqb_refl in H; destruct H as [p [Ep Hp]]; sinvert Ep; assumption).
 Qed.
 Hint Resolve empty_or_maximal_pfx_par_pair : core.
-
-Theorem catlenvtyped : forall G x y z p1 p2 s t r n,
-  x <> y ->
-  NoConflict n (env_union (singleton_env x p1) (singleton_env y p2)) ->
-  n z = Some (PfxParPair p1 p2) ->
-  PrefixTyped p1 s ->
-  PrefixTyped p2 t ->
-  EnvTyped n (fill G (CtxHasTy z r)) ->
-  EnvTyped
-    (env_union n (env_union (singleton_env x p1) (singleton_env y p2)))
-    (fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
-Proof.
-  intros G x y z p1 p2 s t r n Hxy Hn Hnz Hp1 Hp2 He.
-  eapply env_subctx_bind; [eassumption | eassumption | |].
-  - constructor; (econstructor; [| eassumption]); cbn in *; rewrite eqb_refl; [| reflexivity].
-    destruct (eqb_spec y x); [| reflexivity]. subst. contradiction Hxy. reflexivity.
-  - split; intros; eapply empty_or_maximal_pfx_par_pair; try eassumption; [right | left]; reflexivity.
-Qed.
-Hint Resolve catlenvtyped : core.
