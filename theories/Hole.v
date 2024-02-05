@@ -14,7 +14,6 @@ Inductive hole : Set :=
   .
 Hint Constructors hole : core.
 Derive Show for hole.
-(* Derive Arbitrary for hole. *)
 
 Fixpoint fill h D :=
   match h with
@@ -26,20 +25,20 @@ Fixpoint fill h D :=
   end.
 
 Inductive Fill : hole -> context -> context -> Prop :=
-  | FillHere : forall y,
-      Fill HoleHere y y
-  | FillCommaL : forall y lhs rhs lhs',
-      Fill lhs y lhs' ->
-      Fill (HoleCommaL lhs rhs) y (CtxComma lhs' rhs)
-  | FillCommaR : forall y lhs rhs rhs',
-      Fill rhs y rhs' ->
-      Fill (HoleCommaR lhs rhs) y (CtxComma lhs rhs')
-  | FillSemicL : forall y lhs rhs lhs',
-      Fill lhs y lhs' ->
-      Fill (HoleSemicL lhs rhs) y (CtxSemic lhs' rhs)
-  | FillSemicR : forall y lhs rhs rhs',
-      Fill rhs y rhs' ->
-      Fill (HoleSemicR lhs rhs) y (CtxSemic lhs rhs')
+  | FillHere : forall g,
+      Fill HoleHere g g
+  | FillCommaL : forall d h g hd,
+      Fill h d hd ->
+      Fill (HoleCommaL h g) d (CtxComma hd g)
+  | FillCommaR : forall d g h hd,
+      Fill h d hd ->
+      Fill (HoleCommaR g h) d (CtxComma g hd)
+  | FillSemicL : forall d h g hd,
+      Fill h d hd ->
+      Fill (HoleSemicL h g) d (CtxSemic hd g)
+  | FillSemicR : forall d g h hd,
+      Fill h d hd ->
+      Fill (HoleSemicR g h) d (CtxSemic g hd)
   .
 Hint Constructors Fill : core.
 (* Notation "G '(' D ')' 'is' GD" := (Fill G D GD) (at level 97, no associativity). *) (* Coq prints this oddly; better off without *)

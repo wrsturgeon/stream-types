@@ -44,7 +44,5 @@ apply (lex_ind P_hom); unfold P_hom in *; intros.
 - sinvert H5. sinvert H7. sinvert H8. sinvert H6.
   + econstructor. hauto l: on. qauto l: on use:pfx_cat_maximal.
   + sinvert H8. sinvert H6. econstructor; [ eauto | best use:pfx_cat_maximal |].
-    
--
 intros.
 Admitted.

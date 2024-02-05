@@ -199,13 +199,26 @@ Theorem maps_to_has_type_reflect : forall n G x Gx s,
 Proof. intros. assert (A := maps_to_hole_reflect _ _ _ _ H H0). sinvert A. repeat econstructor; eassumption. Qed.
 Hint Resolve maps_to_has_type : core.
 
-Definition NoConflict (n n' : env) := forall x p,
+Definition NoConflict (n n' : env) := forall x p p',
   n x = Some p ->
-  forall p',
   n' x = Some p' ->
   p = p'.
 Arguments NoConflict/ n n'.
 Hint Unfold NoConflict : core.
+
+Definition NoConflictOn (n n' : env) s := forall x p p',
+  s x ->
+  n x = Some p ->
+  n' x = Some p' ->
+  p = p'.
+Arguments NoConflictOn/ n n' s.
+Hint Unfold NoConflictOn : core.
+
+Theorem NoConflictOn_union : forall eta eta' s s',
+  NoConflictOn eta eta' (set_union s s') <-> (NoConflictOn eta eta' s /\ NoConflictOn eta eta' s').
+Proof.
+sfirstorder.
+Qed.
 
 Lemma prop_on_fill : forall P n d d' g lhs lhs',
   Fill g d lhs ->
@@ -308,6 +321,14 @@ Proof.
     (eapply prop_on_weakening_alt in Hc; [| eassumption]); [left | right]; assumption.
 Qed.
 Hint Resolve env_typed_weakening_alt : core.
+
+Lemma env_typed_weakening_alt' : forall n n' g,
+  NoConflictOn n n' (fv g) ->
+  EnvTyped n g ->
+  EnvTyped (env_union n n') g.
+Proof.
+Admitted.
+Hint Resolve env_typed_weakening_alt' : core.
 
 (* environment typing smart constructors *)
 Theorem env_typed_singleton : forall x s p,
@@ -426,6 +447,51 @@ Proof.
 Qed.
 Hint Resolve env_subctx_bind : core.
 
+Theorem env_subctx_bind' : forall h d d' hd hd' eta eta',
+  Fill h d hd ->
+  WFContext hd ->
+  WFContext hd' ->
+  Fill h d' hd' ->
+  NoConflictOn eta eta' (fv h) ->
+  EnvTyped eta hd ->
+  EnvTyped eta' d' ->
+  Agree Inert eta eta' (fv d) (fv d') ->
+  EnvTyped (env_union eta eta') hd'.
+Proof.
+  intros.
+  generalize dependent d'.
+  generalize dependent hd'.
+  generalize dependent eta'.
+  generalize dependent eta.
+  generalize dependent H0.
+  induction H; intros.
+  - sauto l: on.
+  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; [hauto l: on | hauto l:on use: env_typed_weakening_alt'].
+  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; hauto l: on.
+  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; [qauto l:on | hauto l:on |].
+    destruct H14; [left | right].
+    + unfold NoConflictOn in H3. unfold EmptyOn in *. unfold PropOn in *.
+      intros. edestruct H0 as [p]; eauto. 
+      exists p. hauto q: on.
+    + unfold NoConflictOn in H3. unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
+      intros.
+      assert (fv h x \/ fv d' x) by hauto q: on use:fv_fill.
+      destruct H2.
+      * edestruct H0 as [p]. qauto l: on use:fv_fill. exists p; hauto q: on.
+      * assert (MaximalOn (fv d') eta') by qauto l:on use:fv_fill; edestruct H14 as [p]; eauto; exists p; hauto q: on.
+  - sinvert H0; sinvert H4; sinvert H2; sinvert H1; econstructor; [hauto l:on | qauto l:on |].
+    destruct H14; [left | right].
+    + unfold NoConflictOn in H3. unfold EmptyOn in *. unfold PropOn in *.
+      intros. 
+      assert (fv h x \/ fv d' x) by hauto q: on use:fv_fill.
+      destruct H2.
+      * edestruct H0 as [p]. qauto l: on use:fv_fill. exists p; hauto q: on.
+      * assert (EmptyOn (fv d') eta') by qauto l:on use:fv_fill; edestruct H14 as [p]; eauto; exists p; hauto q: on.
+    + unfold NoConflictOn in H3. unfold MaximalOn in *. unfold PropOn in *.
+      intros. edestruct H0 as [p]; eauto. 
+      exists p. hauto q: on.
+Qed.
+
 (* TODO: what's the notation in Theorem B.12? *)
 
 (*TODO: Fix uses of fill.*)
@@ -447,10 +513,6 @@ Proof.
 Qed.
 Hint Resolve empty_or_maximal_pfx_par_pair : core.
 
-(*
-NEED THE STRONGER THEOREM HERE! We can't get away with them not conflicting everywhere,
-it has to be true on G.
-*)
 
 Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
   x <> y ->

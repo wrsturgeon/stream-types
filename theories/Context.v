@@ -11,8 +11,8 @@ From Coq Require Import
 Inductive context : Set :=
   | CtxEmpty
   | CtxHasTy (id : string) (ty : type)
-  | CtxComma (lhs rhs : context)
-  | CtxSemic (lhs rhs : context)
+  | CtxComma (g g': context)
+  | CtxSemic (g g': context)
   .
 Hint Constructors context : core.
 Derive Show for context.
