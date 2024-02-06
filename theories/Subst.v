@@ -17,13 +17,15 @@ Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
   | TmUnit =>
       e
   | TmVar z =>
-      TmVar (if eqb z y then x else z)
-  | TmComma lhs rhs => TmComma (subst_var lhs x y) (subst_var rhs x y)
-  | TmSemic lhs rhs => TmSemic (subst_var lhs x y) (subst_var rhs x y)
-  | TmLet x' e e' => TmLet x' (if eqb y x' then e else subst_var e x y) (subst_var e' x y)
-      (* let subst_bound := subst_var bound x y in *)
-      (* let subst_body := if eqb bind x then shadowing body else no shadowing subst_var body x y in *)
-      (* TmLet bind subst_bound subst_body *)
+      TmVar (subst_str x y z)
+  | TmComma lhs rhs =>
+      TmComma (subst_var lhs x y) (subst_var rhs x y)
+  | TmSemic lhs rhs =>
+      TmSemic (subst_var lhs x y) (subst_var rhs x y)
+  | TmLet t bind bound body =>
+      let subst_bound := subst_var bound x y in
+      let subst_body := if eqb bind x then (* shadowing *) body else (* no shadowing *) subst_var body x y in
+      TmLet t bind subst_bound subst_body
   | TmLetPar lhs rhs bound body =>
       let subst_bound := subst_str x y bound in
       let subst_body := if (eqb x lhs || eqb x rhs)%bool then body else subst_var body x y in

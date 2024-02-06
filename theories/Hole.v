@@ -2,7 +2,9 @@ From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Context
+  Eqb
   FV
+  Terms
   Sets.
 
 Inductive hole : Set :=
@@ -76,13 +78,60 @@ Fixpoint fv_hole h :=
       set_union (fv c) (fv_hole h)
   end.
 
+Instance fv_hole_inst : FV hole := { fv := fv_hole }.
+
+Fixpoint fv_hole_li h :=
+  match h with
+  | HoleHere =>
+      nil
+  | HoleCommaL h c
+  | HoleCommaR c h
+  | HoleSemicL h c
+  | HoleSemicR c h =>
+      List.app (fv_ctx_li c) (fv_hole_li h)
+  end.
+
+Lemma reflect_fv_hole : forall h x,
+  Bool.reflect (fv h x) (lcontains x (fv_hole_li h)).
+Proof.
+  induction h; cbn in *; intros.
+  - constructor. intros [].
+  - rewrite lcontains_app. specialize (IHh x). sinvert IHh. {
+      rewrite Bool.orb_true_r. constructor. right. assumption. }
+    destruct (lcontains_in x (fv_ctx_li g)); constructor. {
+      left. apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)).
+      apply (Bool.reflect_iff _ _ (lcontains_in _ _)). assumption. }
+    intros [C | C]; [| tauto]. apply n. apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+    apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). assumption.
+  - rewrite lcontains_app. specialize (IHh x). sinvert IHh. {
+      rewrite Bool.orb_true_r. constructor. right. assumption. }
+    destruct (lcontains_in x (fv_ctx_li g)); constructor. {
+      left. apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)).
+      apply (Bool.reflect_iff _ _ (lcontains_in _ _)). assumption. }
+    intros [C | C]; [| tauto]. apply n. apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+    apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). assumption.
+  - rewrite lcontains_app. specialize (IHh x). sinvert IHh. {
+      rewrite Bool.orb_true_r. constructor. right. assumption. }
+    destruct (lcontains_in x (fv_ctx_li g)); constructor. {
+      left. apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)).
+      apply (Bool.reflect_iff _ _ (lcontains_in _ _)). assumption. }
+    intros [C | C]; [| tauto]. apply n. apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+    apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). assumption.
+  - rewrite lcontains_app. specialize (IHh x). sinvert IHh. {
+      rewrite Bool.orb_true_r. constructor. right. assumption. }
+    destruct (lcontains_in x (fv_ctx_li g)); constructor. {
+      left. apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)).
+      apply (Bool.reflect_iff _ _ (lcontains_in _ _)). assumption. }
+    intros [C | C]; [| tauto]. apply n. apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+    apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). assumption.
+Qed.
+Hint Resolve reflect_fv_hole : core.
+
 (* Sanity check: *)
 Theorem fv_hole_plug : forall h,
   SetEq (fv_hole h) (fv (fill h CtxEmpty)).
 Proof. induction h; intros; split; sfirstorder. Qed.
 Hint Resolve fv_hole_plug : core.
-
-Instance fv_hole_inst : FV hole := { fv := fv_hole }.
 
 Lemma fv_fill : forall h plug ctx,
   Fill h plug ctx ->
@@ -248,6 +297,201 @@ eapply reflect_fill in H.
 hauto l: on use: wf_fill.
 Qed.
 Hint Resolve wf_fill_reflect : core.
+
+Fixpoint ctx_lookup G x :=
+  match G with
+  | CtxEmpty =>
+      None
+  | CtxHasTy z t =>
+      if eqb x z then Some t else None
+  | CtxComma lhs rhs
+  | CtxSemic lhs rhs =>
+      match ctx_lookup lhs x with Some t => Some t | None => ctx_lookup rhs x end
+  end.
+
+Theorem ctx_lookup_fv : forall G x,
+  ctx_lookup G x = None <-> ~fv G x.
+Proof.
+  induction G; cbn in *; intros.
+  - tauto.
+  - destruct (String.eqb_spec x id). { subst. split; intros. { discriminate H. } contradiction H. reflexivity. }
+    split. { symmetry. assumption. } reflexivity.
+  - destruct (ctx_lookup G1 x) eqn:E1.
+    + split; intros. { discriminate H. } apply Decidable.not_or in H as [H _].
+      apply IHG1 in H. rewrite E1 in H. discriminate H.
+    + split. { intros E2 C. apply IHG1 in E1. apply IHG2 in E2. tauto. } intro H. apply IHG2. tauto.
+  - destruct (ctx_lookup G1 x) eqn:E1.
+    + split; intros. { discriminate H. } apply Decidable.not_or in H as [H _].
+      apply IHG1 in H. rewrite E1 in H. discriminate H.
+    + split. { intros E2 C. apply IHG1 in E1. apply IHG2 in E2. tauto. } intro H. apply IHG2. tauto.
+Qed.
+
+Theorem ctx_lookup_fill : forall GD x t,
+  WFContext GD ->
+  (ctx_lookup GD x = Some t <-> exists G, Fill G (CtxHasTy x t) GD).
+Proof.
+  intros GD x t Hw. split.
+  - generalize dependent t. generalize dependent x. induction GD; cbn in *; intros.
+    + discriminate H.
+    + destruct (String.eqb_spec x id); sinvert H. eexists. constructor.
+    + sinvert Hw. specialize (IHGD1 H2). specialize (IHGD2 H3).
+      destruct (ctx_lookup GD1 x) eqn:E1; [sinvert H; apply IHGD1 in E1 as [G HG] | apply IHGD2 in H as [G HG]];
+      eexists; [apply FillCommaL | apply FillCommaR]; eassumption.
+    + sinvert Hw. specialize (IHGD1 H2). specialize (IHGD2 H3).
+      destruct (ctx_lookup GD1 x) eqn:E1; [sinvert H; apply IHGD1 in E1 as [G HG] | apply IHGD2 in H as [G HG]];
+      eexists; [apply FillSemicL | apply FillSemicR]; eassumption.
+  - intros [G HG]. generalize dependent t. generalize dependent x. generalize dependent GD.
+    induction G; intros; sinvert HG; cbn in *.
+    + rewrite eqb_refl. reflexivity.
+    + sinvert Hw. apply IHG in H3; [| assumption]. rewrite H3. reflexivity.
+    + sinvert Hw. specialize (IHG _ H2 _ _ H3). rewrite IHG. assert (Hf := fv_fill _ _ _ H3).
+      assert (E : ctx_lookup g x = None). { apply ctx_lookup_fv. apply H4. apply Hf. left. reflexivity. }
+      rewrite E. reflexivity.
+    + sinvert Hw. apply IHG in H3; [| assumption]. rewrite H3. reflexivity.
+    + sinvert Hw. specialize (IHG _ H2 _ _ H3). rewrite IHG. assert (Hf := fv_fill _ _ _ H3).
+      assert (E : ctx_lookup g x = None). { apply ctx_lookup_fv. apply H4. apply Hf. left. reflexivity. }
+      rewrite E. reflexivity.
+Qed.
+Hint Resolve ctx_lookup_fill : core.
+
+Fixpoint poke G x :=
+  match G with
+  | CtxEmpty =>
+      None
+  | CtxHasTy z t =>
+      if eqb x z then Some (pair t HoleHere) else None
+  | CtxComma lhs rhs =>
+      match poke lhs x with
+      | Some (pair t h) => Some (pair t (HoleCommaL h rhs))
+      | None =>
+          match poke rhs x with
+          | Some (pair t h) => Some (pair t (HoleCommaR lhs h))
+          | None => None
+          end
+      end
+  | CtxSemic lhs rhs =>
+      match poke lhs x with
+      | Some (pair t h) => Some (pair t (HoleSemicL h rhs))
+      | None =>
+          match poke rhs x with
+          | Some (pair t h) => Some (pair t (HoleSemicR lhs h))
+          | None => None
+          end
+      end
+  end.
+
+Lemma poke_fill : forall GD x t G,
+  poke GD x = Some (pair t G) ->
+  Fill G (CtxHasTy x t) GD.
+Proof.
+  induction GD; cbn in *; intros; [discriminate H | destruct (String.eqb_spec x id); sinvert H; constructor | |];
+  destruct (poke GD1 x) as [[t1 h1] |] eqn:E1; destruct (poke GD2 x) as [[t2 h2] |] eqn:E2; sinvert H;
+  constructor; try apply IHGD1; try apply IHGD2; assumption.
+Qed.
+
+Lemma fill_poke : forall GD x t G,
+  ~fv G x ->
+  Fill G (CtxHasTy x t) GD ->
+  poke GD x = Some (pair t G).
+Proof.
+  induction GD; cbn in *; intros;
+  [sinvert H0 | destruct (String.eqb_spec x id); sinvert H0; [reflexivity | tauto] | |].
+  - destruct (poke GD1 x) as [[t1 h1] |] eqn:E1. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. sinvert E1. reflexivity.
+      - assert (Hp := poke_fill _ _ _ _ E1). assert (Hf := fv_fill _ _ _ Hp).
+        contradiction H1. apply Hf. left. reflexivity. }
+    destruct (poke GD2 x) as [[t2 h2] |] eqn:E2. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. discriminate E1.
+      - erewrite IHGD2 in E2; [| | eassumption]; [| assumption]. sinvert E2. reflexivity. }
+    sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2];
+    [specialize (IHGD1 _ _ _ H2 H4) | specialize (IHGD2 _ _ _ H2 H4)]; congruence.
+  - destruct (poke GD1 x) as [[t1 h1] |] eqn:E1. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. sinvert E1. reflexivity.
+      - assert (Hp := poke_fill _ _ _ _ E1). assert (Hf := fv_fill _ _ _ Hp).
+        contradiction H1. apply Hf. left. reflexivity. }
+    destruct (poke GD2 x) as [[t2 h2] |] eqn:E2. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. discriminate E1.
+      - erewrite IHGD2 in E2; [| | eassumption]; [| assumption]. sinvert E2. reflexivity. }
+    sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2];
+    [specialize (IHGD1 _ _ _ H2 H4) | specialize (IHGD2 _ _ _ H2 H4)]; congruence.
+Qed.
+
+(* Carve out the smallest hole (assuming WF) that binds all these variables *)
+(* TODO: don't compute FVs arbitrarily many times, then convince Coq it's the same function *)
+Fixpoint zoom_in (free : list _ (* ouch *)) G :=
+  match G with
+  | CtxEmpty | CtxHasTy _ _ => pair HoleHere G
+  | CtxComma lhs rhs =>
+      if lsubset free (fv_ctx_li lhs) then
+        let (g, d) := zoom_in free lhs in pair (HoleCommaL g rhs) d else
+      if lsubset free (fv_ctx_li rhs) then
+        let (g, d) := zoom_in free rhs in pair (HoleCommaR lhs g) d else
+      pair HoleHere G
+  | CtxSemic lhs rhs =>
+      if lsubset free (fv_ctx_li lhs) then
+        let (g, d) := zoom_in free lhs in pair (HoleSemicL g rhs) d else
+      if lsubset free (fv_ctx_li rhs) then
+        let (g, d) := zoom_in free rhs in pair (HoleSemicR lhs g) d else
+      pair HoleHere G
+  end.
+
+Lemma zoom_in_full : forall GD free,
+  let (G, D) := zoom_in free GD in
+  Fill G D GD.
+Proof.
+  induction GD; cbn in *; intros; try constructor; specialize (IHGD1 free); specialize (IHGD2 free);
+  destruct (zoom_in free GD1) as [G1 D1]; destruct (zoom_in free GD2) as [G2 D2];
+  destruct (lsubset free (fv_ctx_li GD1)) eqn:E1; try (constructor; assumption);
+  destruct (lsubset free (fv_ctx_li GD2)) eqn:E2; constructor; assumption.
+Qed.
+Hint Resolve zoom_in_full : core.
+
+Lemma zoom_in_full_fn : forall GD free,
+  let (G, D) := zoom_in free GD in
+  fill G D = GD.
+Proof.
+  induction GD; cbn in *; intros; try reflexivity; specialize (IHGD1 free); specialize (IHGD2 free);
+  destruct (zoom_in free GD1) as [G1 D1]; destruct (zoom_in free GD2) as [G2 D2];
+  destruct (lsubset free (fv_ctx_li GD1)) eqn:E1; cbn; f_equal; try assumption;
+  destruct (lsubset free (fv_ctx_li GD2)) eqn:E2; cbn; f_equal; assumption.
+Qed.
+Hint Resolve zoom_in_full_fn : core.
+
+Theorem zoom_in_fv : forall GD free,
+  let (G, D) := zoom_in free GD in
+  forall x,
+  List.In x free ->
+  fv GD x ->
+  fv D x.
+Proof.
+  induction GD; cbn in *; intros.
+  - destruct H0.
+  - assumption.
+  - specialize (IHGD1 free). specialize (IHGD2 free).
+    destruct (zoom_in free GD1) as [G1 D1] eqn:E1. destruct (zoom_in free GD2) as [G2 D2] eqn:E2.
+    destruct (lsubset_incl free (fv_ctx_li GD1)). {
+      intros. apply IHGD1; [assumption |]. destruct H0; [assumption |].
+      apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+      apply i. assumption. }
+    destruct (lsubset_incl free (fv_ctx_li GD2)); intros; [| assumption].
+    apply IHGD2; [assumption |]. destruct H0; [| assumption].
+    apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+    apply i. assumption.
+  - specialize (IHGD1 free). specialize (IHGD2 free).
+    destruct (zoom_in free GD1) as [G1 D1] eqn:E1. destruct (zoom_in free GD2) as [G2 D2] eqn:E2.
+    destruct (lsubset_incl free (fv_ctx_li GD1)). {
+      intros. apply IHGD1; [assumption |]. destruct H0; [assumption |].
+      apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+      apply i. assumption. }
+    destruct (lsubset_incl free (fv_ctx_li GD2)); intros; [| assumption].
+    apply IHGD2; [assumption |]. destruct H0; [| assumption].
+    apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). apply (Bool.reflect_iff _ _ (lcontains_in _ _)).
+    apply i. assumption.
+Qed.
 
 Lemma set_minus_fill_cancel : forall G z r,
   ~fv G z ->

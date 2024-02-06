@@ -1,6 +1,7 @@
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Derivative
+  Eqb
   Prefix
   Environment
   Types.
@@ -49,7 +50,11 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
       PrefixConcat p' p'' p''' ->
       PrefixConcat (PfxStarRest p p') p'' (PfxStarRest p p''')
   .
+Arguments PrefixConcat p p' p''.
 Hint Constructors PrefixConcat : core.
+
+Definition B20 := PrefixConcat.
+Arguments B20/ p p' p''.
 
 Theorem pfx_cat_maximal : forall p p' p'',
   PrefixConcat p p' p'' ->
@@ -94,20 +99,112 @@ Proof.
 (* TODO: will: a few similar-looking cases are all either not true or not provable without induction/lemmas *)
 Admitted.
 
+Fixpoint pfx_cat (arg_p arg_p' : prefix) : option prefix :=
+  match arg_p, arg_p' with
+  | PfxEpsEmp, PfxEpsEmp =>
+      Some PfxEpsEmp
+  | PfxOneEmp, p =>
+      if pfx_ty p TyOne then Some p else None
+  | PfxOneFull, PfxEpsEmp =>
+      Some PfxOneFull
+  | PfxParPair p1 p2, PfxParPair p1' p2' =>
+      match pfx_cat p1 p1' with None => None | Some p1'' =>
+      match pfx_cat p2 p2' with None => None | Some p2'' =>
+      Some (PfxParPair p1'' p2'') end end
+  | PfxCatFst p, PfxCatFst p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxCatFst p'') end
+  | PfxCatFst p, PfxCatBoth p' p''' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxCatBoth p'' p''') end
+  | PfxCatBoth p p', p'' =>
+      match pfx_cat p' p'' with None => None | Some p''' => Some (PfxCatBoth p p''') end
+  | PfxSumEmp, p =>
+      Some p
+  | PfxSumInl p, p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxSumInl p'') end
+  | PfxSumInr p, p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxSumInr p'') end
+  | PfxStarEmp, p =>
+      Some p
+  | PfxStarDone, PfxEpsEmp =>
+      Some PfxStarDone
+  | PfxStarFirst p, PfxCatFst p' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxStarFirst p'') end
+  | PfxStarFirst p, PfxCatBoth p' p''' =>
+      match pfx_cat p p' with None => None | Some p'' => Some (PfxStarRest p'' p''') end
+  | PfxStarRest p p', p'' =>
+      match pfx_cat p' p'' with None => None | Some p''' => Some (PfxStarRest p p''') end
+  | _, _ => None
+  end.
+Arguments pfx_cat p p' : rename.
+
+Theorem reflect_prefix_concat : forall p p' p'',
+  pfx_cat p p' = Some p'' <-> PrefixConcat p p' p''.
+Proof.
+  split; intro H.
+  - generalize dependent p'. generalize dependent p''. induction p; cbn in *; intros; sauto.
+  - induction H; cbn in *; intros; sauto lq: on.
+Qed.
+Hint Resolve reflect_prefix_concat : core.
+
+Theorem reflect_not_prefix_concat : forall p p',
+  pfx_cat p p' = None <-> forall p'', ~PrefixConcat p p' p''.
+Proof.
+  intros. destruct (pfx_cat p p') eqn:E; split; intros.
+  - discriminate H.
+  - apply reflect_prefix_concat in E. apply H in E as [].
+  - intro C. apply reflect_prefix_concat in C. rewrite E in C. discriminate C.
+  - reflexivity.
+Qed.
+Hint Resolve reflect_not_prefix_concat : core.
+
+Variant DecidePrefixConcat p p' :=
+  | DecPfxCatY p'' (Y : PrefixConcat p p' p'')
+  | DecPfxCatN (N : forall p'', ~PrefixConcat p p' p'')
+  .
+
+Theorem dec_pfx_cat : forall p p',
+  DecidePrefixConcat p p'.
+Proof.
+  intros. destruct (pfx_cat p p') eqn:E.
+  - eapply DecPfxCatY. apply reflect_prefix_concat. eassumption.
+  - apply DecPfxCatN. apply reflect_not_prefix_concat. assumption.
+Qed.
+
 (* Theorem B.21, part I *)
 Theorem pfx_cat_unique : forall p p' p1'' p2'',
   PrefixConcat p p' p1'' ->
   PrefixConcat p p' p2'' ->
   p1'' = p2''.
 Proof.
-  intros p p' p1'' p2'' H1 H2. generalize dependent p2''. induction H1; intros; sinvert H2;
-  try apply IHPrefixConcat in H3;
-  try apply IHPrefixConcat in H5;
-  try apply IHPrefixConcat in H0;
-  subst; try reflexivity.
-  f_equal; [apply IHPrefixConcat1 | apply IHPrefixConcat2]; assumption.
+  intros p p' p1'' p2'' H1 H2. apply reflect_prefix_concat in H1. apply reflect_prefix_concat in H2.
+  rewrite H1 in H2. sinvert H2. reflexivity.
 Qed.
 Hint Resolve pfx_cat_unique : core.
+
+Definition pfx_eqb_opt (a b : option prefix) :=
+  match a, b with
+  | None, None => true
+  | Some a', Some b' => eqb a' b'
+  | _, _ => false
+  end.
+
+Definition type_eqb_opt (a b : option type) :=
+  match a, b with
+  | None, None => true
+  | Some a', Some b' => eqb a' b'
+  | _, _ => false
+  end.
+
+Theorem maximal_prefix_concat : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  MaximalPrefix p' ->
+  forall t,
+  PrefixTyped p'' t ->
+  MaximalPrefix p''.
+Proof.
+  intros p p' p'' Hc Hm t Ht. generalize dependent p. generalize dependent p'.
+  induction Ht; cbn in *; intros; try constructor; try assumption; sauto l: on.
+Qed.
 
 (* Theorem B.21, part II *)
 Theorem pfx_cat_exists_when_typed : forall p p' s dps,
@@ -120,9 +217,9 @@ Theorem pfx_cat_exists_when_typed : forall p p' s dps,
   (forall dp'dps, Derivative p' dps dp'dps -> (* i.e. d_{p'}(d_p(s)) = `dp'dps` *)
     Derivative p'' s dp'dps).
 Proof.
-Admitted.
-  (* intros p p' s dps dp'dps Hd Hd' Hp Hp'. generalize dependent p'. generalize dependent dp'dps.
-  generalize dependent Hp. induction Hd; intros; simpl in *.
+  intros p p' s dps dp'dps Hd Hd' Hp Hp'. (* remember (pfx_cat p p') as reflected eqn:R. *)
+  generalize dependent p'. generalize dependent dp'dps. generalize dependent Hp.
+  induction Hd; intros.
   - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor.
   - sinvert Hp. eexists. split; [constructor | split]; assumption.
   - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor.
@@ -130,9 +227,11 @@ Admitted.
     specialize (IHHd1 H2 _ _ H3 H5) as [p1'' [Hp1a [Hp1b Hp1c]]].
     specialize (IHHd2 H4 _ _ H6 H8) as [p2'' [Hp2a [Hp2b Hp2c]]].
     eexists. repeat constructor; eassumption.
-  - sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
+  - (* DrvCatFst *)
+    sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
     + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-    + shelve.
+    + assert (A := derivative_fun _ _ H5). destruct A as [p' H']. specialize (IHHd _ _ H' H5) as [p'' [Ha [Hb Hc]]].
+      eexists. repeat split; constructor; try eassumption. eapply maximal_prefix_concat; eassumption.
   - sinvert Hp. specialize (IHHd H5 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
   - sinvert Hp. eexists. repeat econstructor; eassumption.
   - sinvert Hp. specialize (IHHd H1 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
@@ -141,12 +240,55 @@ Admitted.
   - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor; eassumption.
   - sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
     + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-    + shelve.
+    + assert (A := derivative_fun _ _ H5). destruct A as [p' H']. specialize (IHHd _ _ H' H5) as [p'' [Ha [Hb Hc]]].
+      eexists. repeat split; constructor; try eassumption. eapply maximal_prefix_concat; eassumption.
   - sinvert Hp. specialize (IHHd H4 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]].
-    eexists. repeat split; constructor; eassumption. *)
-  (* Unshelve. Abort. TODO: two lemmas left *)
+    eexists. repeat split; constructor; eassumption.
+Qed.
 
-(* TODO: prefix concatenation and derivatives,*)
+Definition B21 := pfx_cat_exists_when_typed.
+Arguments B21/.
+
+(* Theorem B.22, part I *)
+Theorem pfx_cat_empty_l : forall p s,
+  PrefixTyped p s ->
+  PrefixConcat (emp s) p p.
+Proof. intros. induction H; sfirstorder. Qed.
+
+(* Theorem B.22, part II *)
+Theorem pfx_cat_empty_r : forall p s dps,
+  Derivative p s dps ->
+  PrefixTyped p s ->
+  PrefixConcat p (emp dps) p.
+Proof. intros p s dps Hd H. generalize dependent dps. induction H; sauto lq: on. Qed.
+
+Theorem pfx_cat_empty : forall p s,
+  PrefixTyped p s ->
+  (PrefixConcat (emp s) p p /\ forall dps, Derivative p s dps -> PrefixConcat p (emp dps) p).
+Proof. split; [apply pfx_cat_empty_l | intros; eapply pfx_cat_empty_r]; eassumption. Qed.
+
+Definition B22 := pfx_cat_empty.
+
+(* Theorem B.23, part I *)
+Theorem max_pfx_concat_iff : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  (MaximalPrefix p'' <-> (MaximalPrefix p \/ MaximalPrefix p'')).
+Proof. intros. induction H; sauto lq: on. Qed.
+
+(* Theorem B.23, part I *)
+Theorem max_pfx_concat_eq : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  MaximalPrefix p ->
+  p = p''.
+Proof. intros p p' p'' H. induction H; sauto lq: on rew: off. Qed.
+
+Theorem max_pfx_concat : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  ((MaximalPrefix p'' <-> (MaximalPrefix p \/ MaximalPrefix p'')) /\ (MaximalPrefix p -> p = p'')).
+Proof. split; [eapply max_pfx_concat_iff | eapply max_pfx_concat_eq]; eassumption. Qed.
+
+Definition B23 := max_pfx_concat.
+Arguments B23/.
 
 Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->
@@ -162,6 +304,7 @@ Proof.
 Qed.
 Hint Resolve pfx_cat_assoc : core.
 
+(* Theorem B.24 *)
 (* NOTE: Joe, this is what you said you needed last time--it was a pretty easy corollary of the above *)
 Lemma pfx_cat_assoc_eq : forall p q r pq qr s1 s2,
   PrefixConcat p q pq ->
@@ -177,24 +320,19 @@ Proof.
 Qed.
 Hint Resolve pfx_cat_assoc_eq : core.
 
-(* TODO: environment concatenation, and the same.
- * Environment concat: n . n' ~ n'' if,
- * for all x in dom(n) and dom(n'),
- * n(x) . n'(x) ~ n''(x) *)
+Definition B24 := pfx_cat_assoc_eq.
+Arguments B24/.
 
 Definition EnvConcat (n : env) (n' : env) (n'' : env) : Prop :=
   (forall x p p', n x = Some p -> n' x = Some p' -> (exists p'', n'' x = Some p'' /\ PrefixConcat p p' p''))
   /\
-  (forall x, n x = None \/ n' x = None -> n'' x = None) (* to ensure that n'' is unique, we need to restrict the domain. *)
-.
-
+  (forall x, n x = None \/ n' x = None -> n'' x = None). (* to ensure that n'' is unique, we need to restrict the domain. *)
 Hint Unfold EnvConcat : core.
 
 (* fuck it, i want this theorem to hold on the nose.  *)
 Axiom functional_extensionality: forall {A B} (f g:A->B) , (forall x, f x = g x) -> f = g.
 
-
-Theorem  env_cat_unique : forall n n' n1 n2,
+Theorem env_cat_unique : forall n n' n1 n2,
   EnvConcat n n' n1 -> 
   EnvConcat n n' n2 -> 
   n1 = n2.
@@ -223,14 +361,13 @@ Theorem env_cat_exists_when_typed : forall eta eta' g g',
   (forall g'', ContextDerivative eta' g' g'' ->
     ContextDerivative eta'' g g'').
 Proof.
-intros.
+  intros.
 Admitted.
 
 Theorem env_cat_maximal : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->
   MaximalOn s eta \/ MaximalOn s eta' <-> MaximalOn s eta''.
 Proof.
-intros.
-induction H.
+  intros.
+  induction H.
 Admitted.
-

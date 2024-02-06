@@ -71,3 +71,7 @@ Proof. cbn. intros. split; intros []; try (left; assumption); right; assumption.
 Lemma set_eq_comm : forall T a b,
   @SetEq T a b <-> SetEq b a.
 Proof. cbn in *. split; intros H x; split; apply H. Qed.
+
+Lemma disjoint_comm : forall T a b,
+  @DisjointSets T a b <-> DisjointSets b a.
+Proof. split; intros Hf x; split; intros H C; apply Hf in H; tauto. Qed.

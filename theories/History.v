@@ -13,9 +13,15 @@ Inductive stlc_type : Set :=
   .
 Hint Constructors stlc_type : core.
 
+Definition B32 := stlc_type.
+Arguments B32/.
+
 (* Definition B.31 *)
 Definition hist_ctx := string -> option stlc_type.
 Hint Unfold hist_ctx : core.
+
+Definition B31 := hist_ctx.
+Arguments B31/.
 
 (* TODO: propose using user-defined types like Coq's `Inductive` EVENTUALLY for e.g. here,
  * where type-level recursion corresponds to streamification (exactly how we use a list below),

@@ -3,6 +3,7 @@ From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
+  Derivative
   Environment
   FV
   Hole
@@ -14,11 +15,6 @@ From LambdaST Require Import
 (* Definition B.34 *)
 (* Argument order designed for notation: (Subcontext A B) === (A <: B) *)
 Inductive Subcontext : context -> context -> Prop :=
-  | SubCong : forall g d d' gd gd',
-      Fill g d gd ->
-      Fill g d' gd' ->
-      Subcontext d d' ->
-      Subcontext gd gd'
   | SubRefl : forall g,
       Subcontext g g
   | SubCommaExc : forall g d,
@@ -36,22 +32,28 @@ Inductive Subcontext : context -> context -> Prop :=
       Subcontext g (CtxSemic g CtxEmpty)
   | SubSemicUnit2 : forall g,
       Subcontext g (CtxSemic CtxEmpty g)
+  | SubCong : forall d d' g gd gd',
+      Fill g d gd ->
+      Fill g d' gd' ->
+      Subcontext d d' ->
+      Subcontext gd gd'
   .
+Arguments Subcontext G D.
 Hint Constructors Subcontext : core.
 
-
-
+Definition B34 := Subcontext.
+Arguments B34/ G D.
 
 Theorem subcontext_fv_subset : forall g g',
   Subcontext g g' ->
   Subset (fv g') (fv g).
 Proof.
-  intros. induction H; cbn in *; intros; [shelve | | | | | | | |]; sfirstorder.
+  intros. induction H; cbn in *; intros; [| | | | | | | | shelve]; sfirstorder.
   (* Only interesting case is `Fill`, covered below: *)
   Unshelve. eapply fv_fill; [eassumption |]. apply fv_fill in H. apply fv_fill in H0. cbn in *.
   apply H0 in H2. destruct H2; [| right; assumption]. left. apply IHSubcontext. assumption.
 Qed.
-Hint Resolve subcontext_fv_subset : core.
+Hint Resolve subctx_fv_subset : core.
 
 Theorem subtcontext_wf : forall g g',
   Subcontext g g' -> WFContext g -> WFContext g'.
@@ -102,10 +104,6 @@ Theorem sub_preserves_env : forall n G D,
   EnvTyped n D /\ Agree Inert n n (fv G) (fv D).
 Proof.
   intros n G D He Hs. generalize dependent n. induction Hs; intros.
-  - assert (A := maps_to_hole_reflect _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
-    + eapply fill_preserves_env; [ | eassumption | | eassumption | ]; try eassumption. apply IHHs.
-    + split; intros; (eapply prop_on_contains; [| eassumption]);
-      apply subcontext_fv_subset; econstructor; eassumption.
   - repeat split; intros; eassumption.
   - sinvert He. repeat split; sfirstorder.
   - sinvert He. repeat split; sfirstorder.
@@ -114,7 +112,15 @@ Proof.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
+  - assert (A := maps_to_hole _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
+    + eapply fill_preserves_env; [ | eassumption | | eassumption | ]; try eassumption. apply IHHs.
+    + split; intros; (eapply prop_on_subset; [| eassumption]);
+      apply subctx_fv_subset; econstructor; eassumption.
 Qed.
+Hint Resolve sub_preserves_env : core.
+
+Definition B35 := sub_preserves_env.
+Arguments B35/.
 
 (* TODO: will. this shouldn't need any extra assumptions, but if it does, figure out the minimal ones. *)
 Theorem subctx_deriv : forall eta g1 g2 g1' g2',
@@ -125,3 +131,59 @@ Theorem subctx_deriv : forall eta g1 g2 g1' g2',
 Proof.
 Admitted.
   
+Theorem sub_preserves_wf : forall G D,
+  Subcontext G D ->
+  WFContext G ->
+  WFContext D.
+Proof.
+  intros G D Hs Hwf. generalize dependent Hwf. induction Hs; cbn in *; intros.
+  - assumption.
+  - sinvert Hwf. apply disjoint_comm in H3. constructor; eassumption.
+  - sinvert Hwf. assumption.
+  - sinvert Hwf. assumption.
+  - sinvert Hwf. assumption.
+  - constructor; [assumption | constructor |]. intro x. split. { intros _ []. } intros [].
+  - constructor; [assumption | constructor |]. intro x. split. { intros _ []. } intros [].
+  - constructor; [constructor | assumption |]. intro x. split. { intros []. } intros _ [].
+  - assert (Hd := wf_ctx_plug _ Hwf _ _ H). assert (Hg := wf_ctx_hole _ Hwf _ _ H).
+    specialize (IHHs Hd). apply subctx_fv_subset in Hs.
+    eapply wf_ctx_fill; try eassumption.
+    eapply wf_hole_iff in Hwf as [_ [_ Hgd]]; [| eassumption].
+    sfirstorder.
+Qed.
+Hint Resolve sub_preserves_wf : core.
+
+(* Theorem B.36 *)
+Theorem deriv_subctx : forall G D,
+  Subcontext G D ->
+  forall n G' D',
+  ContextDerivative n G G' ->
+  ContextDerivative n D D' ->
+  Subcontext G' D'.
+Proof.
+  intros G D Hs n G' D' HG HD. generalize dependent n.
+  generalize dependent G'. generalize dependent D'. induction Hs; intros.
+  - assert (E := context_derivative_det _ _ _ _ HG HD). subst. constructor.
+  - sinvert HG. sinvert HD. assert (E := context_derivative_det _ _ _ _ H2 H6). subst.
+    assert (E := context_derivative_det _ _ _ _ H3 H4). subst. constructor.
+  - sinvert HG. assert (E := context_derivative_det _ _ _ _ HD H2). subst. constructor.
+  - sinvert HG. assert (E := context_derivative_det _ _ _ _ HD H2). subst. constructor.
+  - sinvert HG. assert (E := context_derivative_det _ _ _ _ HD H4). subst. constructor.
+  - sinvert HD. sinvert H4. assert (E := context_derivative_det _ _ _ _ HG H2). subst. constructor.
+  - sinvert HD. sinvert H4. assert (E := context_derivative_det _ _ _ _ HG H2). subst. constructor.
+  - sinvert HD. sinvert H2. assert (E := context_derivative_det _ _ _ _ HG H4). subst. constructor.
+  - generalize dependent d. generalize dependent d'. generalize dependent gd.
+    generalize dependent gd'. generalize dependent D'. generalize dependent G'.
+    generalize dependent n. induction g; cbn in *; intros; sinvert H0; sinvert H;
+    [eapply IHHs; eassumption | | | |]; sinvert HD; sinvert HG;
+    try (assert (E := context_derivative_det _ _ _ _ H6 H8));
+    try (assert (E := context_derivative_det _ _ _ _ H2 H3));
+    subst; econstructor; [
+      apply FillCommaL | | | apply FillCommaR | | |
+      apply FillSemicL | | | apply FillSemicR | |];
+    sfirstorder.
+Qed.
+Hint Resolve deriv_subctx : core.
+
+Definition B36 := deriv_subctx.
+Arguments B36/.
