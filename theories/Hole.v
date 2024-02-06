@@ -41,8 +41,6 @@ Inductive Fill : hole -> context -> context -> Prop :=
       Fill (HoleSemicR g h) d (CtxSemic g hd)
   .
 Hint Constructors Fill : core.
-(* Notation "G '(' D ')' 'is' GD" := (Fill G D GD) (at level 97, no associativity). *) (* Coq prints this oddly; better off without *)
-
 
 Theorem reflect_fill : forall h y c,
   c = fill h y <-> Fill h y c.
@@ -54,27 +52,18 @@ Qed.
 Hint Resolve reflect_fill : core.
 
 Theorem fill_reflect_fun : forall h d, exists hd, Fill h d hd.
-Proof.
-Admitted.
+Proof. intros. exists (fill h d). apply reflect_fill. reflexivity. Qed.
 
-(* TODO: will *)
 Theorem fill_reflect_inj : forall h d d' hd,
   Fill h d hd ->
   Fill h d' hd ->
   d = d'.
 Proof.
-Admitted.
+  induction h; intros d d' hd Hf Hf'; sinvert Hf; sinvert Hf';
+  [reflexivity | | | |]; eapply IHh; eassumption.
+Qed.
 
-(* TODO: will. This one is cute: if your context is well formed,
-there is at most one way to arrive at it by filling a hole with x.
-I'm pretty sure this fact, for all variables is equivalent to WFContext! *)
-Theorem fill_reflect_var_localize : forall h h' hd x s s',
-  WFContext hd ->
-  Fill h (CtxHasTy x s) hd ->
-  Fill h' (CtxHasTy x s') hd ->
-  h = h' /\ s = s'.
-Proof.
-Admitted.
+(* had to move `fill_reflect_var_localize` after `fv_fill` *)
 
 Fixpoint fv_hole h :=
   match h with
@@ -105,6 +94,31 @@ Lemma fv_fill_fn : forall h plug,
   SetEq (fv_ctx (fill h plug)) (set_union (fv plug) (fv h)).
 Proof. intros. remember (fill h plug) as ctx eqn:E. apply reflect_fill in E. apply fv_fill. assumption. Qed.
 Hint Resolve fv_fill_fn : core.
+
+(* This one is cute: if your context is well formed,
+ * there is at most one way to arrive at it by filling a hole with x.
+ * I'm pretty sure this fact, for all variables is equivalent to WFContext! *)
+Theorem fill_reflect_var_localize : forall h h' hd x s s',
+  WFContext hd ->
+  Fill h (CtxHasTy x s) hd ->
+  Fill h' (CtxHasTy x s') hd ->
+  h = h' /\ s = s'.
+Proof.
+  induction h; intros h' hd x s s' Hw Hf Hf'; sinvert Hf.
+  - sinvert Hf'. split; reflexivity.
+  - sinvert Hw. sinvert Hf'. { specialize (IHh _ _ _ _ _ H1 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H3 | apply H6]; left; reflexivity.
+  - sinvert Hw. sinvert Hf'. 2: { specialize (IHh _ _ _ _ _ H2 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H6 | apply H3]; left; reflexivity.
+  - sinvert Hw. sinvert Hf'. { specialize (IHh _ _ _ _ _ H1 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H3 | apply H6]; left; reflexivity.
+  - sinvert Hw. sinvert Hf'. 2: { specialize (IHh _ _ _ _ _ H2 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H6 | apply H3]; left; reflexivity.
+Qed.
 
 Inductive WFHole : hole -> Prop :=
   | WFHoleHere :
@@ -235,8 +249,6 @@ hauto l: on use: wf_fill.
 Qed.
 Hint Resolve wf_fill_reflect : core.
 
-(* TODO: delete everything below this line *)
-
 Lemma set_minus_fill_cancel : forall G z r,
   ~fv G z ->
   SetEq
@@ -310,16 +322,84 @@ Fixpoint hole_compose (h : hole) (h' : hole) : hole :=
   | HoleSemicR lhs rhs => HoleSemicR lhs (hole_compose rhs h')
   end.
 
-(* TODO: will *) (* this will also need another tehorem about its derivatives, unfortunately. *)
+Inductive HoleCompose : hole -> hole -> hole -> Prop :=
+  | HCompHere : forall g,
+      HoleCompose HoleHere g g
+  | HCompCommaL : forall d h g hd,
+      HoleCompose h d hd ->
+      HoleCompose (HoleCommaL h g) d (HoleCommaL hd g)
+  | HCompCommaR : forall d g h hd,
+      HoleCompose h d hd ->
+      HoleCompose (HoleCommaR g h) d (HoleCommaR g hd)
+  | HCompSemicL : forall d h g hd,
+      HoleCompose h d hd ->
+      HoleCompose (HoleSemicL h g) d (HoleSemicL hd g)
+  | HCompSemicR : forall d g h hd,
+      HoleCompose h d hd ->
+      HoleCompose (HoleSemicR g h) d (HoleSemicR g hd)
+  .
+Hint Constructors HoleCompose : core.
 
-Theorem hole_compose_fill : forall h h' d hh'd,
-  Fill (hole_compose h h') d hh'd <-> (exists h'd, Fill h' d h'd /\ Fill h h'd hh'd).
+Theorem reflect_hole_compose : forall h y c,
+  c = hole_compose h y <-> HoleCompose h y c.
 Proof.
-Admitted.
+  split; intros.
+  - subst. generalize dependent y. induction h; intros; cbn in *; constructor; apply IHh.
+  - induction H; cbn; try rewrite IHHoleCompose; reflexivity.
+Qed.
+Hint Resolve reflect_hole_compose : core.
 
-
-Theorem hole_compose_fv : forall h h',
-  SetEq (fv (hole_compose h h')) (set_union (fv h) (fv h'))
-.
+Theorem hole_compose_fill : forall h h' hh',
+  HoleCompose h h' hh' ->
+  forall d hh'd,
+  Fill hh' d hh'd <-> (exists h'd, Fill h' d h'd /\ Fill h h'd hh'd).
 Proof.
-Admitted.
+  intros h h' hh' Hh. induction Hh; cbn in *; intros.
+  - split. { eexists. split. { eassumption. } constructor. } intros [h'd [H1 H2]]. sinvert H2. assumption.
+  - split. { intro H. sinvert H. apply IHHh in H4 as [h'd [H1 H2]]. eexists. repeat constructor; eassumption. }
+    intros [h'd [H1 H2]]. sinvert H2. constructor. apply IHHh. eexists. split; eassumption.
+  - split. { intro H. sinvert H. apply IHHh in H4 as [h'd [H1 H2]]. eexists. repeat constructor; eassumption. }
+    intros [h'd [H1 H2]]. sinvert H2. constructor. apply IHHh. eexists. split; eassumption.
+  - split. { intro H. sinvert H. apply IHHh in H4 as [h'd [H1 H2]]. eexists. repeat constructor; eassumption. }
+    intros [h'd [H1 H2]]. sinvert H2. constructor. apply IHHh. eexists. split; eassumption.
+  - split. { intro H. sinvert H. apply IHHh in H4 as [h'd [H1 H2]]. eexists. repeat constructor; eassumption. }
+    intros [h'd [H1 H2]]. sinvert H2. constructor. apply IHHh. eexists. split; eassumption.
+Qed.
+Hint Resolve hole_compose_fill : core.
+
+Theorem hole_compose_fv : forall h h' hh',
+  HoleCompose h h' hh' ->
+  SetEq (fv hh') (set_union (fv h) (fv h')).
+Proof.
+  intros. induction H; cbn; intros.
+  - split; intros. { right. assumption. } destruct H as [[] |]. assumption.
+  - split; intros.
+    + destruct H0. { left. left. assumption. }
+      apply IHHoleCompose in H0. destruct H0. { left. right. assumption. } right. assumption.
+    + destruct H0. { destruct H0. { left. assumption. } right. apply IHHoleCompose. left. assumption. }
+      right. apply IHHoleCompose. right. assumption.
+  - split; intros.
+    + destruct H0. { left. left. assumption. }
+      apply IHHoleCompose in H0. destruct H0. { left. right. assumption. } right. assumption.
+    + destruct H0. { destruct H0. { left. assumption. } right. apply IHHoleCompose. left. assumption. }
+      right. apply IHHoleCompose. right. assumption.
+  - split; intros.
+    + destruct H0. { left. left. assumption. }
+      apply IHHoleCompose in H0. destruct H0. { left. right. assumption. } right. assumption.
+    + destruct H0. { destruct H0. { left. assumption. } right. apply IHHoleCompose. left. assumption. }
+      right. apply IHHoleCompose. right. assumption.
+  - split; intros.
+    + destruct H0. { left. left. assumption. }
+      apply IHHoleCompose in H0. destruct H0. { left. right. assumption. } right. assumption.
+    + destruct H0. { destruct H0. { left. assumption. } right. apply IHHoleCompose. left. assumption. }
+      right. apply IHHoleCompose. right. assumption.
+Qed.
+Hint Resolve hole_compose_fv : core.
+
+Theorem hole_compose_fv_fn : forall h h',
+  SetEq (fv (hole_compose h h')) (set_union (fv h) (fv h')).
+Proof.
+  intros. remember (hole_compose h h') as hh' eqn:E. apply reflect_hole_compose in E.
+  apply hole_compose_fv. assumption.
+Qed.
+Hint Resolve hole_compose_fv_fn : core.
