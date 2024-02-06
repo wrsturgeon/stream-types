@@ -206,6 +206,13 @@ Theorem context_derivative_wf : forall eta g g',
 Proof.
 Admitted.
 
+Theorem context_derivative_wf' : forall eta g g',
+  WFContext g' ->
+  ContextDerivative eta g g' ->
+  WFContext g.
+Proof.
+Admitted.
+
 (* TODO: will *)
 Theorem hole_derivative_wf : forall eta h h',
   WFHole h ->

@@ -12,6 +12,7 @@ From LambdaST Require Import
   Prefix
   Subcontext
   Semantics
+  PrefixConcat
   SinkTerm
   Sets
   Terms
@@ -141,6 +142,34 @@ Proof.
         best use:hole_compose_fill.
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
     + admit.
+  - split; try split; try split.
+    + best use:emp_well_typed.
+    + intros.
+      assert (Derivative (emp r) r r) by best use:derivative_emp.
+      destruct (ltac:(sfirstorder use:derivative_det) : r = s').
+      edestruct (env_cat_exists_when_typed eta') as [eta''0 [A [B C]]]; eauto.
+      destruct (ltac:(best use:env_cat_unique) : eta'' = eta''0).
+      eapply TPlusCase; eauto.
+    + assert (Subset (singleton_set z) (fv (TmPlusCase eta' r z x e1 y e2))) by sfirstorder.
+      intro HM. eapply (prop_on_contains) in HM; [|eauto].
+      edestruct (env_cat_maximal (singleton_set z) eta' eta eta''); eauto.
+      assert (Hcontra : MaximalPrefix PfxSumEmp) by best.
+      sinvert Hcontra.
+    + best use:emp_empty.
+  - assert (WFHole G). { eapply (wf_fill_reflect G (CtxHasTy z _)). eauto. sfirstorder use:context_derivative_wf'. }
+    edestruct (env_cat_exists_when_typed eta') as [eta''0 [A [B C]]]; eauto.
+    destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
+    assert (Hty : PrefixTyped (PfxSumInl p) (TySum s t)) by qauto l: on use:maps_to_has_type_reflect.
+    sinvert Hty.
+    edestruct H11 as [A' [B' [C' D']]]. { eapply wf_fill_reflect. eauto. sfirstorder. } { eapply sumcaseenvtyped1; eauto. }
+    edestruct (fill_derivative eta') as [G' [d_s [A'' [B'' [C'']]]]]; [| eauto |]. eauto.
+    sinvert A''.
+    split; try split; try split.
+    + eauto.
+    + intros.
+      eapply typing_subst. eapply B'. eauto. admit. admit. admit. admit. admit.
+    + admit.
+    + admit. (* need to know that eta' is empty on z for intertness here!! *)
 Admitted.
 
 (*

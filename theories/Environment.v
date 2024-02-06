@@ -581,3 +581,27 @@ Theorem dropenvtyped :  forall G Gx GE x s eta,
   EnvTyped (env_drop eta x) GE.
 Proof.
 Admitted.
+
+Theorem sumcaseenvtyped1 : forall G Gz Gx x z p s r n,
+  (~ fv G x) ->
+  n z = Some (PfxSumInl p) ->
+  PrefixTyped p s ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped n Gz ->
+  EnvTyped
+    (env_union n (singleton_env x p)) Gx.
+Proof.
+Admitted.
+
+Theorem sumcaseenvtyped2 : forall G Gz Gx x z p s r n,
+  (~ fv G x) ->
+  n z = Some (PfxSumInr p) ->
+  PrefixTyped p s ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped n Gz ->
+  EnvTyped
+    (env_union n (singleton_env x p)) Gx.
+Proof.
+Admitted.

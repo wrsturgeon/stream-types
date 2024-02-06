@@ -13,6 +13,7 @@ From LambdaST Require Import
   Inert
   Nullable
   Derivative
+  Environment
   Types.
 
 
@@ -61,10 +62,24 @@ Inductive Typed : context -> term -> type -> inertness -> Prop :=
       Fill G D GD ->
       Typed Gxs e' t i ->
       Typed GD (TmLet x e e') t i
-   (* | TRec : forall g e g' eargs s, *)
-      (* ArgsTyped g eargs g' -> *)
-      (* Typed g e s *)
-
+  | TInl : forall G e s t i,
+      Typed G e s i ->
+      Typed G (TmInl e) (TySum s t) Jumpy
+  | TInr : forall G e s t i,
+      Typed G e s i ->
+      Typed G (TmInr e) (TySum s t) Jumpy
+  | TPlusCase : forall G x y z s t r Gz Gx Gy Gz' e1 e2 eta i i1 i2,
+      ~ fv G x ->
+      ~ fv G y ->
+      Fill G (CtxHasTy z (TySum s t)) Gz ->
+      Fill G (CtxHasTy x s) Gx ->
+      Fill G (CtxHasTy y t) Gy ->
+      EnvTyped eta Gz ->
+      ContextDerivative eta Gz Gz' ->
+      Typed Gx e1 r i1 ->
+      Typed Gy e2 r i2 ->
+      Typed Gz' (TmPlusCase eta r z x e1 y e2) r i
+      
 with ArgsTyped : context -> argsterm -> context -> Prop :=
   | T_ATmEmpty : forall g, ArgsTyped g ATmEmpty CtxEmpty
   | T_ATmSng : forall g e s x i,
@@ -80,8 +95,14 @@ with ArgsTyped : context -> argsterm -> context -> Prop :=
       ArgsTyped (CtxSemic g1 g2) (ATmSemic e1 e2) (CtxSemic g1' g2')
 .
 
+Scheme Typed_ind' := Induction for Typed Sort Prop
+with ArgsTyped_ind' := Induction for ArgsTyped Sort Prop.
+Combined Scheme Typed_mutual from Typed_ind', ArgsTyped_ind'.
+
 Hint Constructors Typed : core.
 Hint Constructors ArgsTyped : core.
+
+Check Typed_mutual.
 
 Theorem typing_sub_inert : forall g e s i,
   Typed g e s i ->
@@ -99,7 +120,10 @@ induction H; intros.
 - sfirstorder.
 - best.
 - best.
-Qed.
+- best.
+- best.
+- best.
+Admitted.
 
 
 (* TODO:

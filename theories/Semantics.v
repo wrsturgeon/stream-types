@@ -7,6 +7,7 @@ From LambdaST Require Import
   Context
   FV
   Derivative
+  PrefixConcat
   Terms.
 
 Inductive Step : env -> term -> term -> prefix -> Prop :=
@@ -46,6 +47,20 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step eta e1 e1' p ->
       Step (env_subst x p eta) e2 e2' p' ->
       Step eta (TmLet x e1 e2) (TmLet x e1' e2') p'
+  | SPlusCase1 : forall eta eta' eta'' r z x y e1 e2,
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some PfxSumEmp ->
+        Step eta (TmPlusCase eta' r z x e1 y e2) (TmPlusCase eta'' r z x e1 y e2) (emp r)
+  | SPlusCase2 : forall eta eta' eta'' r z x y e1 e2 e' p p',
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some (PfxSumInl p) ->
+        Step (env_union eta'' (singleton_env x p)) e1 e' p' ->
+        Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z x) p'
+  | SPlusCase3 : forall eta eta' eta'' r z x y e1 e2 e' p p',
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some (PfxSumInr p) ->
+        Step (env_union eta'' (singleton_env y p)) e2 e' p' ->
+        Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
 with
 ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
   | SATmEmpty : forall eta,
@@ -71,6 +86,7 @@ ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
 
 (* todo: will 
 stronger version: eta eta', noconflict on fv(e).
+Need to derive a mutual induction principle for
 *)
 Theorem Step_det : forall eta e e1 e2 p1 p2,
     Step eta e e1 p1 ->
