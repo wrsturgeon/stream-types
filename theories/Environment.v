@@ -156,7 +156,8 @@ Fixpoint empty_env_for (g : context) : env :=
   | CtxComma g1 g2 | CtxSemic g1 g2 => env_union (empty_env_for g1) (empty_env_for g2)
   end.
 
-(* use the above smart constructors (dom_union, dom_singleton). *)
+(* TODO: will.
+use the above smart constructors (dom_union, dom_singleton). *)
 Theorem empty_env_for_dom : forall g, SetEq (dom (empty_env_for g)) (fv g).
 Proof.
 Admitted.
@@ -384,6 +385,7 @@ Qed.
 Hint Resolve env_typed_semic : core.
 
 
+(* todo: emptyenv_for *)
 (* need to use the empty_env_dom theorem, otherwise easy. *)
 Theorem empty_env_for_typed : forall g, EnvTyped (empty_env_for g) g.
 Proof.
@@ -629,3 +631,27 @@ Proof.
       apply H. eapply fv_fill. { eassumption. } right. assumption.
     + intro C. eapply fv_fill in C; [| eassumption]. destruct C as [[] |]. tauto.
 Qed.
+
+Theorem sumcaseenvtyped1 : forall G Gz Gx x z p s r n,
+  (~ fv G x) ->
+  n z = Some (PfxSumInl p) ->
+  PrefixTyped p s ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped n Gz ->
+  EnvTyped
+    (env_union n (singleton_env x p)) Gx.
+Proof.
+Admitted.
+
+Theorem sumcaseenvtyped2 : forall G Gz Gx x z p s r n,
+  (~ fv G x) ->
+  n z = Some (PfxSumInr p) ->
+  PrefixTyped p s ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxHasTy x s) Gx ->
+  EnvTyped n Gz ->
+  EnvTyped
+    (env_union n (singleton_env x p)) Gx.
+Proof.
+Admitted.

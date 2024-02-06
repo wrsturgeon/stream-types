@@ -4,10 +4,12 @@ From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Eqb
   FV
+  Context
   Sets
   Environment
   Types.
 
+  (* #[export]Hint Unfold dep_ith : core. *)
 Inductive term : Set :=
   | TmSink
   | TmUnit
@@ -20,6 +22,8 @@ Inductive term : Set :=
   | TmInl (e : term)
   | TmInr (e : term)
   | TmPlusCase (eta : env) (r : type) (z : string) (x : string) (e1 : term) (y : string) (e2 : term)
+  | TmFix (args : argsterm) (g : context) (r : type) (e : term)
+  | TmRec (args : argsterm)
 with
 argsterm : Set :=
   | ATmEmpty
@@ -27,6 +31,36 @@ argsterm : Set :=
   | ATmComma (e1 : argsterm) (e2 : argsterm)
   | ATmSemic (e1 : argsterm) (e2 : argsterm)
 .
+
+Fixpoint fix_subst (g : context) (r : type) (e : term) (e' : term) :=
+  match e' with
+  | TmSink => TmSink
+  | TmUnit => TmUnit
+  | TmVar x => TmVar x
+  | TmComma e1 e2 => TmComma (fix_subst g r e e1) (fix_subst g r e e2)
+  | TmSemic e1 e2 => TmSemic (fix_subst g r e e1) (fix_subst g r e e2)
+  | TmLet x e1 e2 => TmLet x (fix_subst g r e e1) (fix_subst g r e e2)
+  | TmLetPar x y z e' => TmLetPar x y z (fix_subst g r e e')
+  | TmLetCat t x y z e' => TmLetCat t x y z (fix_subst g r e e')
+  | TmInl e' => TmInl (fix_subst g r e e')
+  | TmInr e' => TmInr (fix_subst g r e e')
+  | TmPlusCase eta r z x e1 y e2 => TmPlusCase eta r z x (fix_subst g r e e1) y (fix_subst g r e e2)
+  | TmFix args g' r' e' => TmFix (fix_subst_args g r e args) g' r' e'
+  | TmRec args => TmFix (fix_subst_args g r e args) g r e
+  end
+with
+fix_subst_args (g : context) (r : type) (e : term) (args : argsterm) := 
+  match args with
+  | ATmEmpty => ATmEmpty
+  | ATmSng e' => ATmSng (fix_subst g r e e')
+  | ATmComma e1 e2 => ATmComma (fix_subst_args g r e e1) (fix_subst_args g r e e2)
+  | ATmSemic e1 e2 => ATmSemic (fix_subst_args g r e e1) (fix_subst_args g r e e2)
+  end
+.
+
+Scheme term_ind' := Induction for term Sort Prop
+with argsterm_ind' := Induction for argsterm Sort Prop.
+Combined Scheme term_mutual from term_ind', argsterm_ind'.
 
 
 Hint Constructors term : core.
@@ -66,118 +100,27 @@ Fixpoint fv_term e : set string :=
   | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
   | TmInl e | TmInr e => fv_term e
   | TmPlusCase _ _ z x e1 y e2 => set_union (singleton_set z) (set_union (set_minus (fv_term e1) (singleton_set x)) (set_minus (fv_term e2) (singleton_set y)))
-  end.
-
-Instance fv_term_inst : FV term := { fv := fv_term }.
-
-
-
-Fixpoint fv_argsterm e : set string :=
+  | TmFix args _ _ _ => fv_argsterm args
+  | TmRec args => fv_argsterm args
+  end
+with
+fv_argsterm e : set string :=
   match e with
   | ATmEmpty => empty_set
   | ATmSng e => fv_term e
   | ATmComma e1 e2 | ATmSemic e1 e2 => set_union (fv_argsterm e1) (fv_argsterm e2)
   end.
 
+Instance fv_term_inst : FV term := { fv := fv_term }.
 Instance fv_argsterm_inst : FV argsterm := { fv := fv_argsterm }.
 
-(* Inductive ctx_term : Set :=
-  | CtxTmEmp
-  | CtxTmVarTerm (id : string) (t : type) (tm : term)
-  | CtxTmComma (lhs rhs : ctx_term)
-  | CtxTmSemic (lhs rhs : ctx_term)
-  .
-Hint Constructors ctx_term : core.
-Derive Show for ctx_term.
-Derive Arbitrary for ctx_term.
- *)
 (*
-Inductive WFTerm : set string -> term -> Prop :=
-  | WFTmSink : forall s,
-      WFTerm s TmSink
-  | WFTmUnit : forall s,
-      WFTerm s TmUnit
-  | WFTmVar : forall x s,
-      s x ->
-      WFTerm s (TmVar x)
-  | WFTmComma : forall e e' s,
-      WFTerm s e ->
-      WFTerm s e' ->
-      WFTerm s (e, e')
-  | WFTmSemic : forall e e' s,
-      WFTerm s e ->
-      WFTerm s e' ->
-      WFTerm s (e; e')
-  | WFTmLet : forall x e e' s,
-      ~s x ->
-      WFTerm s e ->
-      WFTerm (set_union s (singleton_set x)) e' ->
-      WFTerm s (TmLet x e e')
-  | WFTmLetPar : forall x y z e s,
-      s z ->
-      ~s x ->
-      ~s y ->
-      x <> y ->
-      WFTerm (set_minus (set_union s (set_union (singleton_set x) (singleton_set y))) (singleton_set z)) e ->
-      WFTerm s (TmLetPar x y z e)
-  | WFTmLetCat : forall x y z e t s,
-      s z ->
-      ~s x ->
-      ~s y ->
-      x <> y ->
-      (* TODO: WFType s t -> *)
-      WFTerm (set_minus (set_union s (set_union (singleton_set x) (singleton_set y))) (singleton_set z)) e ->
-      WFTerm s (TmLetCat t x y z e)
-.
-Hint Constructors WFTerm : core.
 
-Lemma wf_set_eq : forall s s' e,
-  SetEq s s' ->
-  WFTerm s e ->
-  WFTerm s' e.
-Proof.
-  intros.
-  generalize dependent s'.
-  induction H0; cbn in *; intros; constructor; sfirstorder.
-Qed.
+term_ind
+	 : 
+argsterm_ind
+	 : forall P : argsterm -> Prop,
+       
+       forall a : argsterm, P a
 
-(* TODO: it is a bit concerning that we can't prove this *)
-Lemma wf_weaken_l : forall sl sr x,
-  (forall z, fv x z -> sl z) -> (* <-- i.e., sl contains all the free variables in x *)
-  WFTerm (set_union sl sr) x ->
-  WFTerm sl x.
-Proof.
-  (*
-  intros sl sr x Hf H. remember (set_union sl sr) as s eqn:Es. generalize dependent sl. generalize dependent sr.
-  induction H; intros; subst; cbn in *.
-  - constructor.
-  - constructor.
-  - constructor. apply Hf. reflexivity.
-  - constructor; [eapply IHWFTerm1 | eapply IHWFTerm2]; sfirstorder.
-  - constructor; [eapply IHWFTerm1 | eapply IHWFTerm2]; sfirstorder.
-  - constructor; [sfirstorder | eapply IHWFTerm1; sfirstorder | eapply IHWFTerm2]; clear IHWFTerm1 IHWFTerm2.
-    admit. cbn. rewrite or_assoc.
-    shelve. shelve.
-  - constructor; [shelve | sfirstorder | sfirstorder | sfirstorder | sfirstorder].
-  - constructor; [shelve | sfirstorder | sfirstorder | sfirstorder | sfirstorder].
-  Unshelve. Abort.
-  *)
-  intros sl sr x. generalize dependent sl. generalize dependent sr. induction x; cbn in *; intros.
-  - (* sink *)
-    constructor.
-  - (* unit *)
-    constructor.
-  - (* Var id *)
-    constructor. apply H. reflexivity.
-  - (* (x1, x2) *)
-    invert H0. constructor; [eapply IHx1 | eapply IHx2]; sfirstorder.
-  - (* (x1; x2) *)
-    sinvert H0. constructor; [eapply IHx1 | eapply IHx2]; sfirstorder.
-  - (* let bind = x1 in x2 *)
-    shelve. (* sinvert H0. cbn in H7. constructor; [sfirstorder | sfirstorder |]. cbn. eapply IHx2. best. ; [eapply IHx1 | eapply IHx2]; sfirstorder. *)
-  - (* let (lhs, rhs) = bound in x *)
-    sinvert H0. constructor; [sfirstorder | sfirstorder | sfirstorder | sfirstorder |]. cbn in *.
-    eapply IHx. { shelve. } eapply wf_set_eq; [| eassumption]. cbn. intro x'. split; intro H'. { sfirstorder. }
-    destruct H'. { destruct H0. split; [| assumption]. destruct H0; [| right; assumption]. sfirstorder. }
-    split. { left. right. assumption. } intro. subst. (* Need to show that `sr` does not contain `bound` *) Abort.
 *)

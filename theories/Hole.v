@@ -311,8 +311,15 @@ Fixpoint hole_compose (h : hole) (h' : hole) : hole :=
   end.
 
 (* TODO: will *) (* this will also need another tehorem about its derivatives, unfortunately. *)
-(* todo: low priority. *)
+
 Theorem hole_compose_fill : forall h h' d hh'd,
   Fill (hole_compose h h') d hh'd <-> (exists h'd, Fill h' d h'd /\ Fill h h'd hh'd).
+Proof.
+Admitted.
+
+
+Theorem hole_compose_fv : forall h h',
+  SetEq (fv (hole_compose h h')) (set_union (fv h) (fv h'))
+.
 Proof.
 Admitted.
