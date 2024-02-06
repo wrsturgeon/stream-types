@@ -135,30 +135,6 @@ Proof.
   - apply DecDerivN. apply reflect_not_derivative. assumption.
 Qed.
 
-Inductive HoleDerivative : env -> hole -> hole -> Prop :=
-  | HoleDrvHere : forall eta,
-      HoleDerivative eta HoleHere HoleHere
-  | HoleDrvCommaL : forall eta h h' g g',
-      HoleDerivative eta h h' ->
-      ContextDerivative eta g g' ->
-      HoleDerivative eta (HoleCommaL h g) (HoleCommaL h' g')
-  | HoleDrvCommaR : forall eta h h' g g',
-      HoleDerivative eta h h' ->
-      ContextDerivative eta g g' ->
-      HoleDerivative eta (HoleCommaR g h) (HoleCommaR g' h')
-  | HoleDrvSemicL : forall eta h h' g g',
-      HoleDerivative eta h h' ->
-      ContextDerivative eta g g' ->
-      HoleDerivative eta (HoleSemicL h g) (HoleSemicL h' g')
-  | HoleDrvSemicR : forall eta h h' g g',
-      HoleDerivative eta h h' ->
-      ContextDerivative eta g g' ->
-      HoleDerivative eta (HoleSemicR g h) (HoleSemicR g' h')
-  .
-Hint Constructors ContextDerivative : core.
-
-
-
 (* Theorem B.15, part I *)
 Theorem derivative_det : forall p s s'1 s'2,
   Derivative p s s'1 ->
@@ -326,6 +302,28 @@ Hint Resolve context_derivative_fun : core.
 
 Definition B17 := context_derivative_fun.
 Arguments B17/.
+
+Inductive HoleDerivative : env -> hole -> hole -> Prop :=
+  | HoleDrvHere : forall eta,
+      HoleDerivative eta HoleHere HoleHere
+  | HoleDrvCommaL : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleCommaL h g) (HoleCommaL h' g')
+  | HoleDrvCommaR : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleCommaR g h) (HoleCommaR g' h')
+  | HoleDrvSemicL : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleSemicL h g) (HoleSemicL h' g')
+  | HoleDrvSemicR : forall eta h h' g g',
+      HoleDerivative eta h h' ->
+      ContextDerivative eta g g' ->
+      HoleDerivative eta (HoleSemicR g h) (HoleSemicR g' h')
+  .
+Hint Constructors ContextDerivative : core.
 
 (* TODO: will *)
 Theorem fv_context_derivative : forall eta g g',

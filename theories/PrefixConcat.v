@@ -206,6 +206,7 @@ Proof.
   induction Ht; cbn in *; intros; try constructor; try assumption; sauto l: on.
 Qed.
 
+(* TODO:
 (* Theorem B.21, part II *)
 Theorem pfx_cat_exists_when_typed : forall p p' s dps,
   Derivative p s dps -> (* i.e., d_p(s) = `dps`. difficult to write in ASCII *)
@@ -248,6 +249,7 @@ Qed.
 
 Definition B21 := pfx_cat_exists_when_typed.
 Arguments B21/.
+*)
 
 (* Theorem B.22, part I *)
 Theorem pfx_cat_empty_l : forall p s,

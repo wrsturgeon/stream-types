@@ -4,7 +4,6 @@ From LambdaST Require Import
   Context
   Eqb
   FV
-  Terms
   Sets.
 
 Inductive hole : Set :=
@@ -91,6 +90,7 @@ Fixpoint fv_hole_li h :=
       List.app (fv_ctx_li c) (fv_hole_li h)
   end.
 
+(* TODO:
 Lemma reflect_fv_hole : forall h x,
   Bool.reflect (fv h x) (lcontains x (fv_hole_li h)).
 Proof.
@@ -126,6 +126,7 @@ Proof.
     apply (Bool.reflect_iff _ _ (reflect_fv_ctx _ _)). assumption.
 Qed.
 Hint Resolve reflect_fv_hole : core.
+*)
 
 (* Sanity check: *)
 Theorem fv_hole_plug : forall h,

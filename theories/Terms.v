@@ -16,7 +16,7 @@ Inductive term : Set :=
   | TmVar (id : string)
   | TmComma (lhs rhs : term)
   | TmSemic (lhs rhs : term)
-  | TmLet (t : type (* <-- TODO: will remove, but very helpful rn *)) (bind : string) (bound body : term)
+  | TmLet (bind : string) (bound body : term)
   | TmLetPar (lhs rhs bound : string) (body : term) (* Note that the bound term is NOT really a term, but we can w.l.o.g. surround it with another `let` *)
   | TmLetCat (t : type) (lhs rhs bound : string) (body : term)
   | TmInl (e : term)
@@ -113,75 +113,6 @@ fv_argsterm e : set string :=
 
 Instance fv_term_inst : FV term := { fv := fv_term }.
 Instance fv_argsterm_inst : FV argsterm := { fv := fv_argsterm }.
-
-Fixpoint lcontains {T} `{Eqb T} x li :=
-  match li with
-  | nil => false
-  | cons hd tl => (eqb hd x || lcontains x tl)%bool
-  end.
-
-Lemma lcontains_in : forall {T} `{Eqb T} x li,
-  Bool.reflect (List.In x li) (lcontains x li).
-Proof.
-  intros. generalize dependent H. generalize dependent x.
-  induction li; cbn in *; intros. { constructor. intros []. }
-  destruct (eqb_spec a x). { constructor. left. assumption. }
-  specialize (IHli x H). sinvert IHli; constructor. { right. assumption. }
-  intros [C | C]; tauto.
-Qed.
-Hint Resolve lcontains_in : core.
-
-Lemma lcontains_app : forall {T} a b `{Eqb T} x,
-  lcontains x (a ++ b) = (lcontains x a || lcontains x b)%bool.
-Proof.
-  induction a; cbn in *; intros. { reflexivity. }
-  destruct (eqb_spec a x); cbn. { reflexivity. } apply IHa.
-Qed.
-Hint Resolve lcontains_app : core.
-
-Fixpoint lminus {T} `{Eqb T} x li :=
-  match li with
-  | nil => nil
-  | cons hd tl => if eqb x hd then lminus x tl else cons hd (lminus x tl)
-  end.
-
-Lemma lminus_eq : forall {T} li `{Eqb T} x,
-  lcontains x (lminus x li) = false.
-Proof.
-  induction li; cbn in *; intros. { reflexivity. }
-  destruct (eqb_spec x a). { apply IHli. }
-  cbn. destruct (eqb_spec a x). { subst. tauto. }
-  rewrite IHli. reflexivity.
-Qed.
-
-Lemma lminus_neq : forall {T} li `{Eqb T} x y,
-  x <> y ->
-  lcontains x (lminus y li) = lcontains x li.
-Proof.
-  induction li; cbn in *; intros. { reflexivity. }
-  destruct (eqb_spec a x). {
-    subst. destruct (eqb_spec y x). { subst. tauto. } cbn. destruct (eqb_spec x x). { reflexivity. } tauto. }
-  destruct (eqb_spec y a). { subst. rewrite IHli; [| assumption]. reflexivity. }
-  cbn. destruct (eqb_spec a x). { subst. tauto. } rewrite IHli; [| assumption]. reflexivity.
-Qed.
-
-Fixpoint lsubset {T} `{Eqb T} small big :=
-  match small with
-  | nil => true
-  | cons hd tl => (lcontains hd big && lsubset tl big)%bool
-  end.
-
-Lemma lsubset_incl : forall {T} `{Eqb T} small big,
-  Bool.reflect (forall x, List.In x small -> List.In x big) (lsubset small big).
-Proof.
-  intros. generalize dependent H. generalize dependent big.
-  induction small; cbn in *; intros. { constructor. intros _ []. }
-  destruct (lcontains_in a big). 2: { constructor. intro C. apply n. apply C. left. reflexivity. }
-  specialize (IHsmall big H). sinvert IHsmall; constructor; intros.
-  - destruct H2; [subst | apply H1]; assumption.
-  - intro C. apply H1. intros. apply C. right. assumption.
-Qed.
-Hint Resolve lsubset_incl : core.
 
 Fixpoint fv_term_li e :=
   match e with

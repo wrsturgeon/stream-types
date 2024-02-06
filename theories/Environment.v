@@ -8,9 +8,7 @@ From LambdaST Require Import
   Hole
   Inert
   Prefix
-  Sets
-  (* Terms *)
-  Types.
+  Sets.
 
 (* Definition B.8, part I *)
 Definition env : Set := string -> option prefix.
