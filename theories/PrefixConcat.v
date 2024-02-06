@@ -51,16 +51,48 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
   .
 Hint Constructors PrefixConcat : core.
 
-(* TODO: will *)
-
 Theorem pfx_cat_maximal : forall p p' p'',
   PrefixConcat p p' p'' ->
   MaximalPrefix p \/ MaximalPrefix p' <-> MaximalPrefix p''.
 Proof.
-intros.
-induction H.
+  intros p p' p'' H. induction H. { repeat constructor. }
+  - sinvert H. { tauto. } split. { constructor. } right. assumption.
+  - split. { constructor. } left. assumption.
+  - split; intros.
+    + constructor; [apply IHPrefixConcat1 | apply IHPrefixConcat2];
+      destruct H1; sinvert H1; try (left; assumption); right; assumption.
+    + sinvert H1. apply IHPrefixConcat1 in H4. apply IHPrefixConcat2 in H5.
+      destruct H4; destruct H5.
+      * left. constructor; assumption.
+      * admit. (* TODO: interesting mismatch *)
+      * admit.
+      * right. constructor; assumption.
+  - split; intros. { destruct H0; sinvert H0. } sinvert H0.
+  - split; intros.
+    + constructor. { apply IHPrefixConcat. right. destruct H0; sinvert H0. assumption. }
+      clear IHPrefixConcat. destruct H0; sinvert H0. assumption.
+    + sinvert H0. apply IHPrefixConcat in H3 as [H3 | H3]; right; constructor; try assumption.
+      admit.
+  - split; intros.
+    + constructor; [| apply IHPrefixConcat; destruct H0; [| right; assumption]; sinvert H0; left; assumption].
+      destruct H0; [sinvert H0; assumption |]. admit.
+    + sinvert H0. apply IHPrefixConcat in H4 as [H4 | H4]; [left; constructor | right]; assumption.
+  - split; intros. { destruct H. { sinvert H. } assumption. } right. assumption.
+  - split; intros. { constructor. apply IHPrefixConcat. sinvert H0; [sinvert H1; left | right]; assumption. }
+    sinvert H0. apply IHPrefixConcat in H2 as [H2 | H2]; [left; constructor | right]; assumption.
+  - split; intros. { constructor. apply IHPrefixConcat. sinvert H0; [sinvert H1; left | right]; assumption. }
+    sinvert H0. apply IHPrefixConcat in H2 as [H2 | H2]; [left; constructor | right]; assumption.
+  - split; intros. { destruct H. { sinvert H. } assumption. } right. assumption.
+  - split; [| left]; constructor.
+  - split; intros. { destruct H0; sinvert H0. } sinvert H0.
+  - split; intros. { destruct H0; sinvert H0. constructor; [apply IHPrefixConcat; right |]; assumption. }
+    sinvert H0. right. constructor; [| assumption]. admit.
+  - split; intros.
+    + destruct H0. { sinvert H0. constructor. { assumption. } apply IHPrefixConcat. left. assumption. }
+      constructor; [| apply IHPrefixConcat; right; assumption]. admit.
+    + sinvert H0. apply IHPrefixConcat in H4 as [H4 | H4]. { left. constructor; assumption. } right. assumption.
+(* TODO: will: a few similar-looking cases are all either not true or not provable without induction/lemmas *)
 Admitted.
-
 
 (* Theorem B.21, part I *)
 Theorem pfx_cat_unique : forall p p' p1'' p2'',
