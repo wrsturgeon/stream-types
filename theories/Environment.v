@@ -215,6 +215,12 @@ Definition NoConflictOn (n n' : env) s := forall x p p',
 Arguments NoConflictOn/ n n' s.
 Hint Unfold NoConflictOn : core.
 
+Theorem NoConflictOn_disjoint : forall eta eta' s,
+  DisjointSets (dom eta) s \/ DisjointSets (dom eta') s -> NoConflictOn eta eta' s.
+Proof.
+Admitted.
+
+
 Theorem NoConflictOn_union : forall eta eta' s s',
   NoConflictOn eta eta' (set_union s s') <-> (NoConflictOn eta eta' s /\ NoConflictOn eta eta' s').
 Proof.

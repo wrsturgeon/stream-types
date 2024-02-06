@@ -156,21 +156,39 @@ Proof.
       assert (Hcontra : MaximalPrefix PfxSumEmp) by best.
       sinvert Hcontra.
     + best use:emp_empty.
-  - assert (WFHole G). { eapply (wf_fill_reflect G (CtxHasTy z _)). eauto. sfirstorder use:context_derivative_wf'. }
+  - assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+    assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
+    destruct Hwf.
+    assert (~ fv G z) by sfirstorder.
+    assert (WFHole G). { eapply (wf_fill_reflect G (CtxHasTy z _)). eauto. sfirstorder use:context_derivative_wf'. }
     edestruct (env_cat_exists_when_typed eta') as [eta''0 [A [B C]]]; eauto.
     destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
     assert (Hty : PrefixTyped (PfxSumInl p) (TySum s t)) by qauto l: on use:maps_to_has_type_reflect.
     sinvert Hty.
     edestruct H11 as [A' [B' [C' D']]]. { eapply wf_fill_reflect. eauto. sfirstorder. } { eapply sumcaseenvtyped1; eauto. }
-    edestruct (fill_derivative eta') as [G' [d_s [A'' [B'' [C'']]]]]; [| eauto |]. eauto.
-    sinvert A''.
     split; try split; try split.
     + eauto.
     + intros.
-      eapply typing_subst. eapply B'. eauto. admit. admit. admit. admit. admit.
+      edestruct (fill_derivative eta'' G (CtxHasTy z (TySum s t))) as [G' [d_s [A'' [B'' [C'' D'']]]]]; [eauto | eapply C; eauto |]. 
+      sinvert A''.
+      destruct (ltac:(scongruence) : PfxSumInl p = p0).
+      sinvert H27.
+      assert (WFContext Gx). { eapply wf_fill_reflect. eauto. hauto drew: off. }
+      edestruct (D'' (CtxHasTy x s) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply NoConflictOn_disjoint. right. eapply DisjointSets_inj. intros. admit. } eapply context_derivative_sng; eauto.
+      eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
     + admit.
     + admit. (* need to know that eta' is empty on z for intertness here!! *)
 Admitted.
+
+(*
+d_{ eta''[x |-> p] } G(x : s) |- e' : d_{p'} r
+-----------------------------------------------
+
+-------------------------------------
+d_{eta''} G(z : s + t) |- e'[z / x]
+--------------------------------------------------
+d_{eta} d_{eta'} G(z : s+t) |- e'[z/x] : d_{p'} r
+*)
 
 (*
 G'(x : s'; y :t') |- e : r'

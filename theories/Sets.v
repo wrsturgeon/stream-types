@@ -1,3 +1,4 @@
+From Hammer Require Import Tactics.
 Definition set T := T -> Prop.
 Arguments set/ T.
 Hint Unfold set : core.
@@ -26,6 +27,20 @@ Definition DisjointSets {T} (a b : set T) : Prop := forall x,
   (a x -> ~b x) /\ (b x -> ~a x).
 Arguments DisjointSets {T} a b/.
 Hint Unfold DisjointSets : core.
+
+Axiom em : forall p : Prop, {p} + {~ p}.
+
+Theorem DisjointSets_inj {T} : forall (s : set T) (s' : set T),
+  (forall x, s x -> ~ s' x) -> DisjointSets s s'.
+Proof.
+sfirstorder use: em.
+Qed.
+
+Theorem DisjointSets_inj' {T} : forall (s : set T) (s' : set T),
+  (forall x, s' x -> ~ s x) -> DisjointSets s s'.
+Proof.
+sfirstorder use: em.
+Qed.
 
 (* Argument order matches notation: (Subset a b) === (a is a subset of b) *)
 Definition Subset {T} (little big : set T) : Prop := forall x,
