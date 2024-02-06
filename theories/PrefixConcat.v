@@ -3,6 +3,7 @@ From LambdaST Require Import
   Derivative
   Prefix
   Environment
+  Sets
   Types.
 
 (* Definition B.20 *)
@@ -228,6 +229,8 @@ Admitted.
 
 Theorem env_cat_maximal : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->
+  Subset s (dom eta) ->
+  Subset s (dom eta') ->
   MaximalOn s eta \/ MaximalOn s eta' <-> MaximalOn s eta''.
 Proof.
 intros.
