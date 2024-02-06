@@ -479,7 +479,6 @@ Proof.
 Qed.
 Hint Resolve empty_or_maximal_pfx_par_pair : core.
 
-(* TODO: will *)
 Theorem parlenvtyped : forall G Gz Gxy x y z p1 p2 s t r n,
   x <> y ->
   (~ fv G x) ->
@@ -506,7 +505,6 @@ Proof.
     cbn in Htest; destruct Htest; tauto.
 Qed.
 
-(* TODO: will *)
 Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
   x <> y ->
   (~ fv G x) ->
@@ -521,11 +519,19 @@ Theorem catrenvtyped1 :  forall G Gz Gxy x y z p1 s t r eta,
      (env_union (singleton_env x p1) (singleton_env y (emp t))))
   Gxy.
 Proof.
-  intros.
-  eapply env_subctx_bind'; eauto.
-Admitted.
+  cbn. intros. eapply env_subctx_bind'; [| eassumption | | eassumption | |]. { eassumption. }
+  - cbn. intros test p p' Htest Etest. destruct (eqb_spec y test). { congruence. }
+    destruct (eqb_spec x test). { congruence. } intro C; discriminate C.
+  - apply eqb_neq in H. rewrite eqb_sym in H. constructor; [| | shelve];
+    econstructor; [| eassumption | | apply emp_well_typed]; cbn; [rewrite H |]; rewrite eqb_refl; reflexivity.
+    Unshelve. left. cbn. intros v Hv. subst. rewrite eqb_refl. eexists. split; [reflexivity |]. apply emp_empty.
+  - split; [intros HH | intros _ HH]; specialize (HH _ eq_refl) as [p [Ep Hp]];
+    rewrite H2 in Ep; sinvert Ep; sinvert Hp. intros test Htest. cbn.
+    destruct (eqb_spec y test); [eexists; split; [reflexivity | apply emp_empty] |].
+    destruct (eqb_spec x test); [eexists; split; [reflexivity | assumption] |].
+    cbn in Htest; destruct Htest; tauto.
+Qed.
 
-(* TODO: will *)
 Theorem catrenvtyped2 :  forall G Gz Gxy x y z p1 p2 s t r eta,
   x <> y ->
   (~ fv G x) ->
@@ -542,7 +548,19 @@ Theorem catrenvtyped2 :  forall G Gz Gxy x y z p1 p2 s t r eta,
      (env_union (singleton_env x p1) (singleton_env y p2)))
   Gxy.
 Proof.
-Admitted.
+  cbn. intros. eapply env_subctx_bind'; [| eassumption | | eassumption | |]. { eassumption. }
+  - cbn. intros test p p' Htest Etest. destruct (eqb_spec y test). { congruence. }
+    destruct (eqb_spec x test). { congruence. } intro C; discriminate C.
+  - apply eqb_neq in H. rewrite eqb_sym in H. constructor; [| | shelve];
+    (econstructor; [| eassumption]); cbn; [rewrite H |]; rewrite eqb_refl; reflexivity.
+    Unshelve. right. cbn. intros v Hv. subst. rewrite H. rewrite eqb_refl.
+    eexists. split. { reflexivity. } assumption.
+  - split; [intros HH | intros _ HH]; specialize (HH _ eq_refl) as [p [Ep Hp]];
+    rewrite H2 in Ep; sinvert Ep; sinvert Hp. intros test Htest. cbn.
+    destruct (eqb_spec y test). { subst. eexists. split. { reflexivity. } assumption. }
+    destruct (eqb_spec x test). { subst. eexists. split. { reflexivity. } assumption. }
+    cbn in Htest; destruct Htest; tauto.
+Qed.
 
 (* TODO: will *)
 Theorem letenvtyped :  forall G D GD Gx x p s eta,

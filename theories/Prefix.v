@@ -122,7 +122,7 @@ Fixpoint emp ty :=
   | TyStar _ => PfxStarEmp
   end.
 
-Theorem emp_well_typed : forall s, PrefixTyped (emp s) s.
+Lemma emp_well_typed : forall s, PrefixTyped (emp s) s.
 Proof. induction s; cbn; constructor; assumption. Qed.
 Hint Resolve emp_well_typed : core.
 
@@ -140,5 +140,12 @@ Inductive EmptyPrefix : prefix -> Prop :=
       EmptyPrefix (PfxCatFst p)
   | EmptyPfxSumEmp :
       EmptyPrefix PfxSumEmp
+  | EmptyPfxStarEmp :
+      EmptyPrefix PfxStarEmp
   .
 Hint Constructors EmptyPrefix : core.
+
+Lemma emp_empty : forall ty,
+  EmptyPrefix (emp ty).
+Proof. induction ty; cbn; try constructor; try apply IHty1; apply IHty2. Qed.
+Hint Resolve emp_empty : core.
