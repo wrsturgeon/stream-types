@@ -54,27 +54,18 @@ Qed.
 Hint Resolve reflect_fill : core.
 
 Theorem fill_reflect_fun : forall h d, exists hd, Fill h d hd.
-Proof.
-Admitted.
+Proof. intros. exists (fill h d). apply reflect_fill. reflexivity. Qed.
 
-(* TODO: will *)
 Theorem fill_reflect_inj : forall h d d' hd,
   Fill h d hd ->
   Fill h d' hd ->
   d = d'.
 Proof.
-Admitted.
+  induction h; intros d d' hd Hf Hf'; sinvert Hf; sinvert Hf';
+  [reflexivity | | | |]; eapply IHh; eassumption.
+Qed.
 
-(* TODO: will. This one is cute: if your context is well formed,
-there is at most one way to arrive at it by filling a hole with x.
-I'm pretty sure this fact, for all variables is equivalent to WFContext! *)
-Theorem fill_reflect_var_localize : forall h h' hd x s s',
-  WFContext hd ->
-  Fill h (CtxHasTy x s) hd ->
-  Fill h' (CtxHasTy x s') hd ->
-  h = h' /\ s = s'.
-Proof.
-Admitted.
+(* had to move `fill_reflect_var_localize` after `fv_fill` *)
 
 Fixpoint fv_hole h :=
   match h with
@@ -105,6 +96,31 @@ Lemma fv_fill_fn : forall h plug,
   SetEq (fv_ctx (fill h plug)) (set_union (fv plug) (fv h)).
 Proof. intros. remember (fill h plug) as ctx eqn:E. apply reflect_fill in E. apply fv_fill. assumption. Qed.
 Hint Resolve fv_fill_fn : core.
+
+(* This one is cute: if your context is well formed,
+ * there is at most one way to arrive at it by filling a hole with x.
+ * I'm pretty sure this fact, for all variables is equivalent to WFContext! *)
+Theorem fill_reflect_var_localize : forall h h' hd x s s',
+  WFContext hd ->
+  Fill h (CtxHasTy x s) hd ->
+  Fill h' (CtxHasTy x s') hd ->
+  h = h' /\ s = s'.
+Proof.
+  induction h; intros h' hd x s s' Hw Hf Hf'; sinvert Hf.
+  - sinvert Hf'. split; reflexivity.
+  - sinvert Hw. sinvert Hf'. { specialize (IHh _ _ _ _ _ H1 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H3 | apply H6]; left; reflexivity.
+  - sinvert Hw. sinvert Hf'. 2: { specialize (IHh _ _ _ _ _ H2 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H6 | apply H3]; left; reflexivity.
+  - sinvert Hw. sinvert Hf'. { specialize (IHh _ _ _ _ _ H1 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H3 | apply H6]; left; reflexivity.
+  - sinvert Hw. sinvert Hf'. 2: { specialize (IHh _ _ _ _ _ H2 H3 H6) as [IH1 IH2]. subst. split; reflexivity. }
+    apply fv_fill in H3. apply fv_fill in H6. specialize (H3 x). specialize (H6 x). specialize (H4 x) as [D1 D2].
+    contradiction D1; [apply H6 | apply H3]; left; reflexivity.
+Qed.
 
 Inductive WFHole : hole -> Prop :=
   | WFHoleHere :
@@ -234,8 +250,6 @@ eapply reflect_fill in H.
 hauto l: on use: wf_fill.
 Qed.
 Hint Resolve wf_fill_reflect : core.
-
-(* TODO: delete everything below this line *)
 
 Lemma set_minus_fill_cancel : forall G z r,
   ~fv G z ->
