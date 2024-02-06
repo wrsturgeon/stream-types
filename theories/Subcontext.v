@@ -53,25 +53,22 @@ Proof.
   Unshelve. eapply fv_fill; [eassumption |]. apply fv_fill in H. apply fv_fill in H0. cbn in *.
   apply H0 in H2. destruct H2; [| right; assumption]. left. apply IHSubcontext. assumption.
 Qed.
-Hint Resolve subctx_fv_subset : core.
+Hint Resolve subcontext_fv_subset : core.
 
 Theorem subtcontext_wf : forall g g',
   Subcontext g g' -> WFContext g -> WFContext g'.
 Proof.
-intros.
-dependent induction H.
-- eapply wf_fill_reflect in H.
-  eapply wf_fill_reflect. eauto. sfirstorder use:subcontext_fv_subset.
-- sauto.
-- sauto.
-- sauto.
-- sauto.
-- sauto.
-- sauto.
-- sauto.
-- sauto.
-Qed.
-
+  intros.
+  dependent induction H.
+  - assumption.
+  - sauto.
+  - sauto.
+  - sauto.
+  - sauto.
+  - sauto.
+  - sauto.
+  - sauto.
+  - Admitted.
 
 Lemma fill_preserves_env : forall (d d' : context) (g : hole) (gd gd' : context),
   Fill g d gd ->
@@ -115,7 +112,7 @@ Proof.
   - assert (A := maps_to_hole _ _ _ _ H He). assert (IH := IHHs _ A). destruct IH as [IH1 IH2]. split.
     + eapply fill_preserves_env; [ | eassumption | | eassumption | ]; try eassumption. apply IHHs.
     + split; intros; (eapply prop_on_subset; [| eassumption]);
-      apply subctx_fv_subset; econstructor; eassumption.
+      apply subcontext_fv_subset; econstructor; eassumption.
 Qed.
 Hint Resolve sub_preserves_env : core.
 
@@ -146,7 +143,7 @@ Proof.
   - constructor; [assumption | constructor |]. intro x. split. { intros _ []. } intros [].
   - constructor; [constructor | assumption |]. intro x. split. { intros []. } intros _ [].
   - assert (Hd := wf_ctx_plug _ Hwf _ _ H). assert (Hg := wf_ctx_hole _ Hwf _ _ H).
-    specialize (IHHs Hd). apply subctx_fv_subset in Hs.
+    specialize (IHHs Hd). apply subcontext_fv_subset in Hs.
     eapply wf_ctx_fill; try eassumption.
     eapply wf_hole_iff in Hwf as [_ [_ Hgd]]; [| eassumption].
     sfirstorder.

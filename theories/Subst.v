@@ -22,10 +22,10 @@ Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
       TmComma (subst_var lhs x y) (subst_var rhs x y)
   | TmSemic lhs rhs =>
       TmSemic (subst_var lhs x y) (subst_var rhs x y)
-  | TmLet t bind bound body =>
+  | TmLet bind bound body =>
       let subst_bound := subst_var bound x y in
       let subst_body := if eqb bind x then (* shadowing *) body else (* no shadowing *) subst_var body x y in
-      TmLet t bind subst_bound subst_body
+      TmLet bind subst_bound subst_body
   | TmLetPar lhs rhs bound body =>
       let subst_bound := subst_str x y bound in
       let subst_body := if (eqb x lhs || eqb x rhs)%bool then body else subst_var body x y in
@@ -54,23 +54,13 @@ Arguments subst_var e/ x y.
 
 (* TODO: will. *)
 Theorem subst_not_fv : 
-    (forall e, forall x y, ~(fv e y) -> e = subst_var e x y)
-    /\
-    (forall args, forall x y, ~(fv args y) -> args = subst_var_argsterm args x y).
+  (forall e, forall x y, ~(fv e y) -> e = subst_var e x y) /\
+  (forall args, forall x y, ~(fv args y) -> args = subst_var_argsterm args x y).
 Proof.
-apply term_mutual; intros.
-- hauto lq: on rew: off.
-- hauto lq: on rew: off.
-- admit.
-- qauto l: on.
-- hauto lq: on rew: off.
-- assert (subst_var (TmLet bind bound body) x y = TmLet bind (if eqb bind y then bound else subst_var bound x y) (subst_var body x y)) by best.
-  rewrite -> H2.
-  cbn in H1.
-  assert (~ fv bound y) by best.
-  assert (~ (fv body y /\ bind <> y)) by best.
-  assert ((~ fv body y) \/ bind = y) by admit.
-  destruct H5.
-  + best.
-  + rewrite -> H5. admit.
-Admitted.
+  apply term_mutual; intros.
+  - hauto lq: on rew: off.
+  - hauto lq: on rew: off.
+  - admit.
+  - qauto l: on.
+  - hauto lq: on rew: off.
+  - Admitted.

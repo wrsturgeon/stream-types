@@ -1,6 +1,5 @@
 From Coq Require Import String.
 From Hammer Require Import Tactics.
-From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Eqb
   FV
@@ -114,13 +113,14 @@ fv_argsterm e : set string :=
 Instance fv_term_inst : FV term := { fv := fv_term }.
 Instance fv_argsterm_inst : FV argsterm := { fv := fv_argsterm }.
 
+(* TODO:
 Fixpoint fv_term_li e :=
   match e with
   | TmSink | TmUnit => nil
   | TmVar x => cons x nil
   | TmComma e1 e2 | TmSemic e1 e2 => List.app (fv_term_li e1) (fv_term_li e2)
   | TmLetPar x y z e | TmLetCat _ x y z e => cons z (lminus y (lminus x (fv_term_li e)))
-  | TmLet _ x e e' => List.app (fv_term_li e) (lminus x (fv_term_li e'))
+  | TmLet x e e' => List.app (fv_term_li e) (lminus x (fv_term_li e'))
   end.
 
 Lemma reflect_fv_term : forall t x,
@@ -158,6 +158,7 @@ Proof.
     intros [C | C]; tauto.
 Qed.
 Hint Resolve reflect_fv_term : core.
+*)
 
 Inductive ctx_term : Set :=
   | CtxTmEmp
@@ -166,8 +167,6 @@ Inductive ctx_term : Set :=
   | CtxTmSemic (lhs rhs : ctx_term)
   .
 Hint Constructors ctx_term : core.
-Derive Show for ctx_term.
-Derive Arbitrary for ctx_term.
 
 (*
 

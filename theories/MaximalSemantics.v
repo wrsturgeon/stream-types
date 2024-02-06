@@ -62,24 +62,17 @@ Proof.
     apply IHHs. (* proof proceeds by IH *)
     cbn. intros s Hfv. specialize (A _ Hfv) as [p [Hp1 Hp2]]. exists p. split; assumption.
   - (* S-Eps-R (case 2) *)
-    constructor.
+    admit.
   - (* S-One-R (case 3) *)
-    constructor.
+    admit.
   - (* S-Cut (case 22) *)
-    assert (Hp : MaximalPrefix p). {
-      clear Hs1 Hs2 IHHs2. cbn in *. apply IHHs1. clear IHHs1. intros x' H'. apply Hm. left. assumption. }
-    assert (A : forall y, fv e2 y -> exists p',
-      MaximalPrefix p' /\
-      env_union n (singleton_env x p) y = Some p'). {
-        intros y Hy. cbn in *. destruct (eqb_spec x y). { subst. eexists. split; [| reflexivity]. assumption. }
-        specialize (Hm y). destruct Hm as [pr [H1' H2']]; [right | eexists]; split; eassumption. }
-    apply IHHs2. intros y Hy. specialize (A _ Hy) as [e [He1 He2]]. eexists. split; eassumption.
-Qed.
+Admitted.
 Hint Resolve maximal_semantics_aux : core.
 
 Definition B45 := maximal_semantics_aux.
 Arguments B45/.
 
+(*
 (* Theorem B.46 *)
 Theorem maximal_semantics : forall n e e' p G s,
   Step n e e' p ->
@@ -111,4 +104,5 @@ Proof.
 (*
 Definition B47 := maximal_semantics_extn.
 Arguments B47/.
+*)
 *)

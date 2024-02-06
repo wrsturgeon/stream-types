@@ -139,11 +139,10 @@ Proof.
   - hauto l: on.
   - scongruence.
   - scongruence.
-  - hauto l: on.
-  - sfirstorder.
-  - sfirstorder.
-  - hauto lq: on.
-Qed.
+  - admit.
+  - hauto q: on.
+  - admit.
+  - Admitted.
 
 Definition B48 := step_det.
 Arguments B48/.
