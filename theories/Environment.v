@@ -34,11 +34,11 @@ Hint Unfold env_union : core.
 
 Definition env_subst (x : string) (p : prefix) (rho : env) : env :=
   env_union rho (singleton_env x p).
-Arguments env_subst x p rho x/.
+Arguments env_subst x p rho/ x.
 Hint Unfold env_subst : core.
 
 Definition env_drop (n : env) (x : string) : env := fun y =>
-  if eqb x y then None else n x.
+  if eqb x y then None else n y. (* <-- NOTE: This was wrong! *)
 Hint Unfold env_drop : core.
 
 Definition dom (n : env) : set string :=
@@ -560,7 +560,6 @@ Proof.
     cbn in Htest; destruct Htest; tauto.
 Qed.
 
-(* TODO: will *)
 Theorem letenvtyped :  forall G D GD Gx x p s eta,
   Agree Inert eta (singleton_env x p) (fv D) (singleton_set x) ->
   PrefixTyped p s ->
@@ -569,13 +568,64 @@ Theorem letenvtyped :  forall G D GD Gx x p s eta,
   EnvTyped eta GD ->
   EnvTyped (env_subst x p eta) Gx.
 Proof.
-Admitted.
+  intros. simpl env_subst. eapply env_subctx_bind'; [| eassumption | | eassumption | | eassumption].
+  { eassumption. } 2: { econstructor. { cbn. rewrite eqb_refl. reflexivity. } assumption. }
+  cbn in *. intros test p' p'' Htest Etest. destruct (eqb_spec x test). 2: { intro C. discriminate C. }
+  intro E. sinvert E. destruct H as [He Hm]. specialize (Hm eq_refl). Abort. (* TODO: not looking great... *)
 
-(* TODO: will *)
+Lemma env_typed_drop : forall n G,
+  EnvTyped n G ->
+  forall x,
+  ~fv G x ->
+  EnvTyped (env_drop n x) G.
+Proof.
+  intros n g Ht. induction Ht; cbn in *; intros. { constructor. }
+  - econstructor; [| eassumption]. unfold env_drop.
+    apply eqb_neq in H1. rewrite eqb_sym in H1. rewrite H1. assumption.
+  - apply Decidable.not_or in H as [HG HD]. constructor; [apply IHHt1 | apply IHHt2]; assumption.
+  - apply Decidable.not_or in H0 as [HG HD]. specialize (IHHt1 _ HG). specialize (IHHt2 _ HD).
+    constructor; [apply IHHt1; assumption | apply IHHt2; assumption |].
+    cbn. destruct H; [left | right]; intros test Hf; specialize (H _ Hf) as [p [Ep Hp]];
+    exists p; (split; [| assumption]); unfold env_drop;
+    (destruct (eqb_spec x test); [| assumption]); subst; tauto.
+Qed.
+Hint Resolve env_typed_drop : core.
+
+Lemma prop_on_drop : forall P s eta,
+  PropOn P s eta ->
+  forall x,
+  ~s x ->
+  PropOn P s (env_drop eta x).
+Proof.
+  intros P s eta Hp x Hx. cbn in *. intros test Htest. specialize (Hp _ Htest) as [p [Ep Hp]].
+  exists p. split; [| assumption]. unfold env_drop.
+  destruct (eqb_spec x test); [| assumption]. subst. tauto.
+Qed.
+Hint Resolve prop_on_drop : core.
+
 Theorem dropenvtyped :  forall G Gx GE x s eta,
+  ~fv G x -> (* <-- NOTE: needed to add this assumption, else not actually true *)
   Fill G (CtxHasTy x s) Gx ->
   Fill G CtxEmpty GE ->
   EnvTyped eta Gx ->
   EnvTyped (env_drop eta x) GE.
 Proof.
-Admitted.
+  induction G; cbn in *; intros.
+  - sinvert H1. constructor.
+  - sinvert H0. sinvert H1. sinvert H2. apply Decidable.not_or in H as [Hg HG].
+    constructor; [eapply IHG | apply env_typed_drop]; eassumption.
+  - sinvert H0. sinvert H1. sinvert H2. apply Decidable.not_or in H as [Hg HG].
+    constructor; [apply env_typed_drop | eapply IHG]; eassumption.
+  - sinvert H0. sinvert H1. sinvert H2. apply Decidable.not_or in H as [Hg HG].
+    constructor; [eapply IHG; eassumption | apply env_typed_drop; assumption |].
+    destruct H8; [left | right]; apply prop_on_drop; try assumption.
+    + cbn. intros test Htest. eapply (fv_fill _ _ _ H6) in Htest as [[] | ].
+      apply H. eapply fv_fill. { eassumption. } right. assumption.
+    + intro C. eapply fv_fill in C; [| eassumption]. destruct C as [[] |]. tauto.
+  - sinvert H0. sinvert H1. sinvert H2. apply Decidable.not_or in H as [Hg HG].
+    constructor; [apply env_typed_drop; assumption | eapply IHG; eassumption |].
+    destruct H8; [left | right]; apply prop_on_drop; try assumption.
+    + cbn. intros test Htest. eapply (fv_fill _ _ _ H6) in Htest as [[] | ].
+      apply H. eapply fv_fill. { eassumption. } right. assumption.
+    + intro C. eapply fv_fill in C; [| eassumption]. destruct C as [[] |]. tauto.
+Qed.
