@@ -71,6 +71,7 @@ Qed.
 
 
 Definition P_sound g (e : term) s (i : inertness) eta (e' : term) p :=
+  Typed g e s i ->
   WFContext g ->
   EnvTyped eta g ->
     PrefixTyped p s /\
@@ -78,6 +79,18 @@ Definition P_sound g (e : term) s (i : inertness) eta (e' : term) p :=
     Preserves i eta p (fv e)
 .
 Arguments P_sound g e s i eta e' p/.
+
+Definition P_sound_args g_in (e : argsterm) g_out eta_in (e' : argsterm) g_out' eta_out :=
+  WFContext g_out ->
+  WFContext g_in ->
+  EnvTyped eta_in g_in ->
+    EnvTyped eta_out g_out /\
+    SetEq (dom eta_out) (fv g_out) /\
+    (Agree Jumpy eta_in eta_out (fv g_in) (fv g_out)) /\
+    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped g_in' e' g_out')
+.
+
+Arguments P_sound_args g_in e g_out eta_in e' g_out' eta_out/.
 
 Theorem sound_sub : (forall (G G' : context) (e : term) (s : type) eta e' p i,
         Step eta e e' p ->
@@ -90,24 +103,23 @@ Theorem sound_sub : (forall (G G' : context) (e : term) (s : type) eta e' p i,
 Proof.
   unfold P_sound in *.
   intros.
-  edestruct H2 as [A [B C]]; [best use:subtcontext_wf | best use:sub_preserves_env|].
+  edestruct H2 as [A [B C]]; [eauto | best use:subtcontext_wf | best use:sub_preserves_env|].
   split; try split.
   + sfirstorder.
   + intros.
-    edestruct context_derivative_fun as [g'']. eapply sub_preserves_env. eauto. eauto.
-    eapply TSubCtx. eapply subctx_deriv. eauto. eauto. eauto.
-    eapply B. eauto. eauto.
+    edestruct context_derivative_fun as [g'']. eapply sub_preserves_env; eauto.
+    eapply TSubCtx. eapply subctx_deriv; eauto.
+    hauto l:on.
   + sfirstorder.
 Qed.
 
 
 Theorem sound : forall G e s i eta e' p,
-  Typed G e s i ->
   Step eta e e' p ->
   P_sound G e s i eta e' p.
 Proof.
   intros. generalize dependent G. generalize dependent s. generalize dependent i.
-  induction H0; intros i s G Ht; intros; (dependent induction Ht; try solve [eapply sound_sub; eauto]); unfold P_sound in *; intros.
+  induction H; intros i s G; intro Ht;  (dependent induction Ht; try solve [eapply sound_sub; eauto; unfold P_sound; eauto]).
   - admit.
   - admit.
   - split; try split.
@@ -212,45 +224,8 @@ Proof.
 Admitted.
 
 
-(* Theorem sound' : forall G e s i eta e' p,
-    Typed G e s i ->
-    Step eta e e' p ->
-    P_sound G e s i eta e' p.
-Proof.
-  - 
-  - 
-  - 
-Admitted. *)
 
-(*
-d_{ eta''[x |-> p] } G(x : s) |- e' : d_{p'} r
------------------------------------------------
 
--------------------------------------
-d_{eta''} G(z : s + t) |- e'[z / x]
---------------------------------------------------
-d_{eta} d_{eta'} G(z : s+t) |- e'[z/x] : d_{p'} r
-*)
-
-(*
-G'(x : s'; y :t') |- e : r'
----------------------------
-G'(x : s'; z : t') |- e[z/y] : r'      . |- sinktm : s'
---------------------------------------------
-G'(.;z : t') |- let x = sinktm in e[z/y] : r'       G'(z : t') <: G'(.;z : t')
----------------------------------------------------------
-G'(z : t') |- let x = sinktm in e[z/y] : r
-*)
-
-Definition P_sound_args g_in (e : argsterm) g_out eta_in (e' : argsterm) g_out' eta_out :=
-  WFContext g_out ->
-  WFContext g_in ->
-  EnvTyped eta_in g_in ->
-    EnvTyped eta_out g_out /\
-    SetEq (dom eta_out) (fv g_out) /\
-    (Agree Jumpy eta_in eta_out (fv g_in) (fv g_out)) /\
-    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped g_in' e' g_out')
-.
 
 (* this is basically how this theorem needs to go, but we have to figure out how to tie the knot with the regular soundness theorem. *)
 Theorem soundargs : forall g_in e g_out g_out' eta_in e' eta_out,

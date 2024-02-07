@@ -84,6 +84,15 @@ ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
         ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
 .
 
+Scheme Step_ind' := Induction for Step Sort Prop
+with ArgsStep_ind' := Induction for ArgsStep Sort Prop.
+Combined Scheme Step_mutual from Step_ind', ArgsStep_ind'.
+
+Hint Constructors Step : core.
+Hint Constructors ArgsStep : core.
+
+Check Step_mutual.
+
 (* todo: will 
 stronger version: eta eta', noconflict on fv(e).
 Need to derive a mutual induction principle for
