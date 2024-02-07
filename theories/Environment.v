@@ -100,9 +100,17 @@ Theorem prop_on_contains : forall P s s' n,
   PropOn P s' n.
 Proof. sfirstorder. Qed.
 
-Theorem prop_on_union: forall P s s' n,
+Theorem prop_on_set_union: forall P s s' n,
   PropOn P (set_union s s') n <-> PropOn P s n /\ PropOn P s' n.
 Proof. sfirstorder. Qed.
+
+Theorem prop_on_minus : forall P x s eta p,
+  P p ->
+  PropOn P (set_minus s (singleton_set x)) eta ->
+  PropOn P s (env_union eta (singleton_env x p)).
+Proof.
+Admitted.
+
 
 (* Agree Inert means "including empty on agreement";
  * Agree Jumpy means "not including empty on agreement." *)
@@ -300,6 +308,7 @@ Lemma prop_on_weakening_alt : forall P nl nr ctx,
   PropOn P ctx (env_union nl nr).
 Proof. sfirstorder use: prop_on_item_weakening_alt. Qed.
 Hint Resolve prop_on_weakening_alt : core.
+
 
 Lemma empty_on_weakening_alt : forall nl nr ctx,
   NoConflict nl nr ->

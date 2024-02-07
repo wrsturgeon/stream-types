@@ -234,12 +234,12 @@ induction g; intros.
   destruct (ltac:(scongruence) : p = p0).
   sfirstorder use:derivative_emp'.
 - sinvert H0.
-  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_union.
-  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_union.
+  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
+  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
   hauto lq: on.
 - sinvert H0.
-  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_union.
-  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_union.
+  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
+  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
   hauto lq: on.
 Qed.
 

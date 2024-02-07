@@ -78,6 +78,7 @@ Inductive Typed : context -> term -> type -> inertness -> Prop :=
       ContextDerivative eta Gz Gz' ->
       Typed Gx e1 r i1 ->
       Typed Gy e2 r i2 ->
+      inert_guard (eta z = Some PfxSumEmp) i ->
       Typed Gz' (TmPlusCase eta r z x e1 y e2) r i
       
 with ArgsTyped : context -> argsterm -> context -> Prop :=
@@ -122,7 +123,7 @@ induction H; intros.
 - best.
 - best.
 - best.
-- best.
+- eapply TPlusCase; eauto. unfold inert_guard. best.
 Admitted.
 
 

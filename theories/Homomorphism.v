@@ -42,7 +42,7 @@ apply (lex_ind P_hom); unfold P_hom in *; intros.
 - sinvert H3; unfold EnvConcat in *; econstructor; qauto l: on use:pfx_cat_unique.
 - sauto lq: on rew: off.
 - sinvert H5. sinvert H7. sinvert H8. sinvert H6.
-  + econstructor. hauto l: on. qauto l: on use:pfx_cat_maximal.
-  + sinvert H8. sinvert H6. econstructor; [ eauto | best use:pfx_cat_maximal |].
+  + econstructor. hauto l: on. qauto l: on use:pfx_cat_maximal'.
+  + sinvert H8. sinvert H6. econstructor; [ eauto | |]. eapply pfx_cat_maximal. eauto. best use:sound.
 intros.
 Admitted.

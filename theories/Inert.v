@@ -16,9 +16,10 @@ Definition i_ub i1 i2 i3 :=
   (i1 = Jumpy \/ i2 = Jumpy) -> i3 = Jumpy.
 Hint Unfold i_ub : i1 i2 i3.
 
-(* if p, then i can be inert.*)
+(* if i is required to be inert, then p must hold.*)
 Definition inert_guard (p : Prop) (i : inertness) : Prop :=
-  ~p -> i = Jumpy.
+  i = Inert -> p.
+Hint Unfold inert_guard : core.
 
 Theorem i_ub_is_ub : forall i1 i2 i3,
   i_ub i1 i2 i3 ->

@@ -137,9 +137,9 @@ Proof.
 
       eapply (TLet (hole_compose G' (HoleSemicL HoleHere (CtxHasTy z s'0))) CtxEmpty (fill G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)))).
         admit. (* todo: will: theorem about hole compose free variables should be union. *)
-        best use:sink_tm_typing.
-        best use:hole_compose_fill,reflect_fill.
-        best use:hole_compose_fill.
+        sfirstorder use:sink_tm_typing.
+        admit. (* best use:hole_compose_fill,reflect_fill. *)
+        admit. (* this used to work: best use:hole_compose_fill. *)
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
     + admit.
   - split; try split; try split.
@@ -148,11 +148,11 @@ Proof.
       assert (Derivative (emp r) r r) by best use:derivative_emp.
       destruct (ltac:(sfirstorder use:derivative_det) : r = s').
       edestruct (env_cat_exists_when_typed eta') as [eta''0 [A [B C]]]; eauto.
-      destruct (ltac:(best use:env_cat_unique) : eta'' = eta''0).
-      eapply TPlusCase; eauto.
+      destruct (ltac:(hauto l:on use:env_cat_unique) : eta'' = eta''0).
+      eapply TPlusCase; eauto. 
     + assert (Subset (singleton_set z) (fv (TmPlusCase eta' r z x e1 y e2))) by sfirstorder.
       intro HM. eapply (prop_on_contains) in HM; [|eauto].
-      edestruct (env_cat_maximal (singleton_set z) eta' eta eta''); eauto.
+      edestruct (env_cat_maximal (singleton_set z) eta' eta eta''); eauto. { sauto q:on dep: on use:maps_to_has_type_reflect. } { sfirstorder. }
       assert (Hcontra : MaximalPrefix PfxSumEmp) by best.
       sinvert Hcontra.
     + best use:emp_empty.
@@ -165,19 +165,31 @@ Proof.
     destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
     assert (Hty : PrefixTyped (PfxSumInl p) (TySum s t)) by qauto l: on use:maps_to_has_type_reflect.
     sinvert Hty.
-    edestruct H11 as [A' [B' [C' D']]]. { eapply wf_fill_reflect. eauto. sfirstorder. } { eapply sumcaseenvtyped1; eauto. }
+    edestruct H12 as [A' [B' [C' D']]]. { eapply wf_fill_reflect. eauto. sfirstorder. } { eapply sumcaseenvtyped1; eauto. }
     split; try split; try split.
     + eauto.
     + intros.
       edestruct (fill_derivative eta'' G (CtxHasTy z (TySum s t))) as [G' [d_s [A'' [B'' [C'' D'']]]]]; [eauto | eapply C; eauto |]. 
       sinvert A''.
       destruct (ltac:(scongruence) : PfxSumInl p = p0).
-      sinvert H27.
+      sinvert H28.
       assert (WFContext Gx). { eapply wf_fill_reflect. eauto. hauto drew: off. }
       edestruct (D'' (CtxHasTy x s) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply NoConflictOn_disjoint. right. eapply DisjointSets_inj. intros. admit. } eapply context_derivative_sng; eauto.
       eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
-    + admit.
-    + admit. (* need to know that eta' is empty on z for intertness here!! *)
+    + intros.
+      assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
+      assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ | eauto | | | | ]. eauto. admit. admit. admit. hauto lq: on rew: off.
+      edestruct (H23 z) as [p00 [L R]]. hauto lq: on rew: off.
+      destruct (ltac:(scongruence) : PfxSumInl p = p00).
+      sinvert R.
+      eapply C'. eapply prop_on_minus. eauto. qauto l: on.
+    + intros.
+      assert (eta' z = Some PfxSumEmp) by sfirstorder.
+      assert (EmptyOn (singleton_set z) eta) by hauto q: on use:prop_on_contains.
+      assert (EmptyOn (singleton_set z) eta''). eapply env_cat_empty; [eauto | sauto].
+      edestruct (H25 z) as [p'' []]; eauto.
+      destruct (ltac:(scongruence) : PfxSumInl p = p'').
+      sinvert H27.
 Admitted.
 
 (*

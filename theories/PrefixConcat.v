@@ -3,6 +3,8 @@ From LambdaST Require Import
   Derivative
   Prefix
   Environment
+  FV
+  Context
   Sets
   Types.
 
@@ -27,6 +29,7 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
       PrefixConcat (PfxCatFst p) (PfxCatBoth p' p''') (PfxCatBoth p'' p''')
   | PfxCatCatBoth : forall p p' p'' p''',
       PrefixConcat p' p'' p''' ->
+      MaximalPrefix p ->
       PrefixConcat (PfxCatBoth p p') p'' (PfxCatBoth p p''')
   | PfxCatSumEmp : forall p,
       PrefixConcat PfxSumEmp p p
@@ -48,15 +51,54 @@ Inductive PrefixConcat : prefix -> prefix -> prefix -> Prop :=
       PrefixConcat (PfxStarFirst p) (PfxCatBoth p' p''') (PfxStarRest p'' p''')
   | PfxCatStarRest : forall p p' p'' p''',
       PrefixConcat p' p'' p''' ->
+      MaximalPrefix p ->
       PrefixConcat (PfxStarRest p p') p'' (PfxStarRest p p''')
   .
 Hint Constructors PrefixConcat : core.
+(* Theorem B.21, part I *)
+Theorem pfx_cat_unique : forall p p' p1'' p2'',
+  PrefixConcat p p' p1'' ->
+  PrefixConcat p p' p2'' ->
+  p1'' = p2''.
+Proof.
+  intros p p' p1'' p2'' H1 H2. generalize dependent p2''. induction H1; intros; sinvert H2;
+  try apply IHPrefixConcat in H3;
+  try apply IHPrefixConcat in H5;
+  try apply IHPrefixConcat in H0;
+  subst; try reflexivity.
+  f_equal; [apply IHPrefixConcat1 | apply IHPrefixConcat2]; assumption.
+  sfirstorder. sfirstorder.
+Qed.
+Hint Resolve pfx_cat_unique : core.
 
+
+
+(* TODO: will. previous version of this theorem was false because of par, we should only need one direction.
+Also requires that the first prefix have *some type at all* so that you can pick that maximality condition out of the typing to prove (MaximalPrefix (PfxCatBoth p p')).
+We might want to just bake MaximalPrefix p into the concat rule in case this becomes a problem when it comes time to use this theorem.
+*)
 Theorem pfx_cat_maximal : forall p p' p'',
   PrefixConcat p p' p'' ->
-  MaximalPrefix p \/ MaximalPrefix p' <-> MaximalPrefix p''.
+  MaximalPrefix p \/ MaximalPrefix p' -> MaximalPrefix p''.
 Proof.
-  intros p p' p'' H. induction H. { repeat constructor. }
+  intros. induction H. 
+  - sfirstorder.
+  - sauto lq: on.
+  - sfirstorder.
+  - sauto lq: on rew: off.
+  - sauto lq: on.
+  - best.
+  - best.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sfirstorder.
+  - sauto lq: on.
+  - sauto lq: on.
+  - best.
+Qed.
+  (* sauto lq: on rew: off. { repeat constructor. }
   - sinvert H. { tauto. } split. { constructor. } right. assumption.
   - split. { constructor. } left. assumption.
   - split; intros.
@@ -91,24 +133,71 @@ Proof.
   - split; intros.
     + destruct H0. { sinvert H0. constructor. { assumption. } apply IHPrefixConcat. left. assumption. }
       constructor; [| apply IHPrefixConcat; right; assumption]. admit.
-    + sinvert H0. apply IHPrefixConcat in H4 as [H4 | H4]. { left. constructor; assumption. } right. assumption.
+    + sinvert H0. apply IHPrefixConcat in H4 as [H4 | H4]. { left. constructor; assumption. } right. assumption. *)
 (* TODO: will: a few similar-looking cases are all either not true or not provable without induction/lemmas *)
-Admitted.
+(* TODO: will (joe note: looks like because it's not true! should only need one dir.)*)
 
-(* Theorem B.21, part I *)
-Theorem pfx_cat_unique : forall p p' p1'' p2'',
-  PrefixConcat p p' p1'' ->
-  PrefixConcat p p' p2'' ->
-  p1'' = p2''.
+(* partial converse: if p . p' is maximal, than p' must be. *)
+Theorem pfx_cat_maximal' : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  MaximalPrefix p'' -> MaximalPrefix p'.
 Proof.
-  intros p p' p1'' p2'' H1 H2. generalize dependent p2''. induction H1; intros; sinvert H2;
-  try apply IHPrefixConcat in H3;
-  try apply IHPrefixConcat in H5;
-  try apply IHPrefixConcat in H0;
-  subst; try reflexivity.
-  f_equal; [apply IHPrefixConcat1 | apply IHPrefixConcat2]; assumption.
+  intros. generalize dependent H0. induction H. 
+  - sfirstorder.
+  - sauto lq: on.
+  - sfirstorder.
+  - sauto lq: on rew: off.
+  - sauto lq: on.
+  - best.
+  - best.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sfirstorder.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto.
 Qed.
-Hint Resolve pfx_cat_unique : core.
+
+Theorem pfx_cat_maximal'' : forall p, MaximalPrefix p -> exists p', PrefixConcat p p' p.
+Proof.
+intros.
+induction H.
+- best.
+- best.
+- best.
+- best.
+- best.
+- best.
+- best.
+- best.
+Qed.
+
+Theorem pfx_cat_maximal''' : forall p p' p'', MaximalPrefix p -> PrefixConcat p p' p'' -> p = p''.
+Proof.
+intros.
+generalize dependent p'.
+generalize dependent p''.
+induction H.
+- best.
+- best.
+- best.
+- best.
+- best.
+- best.
+- best.
+- best.
+Qed.
+
+Theorem pfx_cat_empty : forall p p' p'',
+  PrefixConcat p p' p'' ->
+  EmptyPrefix p /\ EmptyPrefix p' <-> EmptyPrefix p''.
+Proof.
+intros.
+induction H; sauto lq: on.
+Qed.
+
 
 (* Theorem B.21, part II *)
 Theorem pfx_cat_exists_when_typed : forall p p' s dps,
@@ -152,14 +241,48 @@ Admitted.
 Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->
   PrefixConcat pq r s ->
-  exists qr, PrefixConcat p qr s /\ PrefixConcat q r qr.
+  exists qr, (PrefixConcat p qr s /\ PrefixConcat q r qr /\ (MaximalPrefix q -> q = qr)).
 Proof.
-  intros p q r s pq Hl Hr. generalize dependent r. generalize dependent s. induction Hl; intros; (* sauto lq: on. *)
-  try (sinvert H; sinvert Hr; eexists; repeat constructor; assumption);
-  try (eexists; repeat constructor; assumption); sinvert Hr; try specialize (IHHl _ _ H0) as [qr1 [Hqr1 Hqr2]];
-  try specialize (IHHl _ _ H3) as [qr [Hqr1 Hqr2]]; try (eexists; repeat constructor; eassumption).
-  specialize (IHHl1 _ _ H1) as [qr1 [Hqr1l Hqr1r]]. specialize (IHHl2 _ _ H4) as [qr2 [Hqr2l Hqr2r]].
-  eexists. repeat constructor; eassumption.
+  intros p q r s pq Hl Hr. generalize dependent r. generalize dependent s. induction Hl; intros. (* sauto lq: on. *)
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - sinvert Hr. 
+    edestruct (pfx_cat_maximal'' p''); eauto.
+    edestruct IHHl as [p0 [A [B C]]]; eauto.
+    exists (PfxCatBoth p0 p'''0).
+    split; try split.
+    + best.
+    + assert (p' = p0) by best use:pfx_cat_maximal'.
+      destruct H0.
+      eapply PfxCatCatBoth.
+      eauto.
+      best use:pfx_cat_maximal'.
+    + intros. sinvert H0.
+      best use:pfx_cat_maximal'''.
+  - best.
+  - best use:pfx_cat_maximal'''.
+  - best.
+  - best.
+  - best use:pfx_cat_maximal'''.
+  - best.
+  - best.
+  - sinvert Hr. 
+    edestruct (pfx_cat_maximal'' p''); eauto.
+    edestruct IHHl as [p0 [A [B C]]]; eauto.
+    exists (PfxCatBoth p0 p'''0).
+    split; try split.
+    + best.
+    + assert (p' = p0) by best use:pfx_cat_maximal'.
+      destruct H0.
+      eapply PfxCatCatBoth.
+      eauto.
+      best use:pfx_cat_maximal'.
+    + intros. sinvert H0.
+      best use:pfx_cat_maximal'''.
+  - best.
 Qed.
 Hint Resolve pfx_cat_assoc : core.
 
@@ -172,7 +295,7 @@ Lemma pfx_cat_assoc_eq : forall p q r pq qr s1 s2,
   s1 = s2.
 Proof.
   intros p q r pq qr s1 s2 Hpq Hqr Hs1 Hs2.
-  assert (A := pfx_cat_assoc _ _ _ _ _ Hpq Hs1). destruct A as [qr' [H1 H2]].
+  assert (A := pfx_cat_assoc _ _ _ _ _ Hpq Hs1). destruct A as [qr' [H1 [H2 _]]].
   assert (A := pfx_cat_unique _ _ _ _ Hqr H2). clear H2. symmetry in A. subst.
   assert (A := pfx_cat_unique _ _ _ _ Hs2 H1). subst. reflexivity.
 Qed.
@@ -227,13 +350,30 @@ Proof.
 intros.
 Admitted.
 
-Theorem env_cat_maximal : forall s eta eta' eta'',
+Theorem env_cat_maximal : forall s eta eta' eta'' g,
+  EnvTyped eta g ->
   EnvConcat eta eta' eta'' ->
   Subset s (dom eta) ->
   Subset s (dom eta') ->
-  MaximalOn s eta \/ MaximalOn s eta' <-> MaximalOn s eta''.
+  Subset s (fv g) ->
+  MaximalOn s eta \/ MaximalOn s eta' -> MaximalOn s eta''.
 Proof.
 intros.
-induction H.
+unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
+intros.
+destruct H4.
++ assert (exists p, eta x = Some p) by best.
+  edestruct H6 as [p].
+  assert (MaximalPrefix p) by hauto l: on.
+  assert (exists p', eta' x = Some p') by sfirstorder.
+  edestruct H9 as [p'].
+  assert (exists p'', eta'' x = Some p'') by sfirstorder.
+  edestruct H11 as [p''].
 Admitted.
 
+Theorem env_cat_empty : forall s eta eta' eta'',
+  EnvConcat eta eta' eta'' ->
+  EmptyOn s eta /\ EmptyOn s eta' -> EmptyOn s eta''.
+Proof.
+intros.
+Admitted.
