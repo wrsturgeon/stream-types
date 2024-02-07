@@ -51,10 +51,6 @@ Inductive Typed : context -> term -> type -> inertness -> Prop :=
   | TVar : forall G x s Gxs i,
       Fill G (CtxHasTy x s) Gxs ->
       Typed Gxs (TmVar x) s i
-  | TSubCtx : forall G G' e s i,
-      Subcontext G G' ->
-      Typed G' e s i ->
-      Typed G e s i
   | TLet : forall G D Gxs x e e' s t GD i,
       ~fv G x ->
       Typed D e s Inert ->
@@ -80,6 +76,10 @@ Inductive Typed : context -> term -> type -> inertness -> Prop :=
       Typed Gy e2 r i2 ->
       inert_guard (eta z = Some PfxSumEmp) i ->
       Typed Gz' (TmPlusCase eta r z x e1 y e2) r i
+  | TSubCtx : forall G G' e s i,
+      Subcontext G G' ->
+      Typed G' e s i ->
+      Typed G e s i
       
 with ArgsTyped : context -> argsterm -> context -> Prop :=
   | T_ATmEmpty : forall g, ArgsTyped g ATmEmpty CtxEmpty
@@ -124,7 +124,7 @@ induction H; intros.
 - best.
 - best.
 - eapply TPlusCase; eauto. unfold inert_guard. best.
-Admitted.
+Qed.
 
 
 (* TODO:

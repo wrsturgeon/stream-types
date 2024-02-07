@@ -1,3 +1,4 @@
+Require Import Coq.Program.Equality.
 From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
@@ -69,15 +70,61 @@ split; intros.
 Qed.
 
 
-Definition P_sound g (e : term) s i eta (e' : term) p :=
+Definition P_sound g (e : term) s (i : inertness) eta (e' : term) p :=
   WFContext g ->
   EnvTyped eta g ->
     PrefixTyped p s /\
     (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed g' e' s' Inert) /\
     Preserves i eta p (fv e)
 .
+Arguments P_sound g e s i eta e' p/.
+
+Theorem sound_sub : (forall (G G' : context) (e : term) (s : type) eta e' p i,
+        Step eta e e' p ->
+        Subcontext G G' ->
+        Typed G' e s i ->
+        P_sound G' e s i eta e' p ->
+        P_sound G e s i eta e' p
+)
+  .
+Proof.
+  unfold P_sound in *.
+  intros.
+  edestruct H2 as [A [B C]]; [best use:subtcontext_wf | best use:sub_preserves_env|].
+  split; try split.
+  + sfirstorder.
+  + intros.
+    edestruct context_derivative_fun as [g'']. eapply sub_preserves_env. eauto. eauto.
+    eapply TSubCtx. eapply subctx_deriv. eauto. eauto. eauto.
+    eapply B. eauto. eauto.
+  + sfirstorder.
+Qed.
+
 
 Theorem sound : forall G e s i eta e' p,
+  Typed G e s i ->
+  Step eta e e' p ->
+  P_sound G e s i eta e' p.
+Proof.
+  intros. generalize dependent G. generalize dependent s. generalize dependent i.
+  induction H0; intros i s G Ht; intros; (dependent induction Ht; try solve [eapply sound_sub; eauto]).
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+Admitted.
+
+
+Theorem sound' : forall G e s i eta e' p,
     Typed G e s i ->
     Step eta e e' p ->
     P_sound G e s i eta e' p.

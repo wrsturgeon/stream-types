@@ -73,10 +73,6 @@ Hint Resolve pfx_cat_unique : core.
 
 
 
-(* TODO: will. previous version of this theorem was false because of par, we should only need one direction.
-Also requires that the first prefix have *some type at all* so that you can pick that maximality condition out of the typing to prove (MaximalPrefix (PfxCatBoth p p')).
-We might want to just bake MaximalPrefix p into the concat rule in case this becomes a problem when it comes time to use this theorem.
-*)
 Theorem pfx_cat_maximal : forall p p' p'',
   PrefixConcat p p' p'' ->
   MaximalPrefix p \/ MaximalPrefix p' -> MaximalPrefix p''.
@@ -98,45 +94,7 @@ Proof.
   - sauto lq: on.
   - best.
 Qed.
-  (* sauto lq: on rew: off. { repeat constructor. }
-  - sinvert H. { tauto. } split. { constructor. } right. assumption.
-  - split. { constructor. } left. assumption.
-  - split; intros.
-    + constructor; [apply IHPrefixConcat1 | apply IHPrefixConcat2];
-      destruct H1; sinvert H1; try (left; assumption); right; assumption.
-    + sinvert H1. apply IHPrefixConcat1 in H4. apply IHPrefixConcat2 in H5.
-      destruct H4; destruct H5.
-      * left. constructor; assumption.
-      * admit. (* TODO: interesting mismatch *)
-      * admit.
-      * right. constructor; assumption.
-  - split; intros. { destruct H0; sinvert H0. } sinvert H0.
-  - split; intros.
-    + constructor. { apply IHPrefixConcat. right. destruct H0; sinvert H0. assumption. }
-      clear IHPrefixConcat. destruct H0; sinvert H0. assumption.
-    + sinvert H0. apply IHPrefixConcat in H3 as [H3 | H3]; right; constructor; try assumption.
-      admit.
-  - split; intros.
-    + constructor; [| apply IHPrefixConcat; destruct H0; [| right; assumption]; sinvert H0; left; assumption].
-      destruct H0; [sinvert H0; assumption |]. admit.
-    + sinvert H0. apply IHPrefixConcat in H4 as [H4 | H4]; [left; constructor | right]; assumption.
-  - split; intros. { destruct H. { sinvert H. } assumption. } right. assumption.
-  - split; intros. { constructor. apply IHPrefixConcat. sinvert H0; [sinvert H1; left | right]; assumption. }
-    sinvert H0. apply IHPrefixConcat in H2 as [H2 | H2]; [left; constructor | right]; assumption.
-  - split; intros. { constructor. apply IHPrefixConcat. sinvert H0; [sinvert H1; left | right]; assumption. }
-    sinvert H0. apply IHPrefixConcat in H2 as [H2 | H2]; [left; constructor | right]; assumption.
-  - split; intros. { destruct H. { sinvert H. } assumption. } right. assumption.
-  - split; [| left]; constructor.
-  - split; intros. { destruct H0; sinvert H0. } sinvert H0.
-  - split; intros. { destruct H0; sinvert H0. constructor; [apply IHPrefixConcat; right |]; assumption. }
-    sinvert H0. right. constructor; [| assumption]. admit.
-  - split; intros.
-    + destruct H0. { sinvert H0. constructor. { assumption. } apply IHPrefixConcat. left. assumption. }
-      constructor; [| apply IHPrefixConcat; right; assumption]. admit.
-    + sinvert H0. apply IHPrefixConcat in H4 as [H4 | H4]. { left. constructor; assumption. } right. assumption. *)
-(* TODO: will: a few similar-looking cases are all either not true or not provable without induction/lemmas *)
-(* TODO: will (joe note: looks like because it's not true! should only need one dir.)*)
-
+  
 (* partial converse: if p . p' is maximal, than p' must be. *)
 Theorem pfx_cat_maximal' : forall p p' p'',
   PrefixConcat p p' p'' ->
@@ -160,18 +118,12 @@ Proof.
   - sauto.
 Qed.
 
-Theorem pfx_cat_maximal'' : forall p, MaximalPrefix p -> exists p', PrefixConcat p p' p.
+Theorem pfx_cat_maximal'' : forall p,
+  MaximalPrefix p ->
+  exists p', PrefixConcat p p' p /\ EmptyPrefix p'.
 Proof.
 intros.
-induction H.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
+induction H; sauto lq: on.
 Qed.
 
 Theorem pfx_cat_maximal''' : forall p p' p'', MaximalPrefix p -> PrefixConcat p p' p'' -> p = p''.
@@ -251,7 +203,7 @@ Qed.
 Lemma pfx_cat_assoc : forall p q r s pq,
   PrefixConcat p q pq ->
   PrefixConcat pq r s ->
-  exists qr, (PrefixConcat p qr s /\ PrefixConcat q r qr /\ (MaximalPrefix q -> q = qr)).
+  exists qr, (PrefixConcat p qr s /\ PrefixConcat q r qr /\ (MaximalPrefix q -> q = qr)). (* had to strengthen this. *)
 Proof.
   intros p q r s pq Hl Hr. generalize dependent r. generalize dependent s. induction Hl; intros. (* sauto lq: on. *)
   - best.
