@@ -201,13 +201,15 @@ Proof.
   try apply H0 in Hf; try apply IHHoleDerivative in Hf; try (left; assumption); right; assumption.
 Qed.
 
-(* TODO: will *)
 Theorem context_derivative_wf : forall eta g g',
   WFContext g ->
   ContextDerivative eta g g' ->
   WFContext g'.
 Proof.
-Admitted.
+  intros eta g g' Hw Hd. generalize dependent Hw. induction Hd; cbn in *; intros; constructor;
+  sinvert Hw; try apply IHHd1; try apply IHHd2; try assumption; split; intros Hf C;
+  apply fv_context_derivative in Hd1; apply fv_context_derivative in Hd2; cbn in *; sfirstorder.
+Qed.
 
 Theorem context_derivative_wf' : forall eta g g',
   WFContext g' ->
