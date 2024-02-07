@@ -133,13 +133,70 @@ Theorem typed_wf_term : forall G x T,
   WFTerm (fv G) x.
 *)
 
+Theorem fv_hole_minus : forall GD,
+  WFContext GD ->
+  forall G D,
+  Fill G D GD ->
+  SetEq (fv G) (set_minus (fv GD) (fv D)).
+Proof.
+  intros GD Hw G D Hf. generalize dependent GD. generalize dependent D.
+  induction G; cbn in *; intros.
+  - sinvert Hf. split; tauto.
+  - sinvert Hf. sinvert Hw. eassert (A := IHG _ _ H1 H3). split; intros.
+    2: { repeat destruct H. { right. apply A. split; assumption. } left. assumption. }
+    split. { destruct H. { right. assumption. } apply A in H as [H _]. left. assumption. }
+    intro C. destruct H; [| apply A in H; tauto].
+    assert (H0 := H1). eapply wf_hole_iff in H0 as [Hh [HD Hd]]; [| eassumption].
+    apply fv_fill in H3. apply H4 in H. apply H. apply H3. left. assumption.
+  - sinvert Hf. sinvert Hw. eassert (A := IHG _ _ H2 H3). split; intros.
+    2: { repeat destruct H. { left. assumption. } right. apply A. split; assumption. }
+    split. { destruct H. { left. assumption. } apply A in H as [H _]. right. assumption. }
+    intro C. destruct H; [| apply A in H; tauto].
+    apply fv_fill in H3. apply H4 in H; [destruct H |]. apply H3. left. assumption.
+  - sinvert Hf. sinvert Hw. eassert (A := IHG _ _ H1 H3). split; intros.
+    2: { repeat destruct H. { right. apply A. split; assumption. } left. assumption. }
+    split. { destruct H. { right. assumption. } apply A in H as [H _]. left. assumption. }
+    intro C. destruct H; [| apply A in H; tauto].
+    assert (H0 := H1). eapply wf_hole_iff in H0 as [Hh [HD Hd]]; [| eassumption].
+    apply fv_fill in H3. apply H4 in H. apply H. apply H3. left. assumption.
+  - sinvert Hf. sinvert Hw. eassert (A := IHG _ _ H2 H3). split; intros.
+    2: { repeat destruct H. { left. assumption. } right. apply A. split; assumption. }
+    split. { destruct H. { left. assumption. } apply A in H as [H _]. right. assumption. }
+    intro C. destruct H; [| apply A in H; tauto].
+    apply fv_fill in H3. apply H4 in H; [destruct H |]. apply H3. left. assumption.
+Qed.
+Hint Resolve fv_hole_minus : core.
+
 Theorem typing_fv : forall G e s i,
   Typed G e s i ->
   forall x,
   fv e x ->
   fv G x.
 Proof.
-Admitted.
+  intros G e s i Ht x Hfv. generalize dependent x. (* just for naming *)
+  induction Ht; try rename x into x' (* hands off my `x`! *); intros x H'; cbn in *.
+  - destruct H'; [apply IHHt1 | apply IHHt2]; assumption.
+  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
+    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
+    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
+  - destruct H'; [left; apply IHHt1 | right; apply IHHt2]; assumption.
+  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
+    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
+    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
+  - destruct H' as [].
+  - destruct H' as [].
+  - eapply fv_fill. { eassumption. } cbn. left. assumption.
+  - eapply subcontext_fv_subset; [| apply IHHt]; eassumption.
+  - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
+    specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
+    cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
+  - apply IHHt. assumption.
+  - apply IHHt. assumption.
+  - apply fv_context_derivative in H5. apply H5. clear Gz' H5. eapply fv_fill; [eassumption |]. cbn.
+    destruct H'. { left. assumption. } destruct H5 as [[Hfv Hx'x] | [Hfv Hyx]]. {
+      apply IHHt1 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption. }
+    apply IHHt2 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption.
+Qed.
 Hint Resolve typing_fv : core.
 
 Theorem argstyping_fv : forall g e g',

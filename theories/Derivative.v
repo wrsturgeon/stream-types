@@ -188,7 +188,13 @@ Theorem fv_context_derivative : forall eta g g',
   ContextDerivative eta g g' ->
   SetEq (fv g) (fv g').
 Proof.
-Admitted.
+  intros. induction H; try rename x into x'; intro x; cbn in *. { split; intros []. }
+  - split; intro A; apply A.
+  - split; intros [Hf | Hf]; try apply IHContextDerivative1 in Hf; try apply IHContextDerivative2 in Hf;
+    try (left; assumption); right; assumption.
+  - split; intros [Hf | Hf]; try apply IHContextDerivative1 in Hf; try apply IHContextDerivative2 in Hf;
+    try (left; assumption); right; assumption.
+Qed.
 
 (* TODO: will *)
 Theorem fv_hole_derivative : forall eta h h',
