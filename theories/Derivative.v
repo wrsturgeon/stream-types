@@ -222,13 +222,15 @@ Proof.
   (* happened to be the exact same proof (automation) as above *)
 Qed.
 
-(* TODO: will *)
 Theorem hole_derivative_wf : forall eta h h',
   WFHole h ->
   HoleDerivative eta h h' ->
   WFHole h'.
 Proof.
-Admitted.
+  intros eta g g' Hw Hd. generalize dependent Hw. induction Hd; cbn in *; intros; constructor;
+  sinvert Hw; try apply IHHd; try eapply context_derivative_wf; try eassumption; split; intros Hf C;
+  apply fv_hole_derivative in Hd; apply fv_context_derivative in H; cbn in *; sfirstorder.
+Qed.
 
 Theorem context_derivative_emp' : forall g g' eta,
   EmptyOn (fv g) eta ->
