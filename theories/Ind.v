@@ -1,4 +1,4 @@
-From Coq Require Import String.
+(* From Coq Require Import String.
 From Hammer Require Import Tactics.
 Require Import Coq.Program.Equality.
 From LambdaST Require Import
@@ -363,4 +363,4 @@ Proof.
   - admit.
   - admit.
   - admit. *)
-Admitted.
+Admitted. *)

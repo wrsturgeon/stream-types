@@ -30,7 +30,7 @@ Definition P_hom g (e : term) (s : type) (i : inertness) eta (e' : term) p :=
   Step eta'' e e'' p''
 .
 
-Theorem hom : forall g e s i eta e' p,
+(* Theorem hom : forall g e s i eta e' p,
     Typed g e s i ->
     Step eta e e' p ->
     P_hom g e s i eta e' p
@@ -45,4 +45,4 @@ apply (lex_ind P_hom); unfold P_hom in *; intros.
   + econstructor. hauto l: on. qauto l: on use:pfx_cat_maximal'.
   + sinvert H8. sinvert H6. econstructor; [ eauto | |]. eapply pfx_cat_maximal. eauto. best use:sound.
 intros.
-Admitted.
+Admitted. *)

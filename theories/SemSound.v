@@ -107,14 +107,33 @@ Theorem sound : forall G e s i eta e' p,
   P_sound G e s i eta e' p.
 Proof.
   intros. generalize dependent G. generalize dependent s. generalize dependent i.
-  induction H0; intros i s G Ht; intros; (dependent induction Ht; try solve [eapply sound_sub; eauto]).
+  induction H0; intros i s G Ht; intros; (dependent induction Ht; try solve [eapply sound_sub; eauto]); unfold P_sound in *; intros.
+  - admit.
+  - admit.
+  - split; try split.
+      + best use:maps_to_has_type_reflect.
+      + intros. edestruct fill_derivative as [h [d' [A [B C]]]]; eauto.
+        sinvert A.
+        assert (p = p0) by scongruence.
+        assert (s' = s'0) by sfirstorder use:derivative_det.
+        sfirstorder.
+      + qauto l: on.
   - admit.
   - admit.
   - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
+  - assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by best use:maps_to_has_type_reflect.
+      sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply parlenvtyped; eauto.
+      split; try split.
+      + sfirstorder.
+      + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
+        sinvert A'.
+        sinvert H17.
+        destruct (ltac:(scongruence) : p1 = p0).
+        destruct (ltac:(scongruence) : p2 = p3).
+        specialize (D' (CtxComma (CtxHasTy x s) (CtxHasTy y t)) (CtxComma (CtxHasTy x s'1) (CtxHasTy y t')) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
+        edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) eapply context_derivative_comma; [admit | | ]; eapply context_derivative_sng; eauto. (* todo: will: check out this admit. for some reason the automation isn't working to establish this, but it should.*)
+        econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
+      + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
   - admit.
   - admit.
   - admit.
@@ -124,7 +143,7 @@ Proof.
 Admitted.
 
 
-Theorem sound' : forall G e s i eta e' p,
+(* Theorem sound' : forall G e s i eta e' p,
     Typed G e s i ->
     Step eta e e' p ->
     P_sound G e s i eta e' p.
@@ -143,30 +162,8 @@ Proof.
     - admit.
     - admit.
     - admit.
-    - assert (Ht : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by best use:maps_to_has_type_reflect.
-      sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply parlenvtyped; eauto.
-      split; try split.
-      + sfirstorder.
-      + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
-        sinvert A'.
-        sinvert H18.
-        destruct (ltac:(scongruence) : p1 = p0).
-        destruct (ltac:(scongruence) : p2 = p3).
-        specialize (D' (CtxComma (CtxHasTy x s) (CtxHasTy y t)) (CtxComma (CtxHasTy x s'1) (CtxHasTy y t')) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
-        edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) eapply context_derivative_comma; [admit | | ]; eapply context_derivative_sng; eauto. (* todo: will: check out this admit. for some reason the automation isn't working to establish this, but it should.*)
-        econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
-      + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
-  - assert (Ht : PrefixTyped (PfxCatFst p) (TyDot s t)) by best use:maps_to_has_type_reflect.
-    sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply catrenvtyped1; eauto.
-    split; try split.
-    + sfirstorder.
-    + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
-      sinvert A'. destruct (ltac:(scongruence) : (PfxCatFst p) = p0).
-      sinvert H17.
-      specialize (D' (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'1) (CtxHasTy y t)) Gxsyt (env_union (singleton_env x p) (singleton_env y (emp t)))).
-      edestruct D' as [u [A'' B'']]. eauto. admit. eapply context_derivative_semic; [admit | |]; eapply context_derivative_sng; [ eauto | sfirstorder use:derivative_emp].
-      econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
-    + admit.
+    - admit.
+  - admit.
   - assert (Ht : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
     sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply catrenvtyped2; eauto.
     split; try split.
@@ -237,7 +234,7 @@ Proof.
       edestruct (H25 z) as [p'' []]; eauto.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
       sinvert H27.
-Admitted.
+Admitted. *)
 
 (*
 d_{ eta''[x |-> p] } G(x : s) |- e' : d_{p'} r

@@ -212,17 +212,17 @@ Proof.
   - best.
   - best.
   - sinvert Hr. 
-    edestruct (pfx_cat_maximal'' p''); eauto.
+    edestruct (pfx_cat_maximal'' p'') as [U [V W]]; eauto.
     edestruct IHHl as [p0 [A [B C]]]; eauto.
     exists (PfxCatBoth p0 p'''0).
     split; try split.
     + best.
     + assert (p' = p0) by best use:pfx_cat_maximal'.
-      destruct H0.
+      destruct H.
       eapply PfxCatCatBoth.
       eauto.
       best use:pfx_cat_maximal'.
-    + intros. sinvert H0.
+    + intros. sinvert H.
       best use:pfx_cat_maximal'''.
   - best.
   - best use:pfx_cat_maximal'''.
@@ -232,17 +232,17 @@ Proof.
   - best.
   - best.
   - sinvert Hr. 
-    edestruct (pfx_cat_maximal'' p''); eauto.
+    edestruct (pfx_cat_maximal'' p'') as [U [V W]]; eauto.
     edestruct IHHl as [p0 [A [B C]]]; eauto.
     exists (PfxCatBoth p0 p'''0).
     split; try split.
     + best.
     + assert (p' = p0) by best use:pfx_cat_maximal'.
-      destruct H0.
+      destruct H.
       eapply PfxCatCatBoth.
       eauto.
       best use:pfx_cat_maximal'.
-    + intros. sinvert H0.
+    + intros. sinvert H.
       best use:pfx_cat_maximal'''.
   - best.
 Qed.

@@ -122,8 +122,8 @@ induction H; intros.
 - best.
 - best.
 - best.
+- destruct i; econstructor; eauto.
 - best.
-- eapply TPlusCase; eauto. unfold inert_guard. best.
 Qed.
 
 
@@ -186,17 +186,18 @@ Proof.
   - destruct H' as [].
   - destruct H' as [].
   - eapply fv_fill. { eassumption. } cbn. left. assumption.
-  - eapply subcontext_fv_subset; [| apply IHHt]; eassumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
+  - (*eapply subcontext_fv_subset; [| apply IHHt]; eassumption.*) admit.
+  - admit.
+  (* - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
     specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
-    cbn in IHHt2. destruct IHHt2. { contradiction. } assumption.
+    cbn in IHHt2. destruct IHHt2. { contradiction. } assumption. *)
   - apply IHHt. assumption.
-  - apply IHHt. assumption.
-  - apply fv_context_derivative in H5. apply H5. clear Gz' H5. eapply fv_fill; [eassumption |]. cbn.
+  - (*apply IHHt. assumption. *) admit.
+  - admit. (*apply fv_context_derivative in H5. apply H5. clear Gz' H5. eapply fv_fill; [eassumption |]. cbn.
     destruct H'. { left. assumption. } destruct H5 as [[Hfv Hx'x] | [Hfv Hyx]]. {
       apply IHHt1 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption. }
-    apply IHHt2 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption.
-Qed.
+    apply IHHt2 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption.*)
+Admitted.
 Hint Resolve typing_fv : core.
 
 Theorem argstyping_fv : forall g e g',
