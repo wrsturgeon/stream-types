@@ -119,7 +119,7 @@ Theorem sound : forall G e s i eta e' p,
   P_sound G e s i eta e' p.
 Proof.
   intros. generalize dependent G. generalize dependent s. generalize dependent i.
-  induction H; intros i s G; intro Ht;  (dependent induction Ht; try solve [eapply sound_sub; eauto; unfold P_sound; eauto]).
+  induction H; intros i s G; intro Ht;  (dependent induction Ht; try solve [eapply sound_sub; eauto; unfold P_sound; eauto]); intros.
   - admit.
   - admit.
   - split; try split.
