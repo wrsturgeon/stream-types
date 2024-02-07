@@ -183,43 +183,54 @@ Proof.
 Qed.
 Hint Resolve context_derivative_fun : core.
 
-(* TODO: will *)
 Theorem fv_context_derivative : forall eta g g',
   ContextDerivative eta g g' ->
   SetEq (fv g) (fv g').
 Proof.
-Admitted.
+  intros. induction H; try rename x into x'; intro x; cbn in *; [split; intros [] | split; intro A; apply A | |];
+  split; intros [Hf | Hf]; try apply IHContextDerivative1 in Hf; try apply IHContextDerivative2 in Hf;
+  try (left; assumption); right; assumption.
+Qed.
 
-(* TODO: will *)
 Theorem fv_hole_derivative : forall eta h h',
-  HoleDerivative eta h h ->
+  HoleDerivative eta h h' ->
   SetEq (fv h) (fv h').
 Proof.
-Admitted.
+  intros. induction H; intro x; cbn in *; [split; intros [] | | | |];
+  apply fv_context_derivative in H0; split; intros [Hf | Hf];
+  try apply H0 in Hf; try apply IHHoleDerivative in Hf; try (left; assumption); right; assumption.
+Qed.
 
-
-(* TODO: will *)
 Theorem context_derivative_wf : forall eta g g',
   WFContext g ->
   ContextDerivative eta g g' ->
   WFContext g'.
 Proof.
-Admitted.
+  intros eta g g' Hw Hd. generalize dependent Hw. induction Hd; cbn in *; intros; constructor;
+  sinvert Hw; try apply IHHd1; try apply IHHd2; try assumption; split; intros Hf C;
+  apply fv_context_derivative in Hd1; apply fv_context_derivative in Hd2; cbn in *; sfirstorder.
+Qed.
 
 Theorem context_derivative_wf' : forall eta g g',
   WFContext g' ->
   ContextDerivative eta g g' ->
   WFContext g.
 Proof.
-Admitted.
+  intros eta g g' Hw Hd. generalize dependent Hw. induction Hd; cbn in *; intros; constructor;
+  sinvert Hw; try apply IHHd1; try apply IHHd2; try assumption; split; intros Hf C;
+  apply fv_context_derivative in Hd1; apply fv_context_derivative in Hd2; cbn in *; sfirstorder.
+  (* happened to be the exact same proof (automation) as above *)
+Qed.
 
-(* TODO: will *)
 Theorem hole_derivative_wf : forall eta h h',
   WFHole h ->
   HoleDerivative eta h h' ->
   WFHole h'.
 Proof.
-Admitted.
+  intros eta g g' Hw Hd. generalize dependent Hw. induction Hd; cbn in *; intros; constructor;
+  sinvert Hw; try apply IHHd; try eapply context_derivative_wf; try eassumption; split; intros Hf C;
+  apply fv_hole_derivative in Hd; apply fv_context_derivative in H; cbn in *; sfirstorder.
+Qed.
 
 Theorem context_derivative_emp' : forall g g' eta,
   EmptyOn (fv g) eta ->
