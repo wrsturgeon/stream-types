@@ -182,7 +182,7 @@ Proof.
     + intros x Hx. eapply fv_fill; [eassumption |]. left. apply Hf. assumption.
     + shelve.
     + eassumption.
-    + 
+    +
 
   intros Gmax e s Ht. induction Ht; cbn in *; intros.
   - constructor; [apply IHHt1 | apply IHHt2]; try assumption;
