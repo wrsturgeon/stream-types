@@ -210,31 +210,41 @@ Theorem pfx_cat_exists_when_typed : forall p p' s dps,
   (forall dp'dps, Derivative p' dps dp'dps -> (* i.e. d_{p'}(d_p(s)) = `dp'dps` *)
     Derivative p'' s dp'dps).
 Proof.
-Admitted.
-  (* intros p p' s dps dp'dps Hd Hd' Hp Hp'. generalize dependent p'. generalize dependent dp'dps.
-  generalize dependent Hp. induction Hd; intros; simpl in *.
-  - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor.
-  - sinvert Hp. eexists. split; [constructor | split]; assumption.
-  - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor.
-  - sinvert Hp. sinvert Hd'. sinvert Hp'.
-    specialize (IHHd1 H2 _ _ H3 H5) as [p1'' [Hp1a [Hp1b Hp1c]]].
-    specialize (IHHd2 H4 _ _ H6 H8) as [p2'' [Hp2a [Hp2b Hp2c]]].
-    eexists. repeat constructor; eassumption.
-  - sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
-    + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-    + shelve.
-  - sinvert Hp. specialize (IHHd H5 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-  - sinvert Hp. eexists. repeat econstructor; eassumption.
-  - sinvert Hp. specialize (IHHd H1 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-  - sinvert Hp. specialize (IHHd H1 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-  - sinvert Hp. eexists. repeat constructor; eassumption.
-  - sinvert Hp. sinvert Hd'. sinvert Hp'. eexists. repeat constructor; eassumption.
-  - sinvert Hp. specialize (IHHd H1). sinvert Hd'; sinvert Hp'.
-    + specialize (IHHd _ _ H4 H2) as [p'' [Hp1 [Hp2 Hp3]]]. eexists. repeat constructor; eassumption.
-    + shelve.
-  - sinvert Hp. specialize (IHHd H4 _ _ Hd' Hp') as [p'' [Hp1 [Hp2 Hp3]]].
-    eexists. repeat split; constructor; eassumption. *)
-  (* Unshelve. Abort. TODO: two lemmas left *)
+  intros.
+  generalize dependent p'.
+  generalize dependent dps.
+  induction H0; intros.
+  - sauto lq: on rew: off.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sinvert H.
+    sinvert H1.
+    + best.
+    + edestruct IHPrefixTyped as [p00 [A [B C]]]; eauto.
+      exists (PfxCatBoth p00 p2).
+      split; try split.
+     * hauto l: on.
+     * sfirstorder use:pfx_cat_maximal.
+     * sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sinvert H.
+    sinvert H1.
+    + sauto lq: on.
+    + edestruct IHPrefixTyped as [p00 [A [B C]]]; eauto.
+      exists (PfxStarRest p00 p2).
+      split; try split.
+      * hauto l: on.
+      * sfirstorder use:pfx_cat_maximal.
+      * sauto lq: on.
+
+  - sauto lq: on.
+Qed.
 
 (* TODO: prefix concatenation and derivatives,*)
 
