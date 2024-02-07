@@ -216,7 +216,11 @@ Theorem context_derivative_wf' : forall eta g g',
   ContextDerivative eta g g' ->
   WFContext g.
 Proof.
-Admitted.
+  intros eta g g' Hw Hd. generalize dependent Hw. induction Hd; cbn in *; intros; constructor;
+  sinvert Hw; try apply IHHd1; try apply IHHd2; try assumption; split; intros Hf C;
+  apply fv_context_derivative in Hd1; apply fv_context_derivative in Hd2; cbn in *; sfirstorder.
+  (* happened to be the exact same proof (automation) as above *)
+Qed.
 
 (* TODO: will *)
 Theorem hole_derivative_wf : forall eta h h',
