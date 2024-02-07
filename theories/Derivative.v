@@ -106,8 +106,6 @@ Inductive HoleDerivative : env -> hole -> hole -> Prop :=
   .
 Hint Constructors ContextDerivative : core.
 
-
-
 (* Theorem B.15, part I *)
 Theorem derivative_det : forall p s s'1 s'2,
   Derivative p s s'1 ->
@@ -155,7 +153,6 @@ Proof.
   intros.
   induction H0; sauto lq: on rew: off.
 Qed.
-
 
 (* Theorem B.17, part I *)
 Theorem context_derivative_det : forall n G G'1 G'2,
@@ -256,21 +253,37 @@ Qed.
 
 Hint Resolve derivative_emp : core.
 
-(* TODO: will *)
 Theorem hole_derivative_fun : forall eta h d hd,
   Fill h d hd ->
   EnvTyped eta hd ->
   exists h', HoleDerivative eta h h'.
 Proof.
-Admitted.
+  intros eta h d hd Hf Ht. generalize dependent eta. generalize dependent d. generalize dependent hd.
+  induction h; cbn in *; intros; sinvert Hf.
+  - eexists. constructor.
+  - sinvert Ht. specialize (IHh _ _ H3 _ H2) as [h' Hh'].
+    destruct (context_derivative_fun _ _ H4) as [g' Hg'].
+    eexists. constructor; eassumption.
+  - sinvert Ht. specialize (IHh _ _ H3 _ H4) as [h' Hh'].
+    destruct (context_derivative_fun _ _ H2) as [g' Hg'].
+    eexists. constructor; eassumption.
+  - sinvert Ht. specialize (IHh _ _ H3 _ H1) as [h' Hh'].
+    destruct (context_derivative_fun _ _ H4) as [g' Hg'].
+    eexists. constructor; eassumption.
+  - sinvert Ht. specialize (IHh _ _ H3 _ H4) as [h' Hh'].
+    destruct (context_derivative_fun _ _ H1) as [g' Hg'].
+    eexists. constructor; eassumption.
+Qed.
 
-(* TODO: will *)
 Theorem hole_derivative_det : forall eta h h' h'',
   HoleDerivative eta h h' ->
   HoleDerivative eta h h'' ->
   h' = h''.
 Proof.
-Admitted.
+  intros eta h h' h'' H. generalize dependent h''. induction H; cbn in *; intros;
+  [sinvert H; reflexivity | | | |]; sinvert H1; rewrite (context_derivative_det _ _ _ _ H0 H7);
+  subst; f_equal; apply IHHoleDerivative; assumption.
+Qed.
 
 (* TODO: will. *)
 Theorem context_derivative_overwrite : forall eta eta' g g',
