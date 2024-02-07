@@ -251,7 +251,6 @@ Proof.
 Qed.
 Hint Resolve wf_fill : core.
 
-
 Theorem wf_fill_reflect : forall h d hd,
   Fill h d hd ->
   WFContext hd <-> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
@@ -322,27 +321,67 @@ Fixpoint poke G x :=
   match G with
   | CtxEmpty =>
       None
-  | CtxHasTy z _ =>
-      if eqb x z then Some HoleHere else None
+  | CtxHasTy z t =>
+      if eqb x z then Some (pair t HoleHere) else None
   | CtxComma lhs rhs =>
       match poke lhs x with
-      | Some h => Some (HoleCommaL h rhs)
+      | Some (pair t h) => Some (pair t (HoleCommaL h rhs))
       | None =>
           match poke rhs x with
-          | Some h => Some (HoleCommaR lhs h)
+          | Some (pair t h) => Some (pair t (HoleCommaR lhs h))
           | None => None
           end
       end
   | CtxSemic lhs rhs =>
       match poke lhs x with
-      | Some h => Some (HoleSemicL h rhs)
+      | Some (pair t h) => Some (pair t (HoleSemicL h rhs))
       | None =>
           match poke rhs x with
-          | Some h => Some (HoleSemicR lhs h)
+          | Some (pair t h) => Some (pair t (HoleSemicR lhs h))
           | None => None
           end
       end
   end.
+
+Lemma poke_fill : forall GD x t G,
+  poke GD x = Some (pair t G) ->
+  Fill G (CtxHasTy x t) GD.
+Proof.
+  induction GD; cbn in *; intros; [discriminate H | destruct (String.eqb_spec x id); sinvert H; constructor | |];
+  destruct (poke GD1 x) as [[t1 h1] |] eqn:E1; destruct (poke GD2 x) as [[t2 h2] |] eqn:E2; sinvert H;
+  constructor; try apply IHGD1; try apply IHGD2; assumption.
+Qed.
+
+Lemma fill_poke : forall GD x t G,
+  ~fv G x ->
+  Fill G (CtxHasTy x t) GD ->
+  poke GD x = Some (pair t G).
+Proof.
+  induction GD; cbn in *; intros;
+  [sinvert H0 | destruct (String.eqb_spec x id); sinvert H0; [reflexivity | tauto] | |].
+  - destruct (poke GD1 x) as [[t1 h1] |] eqn:E1. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. sinvert E1. reflexivity.
+      - assert (Hp := poke_fill _ _ _ _ E1). assert (Hf := fv_fill _ _ _ Hp).
+        contradiction H1. apply Hf. left. reflexivity. }
+    destruct (poke GD2 x) as [[t2 h2] |] eqn:E2. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. discriminate E1.
+      - erewrite IHGD2 in E2; [| | eassumption]; [| assumption]. sinvert E2. reflexivity. }
+    sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2];
+    [specialize (IHGD1 _ _ _ H2 H4) | specialize (IHGD2 _ _ _ H2 H4)]; congruence.
+  - destruct (poke GD1 x) as [[t1 h1] |] eqn:E1. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. sinvert E1. reflexivity.
+      - assert (Hp := poke_fill _ _ _ _ E1). assert (Hf := fv_fill _ _ _ Hp).
+        contradiction H1. apply Hf. left. reflexivity. }
+    destruct (poke GD2 x) as [[t2 h2] |] eqn:E2. {
+      sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2].
+      - erewrite IHGD1 in E1; [| | eassumption]; [| assumption]. discriminate E1.
+      - erewrite IHGD2 in E2; [| | eassumption]; [| assumption]. sinvert E2. reflexivity. }
+    sinvert H0; cbn in H; apply Decidable.not_or in H as [H1 H2];
+    [specialize (IHGD1 _ _ _ H2 H4) | specialize (IHGD2 _ _ _ H2 H4)]; congruence.
+Qed.
 
 (* Carve out the smallest hole (assuming WF) that binds all these variables *)
 (* TODO: don't compute FVs arbitrarily many times, then convince Coq it's the same function *)
