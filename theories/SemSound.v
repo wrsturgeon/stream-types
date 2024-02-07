@@ -122,7 +122,7 @@ Proof.
   - admit.
   - admit.
   - assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by best use:maps_to_has_type_reflect.
-      sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply parlenvtyped; eauto.
+      sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. (* TODO: will. why does this work? speed it up?*) eapply parlenvtyped; eauto.
       split; try split.
       + sfirstorder.
       + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
@@ -135,43 +135,14 @@ Proof.
         econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
       + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
   - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-Admitted.
-
-
-(* Theorem sound' : forall G e s i eta e' p,
-    Typed G e s i ->
-    Step eta e e' p ->
-    P_sound G e s i eta e' p.
-Proof.
-    apply (lex_ind P_sound); unfold P_sound in *; intros.
-    - admit.
-    - admit.
-    - split; try split.
-      + best use:maps_to_has_type_reflect.
-      + intros. edestruct fill_derivative as [h [d' [A [B C]]]]; eauto.
-        sinvert A.
-        assert (p = p0) by scongruence.
-        assert (s' = s'0) by sfirstorder use:derivative_det.
-        sfirstorder.
-      + qauto l: on.
-    - admit.
-    - admit.
-    - admit.
-    - admit.
-  - admit.
-  - assert (Ht : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
-    sinvert Ht. edestruct IHe as [A [B C]]. eauto. eapply catrenvtyped2; eauto.
+  - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
+    sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply catrenvtyped2; eauto.
     split; try split.
     + sfirstorder.
     + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
       sinvert A'.
       destruct (ltac:(scongruence) : (PfxCatBoth p1 p2) = p).
-      sinvert H19.
+      sinvert H18.
       edestruct (derivative_fun p1 s) as [s'']; eauto.
       specialize (D' (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
       edestruct D' as [u [A'' B'']]. eauto. admit. eapply context_derivative_semic; [admit | |]; eapply context_derivative_sng; eauto.
@@ -186,6 +157,7 @@ Proof.
         admit. (* this used to work: best use:hole_compose_fill. *)
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
     + admit.
+  - admit.
   - split; try split; try split.
     + best use:emp_well_typed.
     + intros.
@@ -196,7 +168,7 @@ Proof.
       eapply TPlusCase; eauto. 
     + assert (Subset (singleton_set z) (fv (TmPlusCase eta' r z x e1 y e2))) by sfirstorder.
       intro HM. eapply (prop_on_contains) in HM; [|eauto].
-      edestruct (env_cat_maximal (singleton_set z) eta' eta eta''); eauto. { sauto q:on dep: on use:maps_to_has_type_reflect. } { sfirstorder. }
+      edestruct (env_cat_maximal (singleton_set z) eta' eta eta''); eauto. { admit. } { admit. }
       assert (Hcontra : MaximalPrefix PfxSumEmp) by best.
       sinvert Hcontra.
     + best use:emp_empty.
@@ -207,23 +179,25 @@ Proof.
     assert (WFHole G). { eapply (wf_fill_reflect G (CtxHasTy z _)). eauto. sfirstorder use:context_derivative_wf'. }
     edestruct (env_cat_exists_when_typed eta') as [eta''0 [A [B C]]]; eauto.
     destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
-    assert (Hty : PrefixTyped (PfxSumInl p) (TySum s t)) by qauto l: on use:maps_to_has_type_reflect.
-    sinvert Hty.
-    edestruct H12 as [A' [B' [C' D']]]. { eapply wf_fill_reflect. eauto. sfirstorder. } { eapply sumcaseenvtyped1; eauto. }
+    assert (Hty : exists p0, eta'' z = Some p0 /\ PrefixTyped p0 (TySum s t)) by best use:maps_to_has_type_reflect.
+    edestruct Hty as [p0 [L M]].
+    destruct (ltac:(scongruence) : PfxSumInl p = p0).
+    sinvert M.
+    edestruct IHStep as [A' [B' [C' D']]]. eauto. { eapply wf_fill_reflect. eauto. sfirstorder. } { eapply sumcaseenvtyped1; eauto. }
     split; try split; try split.
     + eauto.
     + intros.
       edestruct (fill_derivative eta'' G (CtxHasTy z (TySum s t))) as [G' [d_s [A'' [B'' [C'' D'']]]]]; [eauto | eapply C; eauto |]. 
       sinvert A''.
       destruct (ltac:(scongruence) : PfxSumInl p = p0).
-      sinvert H28.
+      sinvert H25.
       assert (WFContext Gx). { eapply wf_fill_reflect. eauto. hauto drew: off. }
       edestruct (D'' (CtxHasTy x s) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply NoConflictOn_disjoint. right. eapply DisjointSets_inj. intros. admit. } eapply context_derivative_sng; eauto.
       eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ | eauto | | | | ]. eauto. admit. admit. admit. hauto lq: on rew: off.
-      edestruct (H23 z) as [p00 [L R]]. hauto lq: on rew: off.
+      edestruct (H20 z) as [p00 [L' R]]. hauto lq: on rew: off.
       destruct (ltac:(scongruence) : PfxSumInl p = p00).
       sinvert R.
       eapply C'. eapply prop_on_minus. eauto. qauto l: on.
@@ -231,9 +205,21 @@ Proof.
       assert (eta' z = Some PfxSumEmp) by sfirstorder.
       assert (EmptyOn (singleton_set z) eta) by hauto q: on use:prop_on_contains.
       assert (EmptyOn (singleton_set z) eta''). eapply env_cat_empty; [eauto | sauto].
-      edestruct (H25 z) as [p'' []]; eauto.
+      edestruct (H22 z) as [p'' []]; eauto.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
-      sinvert H27.
+      sinvert H24.
+  - admit.
+Admitted.
+
+
+(* Theorem sound' : forall G e s i eta e' p,
+    Typed G e s i ->
+    Step eta e e' p ->
+    P_sound G e s i eta e' p.
+Proof.
+  - 
+  - 
+  - 
 Admitted. *)
 
 (*
