@@ -442,7 +442,7 @@ Proof.
   - sinvert H. constructor; [| apply env_typed_weakening; apply IHg2; assumption |]. {
       apply env_typed_weakening_alt; [| apply IHg1; assumption]. apply disjoint_no_conflict.
       split; intros H C; apply empty_env_for_dom in H; apply empty_env_for_dom in C; sfirstorder. }
-    left. apply empty_on_weakening. Search EmptyOn. cbn. intros.
+    left. apply empty_on_weakening. cbn. intros.
     apply empty_env_for_dom in H as [p Hp]. eexists. split. { eassumption. }
     eapply empty_env_for_empty_prefix. eassumption.
 Qed.

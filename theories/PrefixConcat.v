@@ -71,85 +71,34 @@ Proof.
 Qed.
 Hint Resolve pfx_cat_unique : core.
 
-
-
 Theorem pfx_cat_maximal : forall p p' p'',
   PrefixConcat p p' p'' ->
   MaximalPrefix p \/ MaximalPrefix p' -> MaximalPrefix p''.
-Proof.
-  intros. induction H. 
-  - sfirstorder.
-  - sauto lq: on.
-  - sfirstorder.
-  - sauto lq: on rew: off.
-  - sauto lq: on.
-  - best.
-  - best.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sfirstorder.
-  - sauto lq: on.
-  - sauto lq: on.
-  - best.
-Qed.
+Proof. intros. induction H; sauto lq: on. Qed.
+Hint Resolve pfx_cat_maximal : core.
   
 (* partial converse: if p . p' is maximal, than p' must be. *)
 Theorem pfx_cat_maximal' : forall p p' p'',
   PrefixConcat p p' p'' ->
   MaximalPrefix p'' -> MaximalPrefix p'.
-Proof.
-  intros. generalize dependent H0. induction H. 
-  - sfirstorder.
-  - sauto lq: on.
-  - sfirstorder.
-  - sauto lq: on rew: off.
-  - sauto lq: on.
-  - best.
-  - best.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sfirstorder.
-  - sauto lq: on.
-  - sauto lq: on.
-  - sauto.
-Qed.
+Proof. intros. generalize dependent H0. induction H; sauto lq: on rew: off. Qed.
+Hint Resolve pfx_cat_maximal' : core.
 
 Theorem pfx_cat_maximal'' : forall p,
   MaximalPrefix p ->
   exists p', PrefixConcat p p' p /\ EmptyPrefix p'.
-Proof.
-intros.
-induction H; sauto lq: on.
-Qed.
+Proof. intros. induction H; sauto lq: on. Qed.
+Hint Resolve pfx_cat_maximal'' : core.
 
 Theorem pfx_cat_maximal''' : forall p p' p'', MaximalPrefix p -> PrefixConcat p p' p'' -> p = p''.
-Proof.
-intros.
-generalize dependent p'.
-generalize dependent p''.
-induction H.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-Qed.
+Proof. intros. generalize dependent p'. generalize dependent p''. induction H; sauto lq: on rew: off. Qed.
+Hint Resolve pfx_cat_maximal''' : core.
 
 Theorem pfx_cat_empty : forall p p' p'',
   PrefixConcat p p' p'' ->
   EmptyPrefix p /\ EmptyPrefix p' <-> EmptyPrefix p''.
-Proof.
-intros.
-induction H; sauto lq: on.
-Qed.
-
+Proof. intros. induction H; sauto lq: on rew: off. Qed.
+Hint Resolve pfx_cat_empty : core.
 
 (* Theorem B.21, part II *)
 Theorem pfx_cat_exists_when_typed : forall p p' s dps,
@@ -194,9 +143,9 @@ Proof.
       * hauto l: on.
       * sfirstorder use:pfx_cat_maximal.
       * sauto lq: on.
-
   - sauto lq: on.
 Qed.
+Hint Resolve pfx_cat_exists_when_typed : core.
 
 (* TODO: prefix concatenation and derivatives,*)
 
@@ -206,49 +155,38 @@ Lemma pfx_cat_assoc : forall p q r s pq,
   exists qr, (PrefixConcat p qr s /\ PrefixConcat q r qr /\ (MaximalPrefix q -> q = qr)). (* had to strengthen this. *)
 Proof.
   intros p q r s pq Hl Hr. generalize dependent r. generalize dependent s. induction Hl; intros. (* sauto lq: on. *)
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on.
+  - sauto lq: on rew: off.
+  - sauto lq: on rew: off.
   - sinvert Hr. 
     edestruct (pfx_cat_maximal'' p'') as [U [V W]]; eauto.
     edestruct IHHl as [p0 [A [B C]]]; eauto.
     exists (PfxCatBoth p0 p'''0).
     split; try split.
-    + best.
-    + assert (p' = p0) by best use:pfx_cat_maximal'.
+    + constructor. assumption.
+    + assert (p' = p0) by hauto lq: on rew: off use: pfx_cat_maximal'.
       destruct H.
       eapply PfxCatCatBoth.
       eauto.
-      best use:pfx_cat_maximal'.
+      eapply pfx_cat_maximal'; eassumption.
     + intros. sinvert H.
-      best use:pfx_cat_maximal'''.
-  - best.
-  - best use:pfx_cat_maximal'''.
-  - best.
-  - best.
-  - best use:pfx_cat_maximal'''.
-  - best.
-  - best.
-  - sinvert Hr. 
-    edestruct (pfx_cat_maximal'' p'') as [U [V W]]; eauto.
-    edestruct IHHl as [p0 [A [B C]]]; eauto.
-    exists (PfxCatBoth p0 p'''0).
-    split; try split.
-    + best.
-    + assert (p' = p0) by best use:pfx_cat_maximal'.
-      destruct H.
-      eapply PfxCatCatBoth.
-      eauto.
-      best use:pfx_cat_maximal'.
-    + intros. sinvert H.
-      best use:pfx_cat_maximal'''.
-  - best.
+      hauto lq: on rew: off use: pfx_cat_maximal'''.
+  - sauto lq: on rew: off.
+  - eexists; split; [| split]. 2: eassumption. { constructor. }
+    intro. eapply pfx_cat_maximal'''; eassumption.
+  - sauto lq: on rew: off use: pfx_cat_maximal'''.
+  - sauto lq: on rew: off.
+  - sfirstorder.
+  - sauto lq: on rew: off use:pfx_cat_maximal'''.
+  - sauto lq: on rew: off.
+  - sinvert Hr. sauto lq: on rew: off use: pfx_cat_maximal', pfx_cat_maximal'''.
+  - sinvert Hr. clear Hl H. specialize (IHHl _ _ H2) as [q [Hq1 [Hq2 Hq3]]]. eexists.
+    split. { constructor; [| assumption]. eassumption. } split; assumption.
 Qed.
 Hint Resolve pfx_cat_assoc : core.
 
-(* NOTE: Joe, this is what you said you needed last time--it was a pretty easy corollary of the above *)
 Lemma pfx_cat_assoc_eq : forall p q r pq qr s1 s2,
   PrefixConcat p q pq ->
   PrefixConcat q r qr ->
@@ -263,24 +201,21 @@ Proof.
 Qed.
 Hint Resolve pfx_cat_assoc_eq : core.
 
-(* TODO: environment concatenation, and the same.
- * Environment concat: n . n' ~ n'' if,
- * for all x in dom(n) and dom(n'),
- * n(x) . n'(x) ~ n''(x) *)
-
 Definition EnvConcat (n : env) (n' : env) (n'' : env) : Prop :=
-  (forall x p p', n x = Some p -> n' x = Some p' -> (exists p'', n'' x = Some p'' /\ PrefixConcat p p' p''))
-  /\
-  (forall x, n x = None \/ n' x = None -> n'' x = None) (* to ensure that n'' is unique, we need to restrict the domain. *)
-.
-
+  (forall x, n x = None \/ n' x = None -> n'' x = None) /\ (* to ensure that n'' is unique, we need to restrict the domain. *)
+    forall x p p',
+    n x = Some p ->
+    n' x = Some p' ->
+    exists p'',
+    n'' x = Some p'' /\
+    PrefixConcat p p' p''.
+Arguments EnvConcat n n' n''/.
 Hint Unfold EnvConcat : core.
 
 (* fuck it, i want this theorem to hold on the nose.  *)
 Axiom functional_extensionality: forall {A B} (f g:A->B) , (forall x, f x = g x) -> f = g.
 
-
-Theorem  env_cat_unique : forall n n' n1 n2,
+Theorem env_cat_unique : forall n n' n1 n2,
   EnvConcat n n' n1 -> 
   EnvConcat n n' n2 -> 
   n1 = n2.
@@ -297,7 +232,6 @@ Proof.
   - sauto lq: on.
 Qed.
 
-
 (* TODO: will. *)
 Theorem env_cat_exists_when_typed : forall eta eta' g g',
   ContextDerivative eta g g'->
@@ -309,7 +243,7 @@ Theorem env_cat_exists_when_typed : forall eta eta' g g',
   (forall g'', ContextDerivative eta' g' g'' ->
     ContextDerivative eta'' g g'').
 Proof.
-intros.
+  intros.
 Admitted.
 
 Theorem env_cat_maximal : forall s eta eta' eta'' g,
@@ -337,5 +271,5 @@ Theorem env_cat_empty : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->
   EmptyOn s eta /\ EmptyOn s eta' -> EmptyOn s eta''.
 Proof.
-intros.
+  intros.
 Admitted.

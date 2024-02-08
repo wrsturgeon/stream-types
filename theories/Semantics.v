@@ -1,4 +1,4 @@
-
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Environment
   Prefix
@@ -61,50 +61,64 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         eta'' z = Some (PfxSumInr p) ->
         Step (env_union eta'' (singleton_env y p)) e2 e' p' ->
         Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
-with
-ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
-  | SATmEmpty : forall eta,
+  .
+Hint Constructors Step : core.
+Arguments Step n e e' p.
+
+Inductive ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
+  | ASEmpty : forall eta,
         ArgsStep eta CtxEmpty ATmEmpty ATmEmpty CtxEmpty empty_env
-  | SATmSng : forall eta x s s' e e' p,
+  | ASSng : forall eta x s s' e e' p,
         Step eta e e' p ->
         Derivative p s s' ->
         ArgsStep eta (CtxHasTy x s) (ATmSng e) (ATmSng e') (CtxHasTy x s') (singleton_env x p)
-  | SATmComma : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
+  | ASComma : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
         ArgsStep eta g1 e1 e1' g1' eta1 ->
         ArgsStep eta g2 e2 e2' g2' eta2 ->
         ArgsStep eta (CtxComma g1 g2) (ATmComma e1 e2) (ATmComma e1' e2') (CtxComma g1' g2') (env_union eta1 eta2)
-  | SATmSemic1 : forall eta g1 g1' g2 e1 e2 e1' eta1,
+  | ASSemic1 : forall eta g1 g1' g2 e1 e2 e1' eta1,
         ArgsStep eta g1 e1 e1' g1' eta1 ->
         ~(MaximalOn (fv g1) eta1) ->
         ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2) (CtxSemic g1' g2) (env_union eta1 (empty_env_for g2))
-  | SATmSemic2 : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
+  | ASSemic2 : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
         ArgsStep eta g1 e1 e1' g1' eta1 ->
         MaximalOn (fv g1) eta1 ->
         ArgsStep eta g2 e2 e2' g2' eta2 ->
         ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
-.
-
-Scheme Step_ind' := Induction for Step Sort Prop
-with ArgsStep_ind' := Induction for ArgsStep Sort Prop.
-Combined Scheme Step_mutual from Step_ind', ArgsStep_ind'.
-
-Hint Constructors Step : core.
+  .
 Hint Constructors ArgsStep : core.
 
-Check Step_mutual.
-
-(* todo: will 
-stronger version: eta eta', noconflict on fv(e).
-Need to derive a mutual induction principle for
-*)
-Theorem Step_det : forall eta e e1 e2 p1 p2,
+Theorem step_det : forall eta e e1 e2 p1 p2,
     Step eta e e1 p1 ->
     Step eta e e2 p2 ->
-    e1 = e2 /\ p1 = p2
-.
+    e1 = e2 /\ p1 = p2.
 Proof.
-Admitted.
-
+  intros. generalize dependent e2. generalize dependent p2. induction H; cbn in *; intros.
+  - sinvert H0. repeat constructor.
+  - sinvert H0. repeat constructor.
+  - sinvert H0. rewrite H in H3. sinvert H3. repeat constructor.
+  - sinvert H1. specialize (IHStep1 _ _ H5) as [Ee1 Ep1].
+    specialize (IHStep2 _ _ H8) as [Ee2 Ep2]. subst. repeat constructor.
+  - sinvert H1. { specialize (IHStep _ _ H5) as [Ee Ep]. subst. repeat constructor. }
+    specialize (IHStep _ _ H4) as [Ee Ep]. subst. apply H0 in H6 as [].
+  - sinvert H2. { specialize (IHStep1 _ _ H6) as [Ee Ep]. subst. apply H9 in H0 as []. }
+    specialize (IHStep1 _ _ H5) as [Ee1 Ep1]. specialize (IHStep2 _ _ H10) as [Ee2 Ep2].
+    subst. repeat constructor.
+  - sinvert H1. rewrite H in H9. sinvert H9. specialize (IHStep _ _ H10) as [Ee Ep].
+    subst. repeat constructor.
+  - sinvert H1; rewrite H in H10; sinvert H10.
+    specialize (IHStep _ _ H11) as [Ee Ep]. subst. repeat constructor.
+  - sinvert H1; rewrite H in H10; sinvert H10.
+    specialize (IHStep _ _ H11) as [Ee Ep]. subst. repeat constructor.
+  - sinvert H1. specialize (IHStep1 _ _ H8) as [Ee Ep]. subst.
+    edestruct IHStep2 as [Ee Ep]; [| split; f_equal]; eassumption.
+  - sinvert H1; assert (A := env_cat_unique _ _ _ _ H H12); subst; [repeat constructor | |]; congruence.
+  - sinvert H2; assert (A := env_cat_unique _ _ _ _ H H13); subst; [congruence | | congruence].
+    assert (p = p0) by congruence. subst. specialize (IHStep _ _ H15) as [Ee Ep]. subst. sfirstorder.
+  - sinvert H2; assert (A := env_cat_unique _ _ _ _ H H13); subst; [congruence | congruence |].
+    assert (p = p0) by congruence. subst. specialize (IHStep _ _ H15) as [Ee Ep]. subst. sfirstorder.
+Qed.
+Hint Resolve step_det : core.
 
 (* evalArgs (SemicCtx g1 g2) (SemicCtx e1 e2) = do
     (env1,g1',e1') <- evalArgs g1 e1
@@ -119,8 +133,3 @@ Admitted.
         where
             env `maximalOn` g = all (\(CE x _) -> isJust (lookupEnv x env >>= Values.maximalLift)) g
             emptyEnvFor g = foldr (\(CE x s) rho -> bindEnv x (emptyPrefix s) rho) emptyEnv g *)
-
-
-(* TODO: FINISH DEFINITION *)
-Arguments Step n e e' p.
-Hint Constructors Step : core.
