@@ -101,12 +101,25 @@ Proof.
   + sfirstorder.
 Qed.
 
+(*
+Step_mutual
+     : forall
+         (P : forall (e : env) (t t0 : term) (p : prefix),
+              Step e t t0 p -> Prop)
+         (P0 : forall (e : env) (c : context) (a a0 : argsterm)
+                 (c0 : context) (e0 : env), ArgsStep e c a a0 c0 e0 -> Prop),
+*)
+
+Definition sound_stmt_step := forall eta e e' p, Step eta e e' p -> forall G s i, P_sound G e s i eta e' p.
+Definition sound_stmt_args := forall eta c a a' c' eta', ArgsStep eta c a a' c' eta' -> forall G e s i e' p, P_sound G e s i eta e' p.
+Print sound_stmt_args.
 
 Theorem sound : forall G e s i eta e' p,
   Step eta e e' p ->
   P_sound G e s i eta e' p.
 Proof.
   intros. generalize dependent G. generalize dependent s. generalize dependent i.
+  Check Step_mutual. apply Step_mutual.
   induction H; intros i s G Ht; intros;
   (dependent induction Ht; [| eapply sound_sub; try eassumption; hauto l: on]).
   - admit.
