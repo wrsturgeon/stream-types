@@ -168,12 +168,21 @@ Proof.
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
     + admit.
   - edestruct (IHStep1) as [A [B [U V]]]; eauto.
-    assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | | | | ]. eauto. { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. admit. } eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. eauto. }
-    assert (WFContext Gxs) by admit.
+   (* todo: need better automation for disjoitnness *)
+    assert (NoConflictOn eta (singleton_env x p) (fv G)). { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. intro. assert (x0 <> x) by scongruence. assert (x = x0) by qauto l: on use:dom_singleton. sfirstorder. }
+    assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. eauto. }
+    edestruct (wf_fill_reflect G) as [QQ _]; eauto.
+    assert (WFContext Gxs). { eapply wf_fill_reflect. eauto. hauto l: on use:DisjointSets_inj'. }
     edestruct IHStep2 as [A' [B' [U' V']]]; eauto.
     split; try split; try split.
     + eauto.
-    + intros.  admit.
+    + intros GD' t'. intros.
+      edestruct (fill_derivative eta G D GD GD') as [G' [D' [L [M [N O]]]]]; eauto.
+      edestruct (derivative_fun p) as [s']; eauto.
+      assert (Typed D' e1' s' Inert) by hauto l: on.
+      edestruct (O (CtxHasTy x s) (CtxHasTy x s') Gxs (singleton_env x p)) as [G'xs' [W X]]. eauto. eauto. hauto l: on.
+      econstructor; [ | eauto | | eauto | ]. hauto q:on use:fv_hole_derivative. eauto.
+      eapply B'; eauto. 
     + intros. assert (MaximalOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
       eapply U'. eapply prop_on_minus. eapply U. hauto q: on. eauto.
     + intros. assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
