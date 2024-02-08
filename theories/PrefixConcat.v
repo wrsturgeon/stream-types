@@ -246,26 +246,27 @@ Proof.
   intros.
 Admitted.
 
-Theorem env_cat_maximal : forall s eta eta' eta'' g,
-  EnvTyped eta g ->
+Theorem env_cat_maximal : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->
   Subset s (dom eta) ->
   Subset s (dom eta') ->
-  Subset s (fv g) ->
   MaximalOn s eta \/ MaximalOn s eta' -> MaximalOn s eta''.
 Proof.
 intros.
 unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
 intros.
-destruct H4.
-+ assert (exists p, eta x = Some p) by best.
-  edestruct H6 as [p].
-  assert (MaximalPrefix p) by hauto l: on.
+unfold EnvConcat in H.
+destruct H as [Hn Hs].
+destruct H2.
++ edestruct H as [p []]; eauto.
   assert (exists p', eta' x = Some p') by sfirstorder.
-  edestruct H9 as [p'].
-  assert (exists p'', eta'' x = Some p'') by sfirstorder.
-  edestruct H11 as [p''].
-Admitted.
+  edestruct H5 as [p'].
+  edestruct Hs as [p'' [ U V]]; eauto.
++ edestruct H as [p' []]; eauto.
+  assert (exists p, eta x = Some p) by sfirstorder.
+  edestruct H5 as [p].
+  edestruct Hs as [p'' [ U V]]; eauto.
+Qed.
 
 Theorem env_cat_empty : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->

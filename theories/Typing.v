@@ -165,7 +165,41 @@ Proof.
 Qed.
 Hint Resolve fv_hole_minus : core.
 
-Theorem typing_fv' : forall G e s i,
+(* (P : ∀ (c : context) (t : term) (t0 : type) (i : inertness),
+       Typed c t t0 i → Prop) *)
+
+Definition P_typing_fv (g : context) (e : term) (s : type) (i : inertness) :=
+  forall x, fv e x -> fv g x.
+
+Definition P_argstyping_fv (g : context) (args : argsterm) (g' : context) :=
+  forall x, fv args x -> fv g x.
+
+Check Typed_mutual.
+
+Theorem typing_fv' :
+  (forall g e s i, Typed g e s i -> P_typing_fv g e s i) /\
+  (forall g args g', ArgsTyped g args g' -> P_argstyping_fv g args g').
+Proof.
+ apply Typed_mutual; intros; unfold P_typing_fv in *; unfold P_argstyping_fv in *.
+ - sfirstorder.
+ - admit.
+ - sfirstorder.
+ - admit.
+ - sfirstorder.
+ - sfirstorder.
+ - hauto q: on use:fv_fill.
+ - admit.
+ - sfirstorder.
+ - sfirstorder.
+ - admit.
+ - sfirstorder use:subcontext_fv_subset.
+ - sfirstorder.
+ - sfirstorder.
+ - sfirstorder.
+ - sfirstorder.
+Admitted.
+
+(* Theorem typing_fv' : forall G e s i,
   Typed G e s i ->
   forall x,
   fv e x ->
@@ -195,18 +229,11 @@ Proof.
     destruct H'. { left. assumption. } destruct H5 as [[Hfv Hx'x] | [Hfv Hyx]]. {
       apply IHHt1 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption. }
     apply IHHt2 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption.*)
-Admitted.
+Admitted. *)
 
-Theorem typing_fv : forall G e s i,
-  Typed G e s i ->
-  Subset (fv e) (fv G).
-Proof.
-(* trivial from prev *)
-Admitted.
 
-Hint Resolve typing_fv : core.
 
-Theorem argstyping_fv : forall g e g',
+(* Theorem argstyping_fv' : forall g e g',
   ArgsTyped g e g' ->
   forall x,
   fv e x ->
@@ -215,7 +242,16 @@ Proof.
   intros.
   generalize dependent x.
   induction H; hauto l:on use:typing_fv'.
+Qed. *)
+
+Theorem typing_fv : forall G e s i,
+  Typed G e s i ->
+  Subset (fv e) (fv G).
+Proof.
+best use:typing_fv'.
 Qed.
+
+Hint Resolve typing_fv : core.
 
 (* TODO: will *)
 Theorem sink_tm_typing : forall g p s s',

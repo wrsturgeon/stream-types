@@ -101,18 +101,6 @@ Proof.
   + sfirstorder.
 Qed.
 
-(*
-Step_mutual
-     : forall
-         (P : forall (e : env) (t t0 : term) (p : prefix),
-              Step e t t0 p -> Prop)
-         (P0 : forall (e : env) (c : context) (a a0 : argsterm)
-                 (c0 : context) (e0 : env), ArgsStep e c a a0 c0 e0 -> Prop),
-*)
-
-Definition sound_stmt_step := forall eta e e' p, Step eta e e' p -> forall G s i, P_sound G e s i eta e' p.
-Definition sound_stmt_args := forall eta c a a' c' eta', ArgsStep eta c a a' c' eta' -> forall G e s i e' p, P_sound G e s i eta e' p.
-Print sound_stmt_args.
 
 Theorem sound : forall G e s i eta e' p,
   Step eta e e' p ->
@@ -182,9 +170,9 @@ Proof.
   - edestruct (IHStep1) as [A [B [U V]]]; eauto.
    (* todo: need better automation for disjoitnness *)
     assert (NoConflictOn eta (singleton_env x p) (fv G)). { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. intro. assert (x0 <> x) by scongruence. assert (x = x0) by qauto l: on use:dom_singleton. sfirstorder. }
-    assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. eauto. }
+    assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. sfirstorder. }
     edestruct (wf_fill_reflect G) as [QQ _]; eauto.
-    assert (WFContext Gxs). { eapply wf_fill_reflect. eauto. hauto l: on use:DisjointSets_inj'. }
+    assert (WFContext Gxs). { eapply wf_fill_reflect. eauto. best use:DisjointSets_inj'. }
     edestruct IHStep2 as [A' [B' [U' V']]]; eauto.
     split; try split; try split.
     + eauto.
@@ -237,7 +225,7 @@ Proof.
       eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
-      assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ | eauto | | | | ]. eauto. admit. admit. admit. hauto lq: on rew: off.
+      assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | | ]. admit. admit. hauto lq: on rew: off.
       edestruct (H20 z) as [p00 [L' R]]. hauto lq: on rew: off.
       destruct (ltac:(scongruence) : PfxSumInl p = p00).
       sinvert R.
