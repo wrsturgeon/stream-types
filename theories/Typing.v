@@ -110,20 +110,19 @@ Theorem typing_sub_inert : forall g e s i,
   Typed g e s Jumpy
 .
 Proof.
-intros.
-induction H; intros.
-- econstructor; sauto.
-- econstructor; eauto.
-- hfcrush.
-- sfirstorder.
-- hauto l: on.
-- sauto lq: on.
-- sfirstorder.
-- best.
-- best.
-- best.
-- destruct i; econstructor; eauto.
-- best.
+  intros. induction H; intros.
+  - econstructor; try eassumption; constructor.
+  - econstructor; eassumption.
+  - econstructor; try eassumption. cbn. Locate inert_guard. fail. best. hfcrush.
+  - sfirstorder.
+  - hauto l: on.
+  - sauto lq: on.
+  - sfirstorder.
+  - best.
+  - best.
+  - best.
+  - destruct i; econstructor; eauto.
+  - best.
 Qed.
 
 
