@@ -133,11 +133,15 @@ Proof.
   - admit.
   - admit.
   - admit.
-  - assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by best use:maps_to_has_type_reflect.
-      sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. (* TODO: will. why does this work? speed it up?*) eapply parlenvtyped; eauto.
-      split; try split.
-      + sfirstorder.
-      + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
+  - assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by hauto l: on use: maps_to_has_type_reflect.
+    sinvert H00. edestruct IHStep as [A [B C]].
+    + eassumption.
+    + clear IHHt. eapply wf_hole_iff in H6 as [Hh [Hc Hd]]; [| eassumption].
+      eapply wf_hole_iff; [eassumption |].
+      repeat split; [assumption | constructor; constructor | |]; sfirstorder.
+    + split; try split.
+      * sfirstorder.
+      * intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
         sinvert A'.
         sinvert H17.
         destruct (ltac:(scongruence) : p1 = p0).
@@ -145,7 +149,7 @@ Proof.
         specialize (D' (CtxComma (CtxHasTy x s) (CtxHasTy y t)) (CtxComma (CtxHasTy x s'1) (CtxHasTy y t')) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
         edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) eapply context_derivative_comma; [admit | | ]; eapply context_derivative_sng; eauto. (* todo: will: check out this admit. for some reason the automation isn't working to establish this, but it should.*)
         econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
-      + admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
+      * admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
   - admit.
   - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply catrenvtyped2; eauto.
