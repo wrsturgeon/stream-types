@@ -215,6 +215,14 @@ Definition NoConflict (n n' : env) := forall x p p',
 Arguments NoConflict/ n n'.
 Hint Unfold NoConflict : core.
 
+Theorem disjoint_no_conflict : forall n n',
+  DisjointSets (dom n) (dom n') -> NoConflict n n'.
+Proof.
+  cbn. intros n n' Hd x p p' En En'. specialize (Hd x) as [Hd _].
+  contradiction Hd; eexists; eassumption.
+Qed.
+Hint Resolve disjoint_no_conflict : core.
+
 Definition NoConflictOn (n n' : env) s := forall x p p',
   s x ->
   n x = Some p ->
@@ -223,17 +231,22 @@ Definition NoConflictOn (n n' : env) s := forall x p p',
 Arguments NoConflictOn/ n n' s.
 Hint Unfold NoConflictOn : core.
 
-Theorem NoConflictOn_disjoint : forall eta eta' s,
+Theorem no_conflict_anywhere : forall n n',
+  NoConflict n n' ->
+  forall s,
+  NoConflictOn n n' s.
+Proof. cbn. intros. eapply H; eassumption. Qed.
+Hint Resolve no_conflict_anywhere : core.
+
+Theorem no_conflict_on_disjoint : forall eta eta' s,
   DisjointSets (dom eta) s \/ DisjointSets (dom eta') s -> NoConflictOn eta eta' s.
-Proof.
-Admitted.
+Proof. sfirstorder. Qed.
+Hint Resolve no_conflict_on_disjoint : core.
 
-
-Theorem NoConflictOn_union : forall eta eta' s s',
+Theorem no_conflict_on_union : forall eta eta' s s',
   NoConflictOn eta eta' (set_union s s') <-> (NoConflictOn eta eta' s /\ NoConflictOn eta eta' s').
-Proof.
-sfirstorder.
-Qed.
+Proof. sfirstorder. Qed.
+Hint Resolve no_conflict_on_union : core.
 
 Lemma prop_on_fill : forall P n d d' g lhs lhs',
   Fill g d lhs ->

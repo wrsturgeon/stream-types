@@ -188,6 +188,7 @@ Proof.
   split; intros [Hf | Hf]; try apply IHContextDerivative1 in Hf; try apply IHContextDerivative2 in Hf;
   try (left; assumption); right; assumption.
 Qed.
+Hint Resolve fv_context_derivative : core.
 
 Theorem fv_hole_derivative : forall eta h h',
   HoleDerivative eta h h' ->
@@ -197,6 +198,7 @@ Proof.
   apply fv_context_derivative in H0; split; intros [Hf | Hf];
   try apply H0 in Hf; try apply IHHoleDerivative in Hf; try (left; assumption); right; assumption.
 Qed.
+Hint Resolve fv_hole_derivative : core.
 
 Theorem context_derivative_wf : forall eta g g',
   WFContext g ->
@@ -207,6 +209,7 @@ Proof.
   sinvert Hw; try apply IHHd1; try apply IHHd2; try assumption; split; intros Hf C;
   apply fv_context_derivative in Hd1; apply fv_context_derivative in Hd2; cbn in *; sfirstorder.
 Qed.
+Hint Resolve context_derivative_wf : core.
 
 Theorem context_derivative_wf' : forall eta g g',
   WFContext g' ->
@@ -218,6 +221,7 @@ Proof.
   apply fv_context_derivative in Hd1; apply fv_context_derivative in Hd2; cbn in *; sfirstorder.
   (* happened to be the exact same proof (automation) as above *)
 Qed.
+Hint Resolve context_derivative_wf' : core.
 
 Theorem hole_derivative_wf : forall eta h h',
   WFHole h ->
@@ -228,30 +232,30 @@ Proof.
   sinvert Hw; try apply IHHd; try eapply context_derivative_wf; try eassumption; split; intros Hf C;
   apply fv_hole_derivative in Hd; apply fv_context_derivative in H; cbn in *; sfirstorder.
 Qed.
+Hint Resolve hole_derivative_wf : core.
 
 Theorem context_derivative_emp' : forall g g' eta,
   EmptyOn (fv g) eta ->
   ContextDerivative eta g g' ->
   g = g'.
 Proof.
-induction g; intros.
-- best.
-- cbn in H. specialize (H id (ltac:(auto))).
-  edestruct H as [p [A B]].
-  sinvert H0.
-  destruct (ltac:(scongruence) : p = p0).
-  sfirstorder use:derivative_emp'.
-- sinvert H0.
-  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
-  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
-  hauto lq: on.
-- sinvert H0.
-  assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
-  assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
-  hauto lq: on.
+  induction g; intros.
+  - sinvert H0. reflexivity.
+  - cbn in H. specialize (H id (ltac:(auto))).
+    edestruct H as [p [A B]].
+    sinvert H0.
+    destruct (ltac:(scongruence) : p = p0).
+    sfirstorder use:derivative_emp'.
+  - sinvert H0.
+    assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
+    assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
+    hauto lq: on.
+  - sinvert H0.
+    assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
+    assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
+    hauto lq: on.
 Qed.
-
-Hint Resolve derivative_emp : core.
+Hint Resolve context_derivative_emp' : core.
 
 Theorem hole_derivative_fun : forall eta h d hd,
   Fill h d hd ->
@@ -274,6 +278,7 @@ Proof.
     destruct (context_derivative_fun _ _ H1) as [g' Hg'].
     eexists. constructor; eassumption.
 Qed.
+Hint Resolve hole_derivative_fun : core.
 
 Theorem hole_derivative_det : forall eta h h' h'',
   HoleDerivative eta h h' ->
@@ -284,59 +289,66 @@ Proof.
   [sinvert H; reflexivity | | | |]; sinvert H1; rewrite (context_derivative_det _ _ _ _ H0 H7);
   subst; f_equal; apply IHHoleDerivative; assumption.
 Qed.
+Hint Resolve hole_derivative_det : core.
 
-(* TODO: will. *)
 Theorem context_derivative_overwrite : forall eta eta' g g',
   ContextDerivative eta' g g' ->
   ContextDerivative (env_union eta eta') g g'.
 Proof.
-Admitted.
+  intros. generalize dependent eta. induction H; cbn in *; intros.
+  - constructor.
+  - econstructor; cbn. { rewrite H. reflexivity. } assumption.
+  - constructor; [apply IHContextDerivative1 | apply IHContextDerivative2].
+  - constructor; [apply IHContextDerivative1 | apply IHContextDerivative2].
+Qed.
+Hint Resolve context_derivative_overwrite : core.
 
-(* TODO: will *)
 Theorem context_derivative_noconflict : forall eta eta' g g',
   NoConflictOn eta eta' (fv g) ->
   ContextDerivative eta g g' ->
   ContextDerivative (env_union eta eta') g g'.
 Proof.
-Admitted.
+  intros. generalize dependent eta'. induction H0; cbn in *; intros.
+  - constructor.
+  - econstructor; cbn; [| eassumption]. destruct (eta' x) eqn:E; [| eassumption].
+    f_equal. symmetry. eapply H1; [reflexivity | |]; assumption.
+  - constructor; [apply IHContextDerivative1 | apply IHContextDerivative2];
+    intros; eapply H; try eassumption; [left | right]; assumption.
+  - constructor; [apply IHContextDerivative1 | apply IHContextDerivative2];
+    intros; eapply H; try eassumption; [left | right]; assumption.
+Qed.
+Hint Resolve context_derivative_noconflict : core.
 
-(* TODO: will *)
 Theorem context_derivative_sng: forall x p s s',
   Derivative p s s' ->
   ContextDerivative (singleton_env x p) (CtxHasTy x s) (CtxHasTy x s').
-Proof.
-Admitted.
+Proof. intros. econstructor; cbn. { rewrite eqb_refl. reflexivity. } assumption. Qed.
+Hint Resolve context_derivative_sng : core.
 
-(* TODO: will *)
 Theorem context_derivative_comma: forall eta eta' g1 g2 g1' g2',
   DisjointSets (dom eta) (dom eta') ->
   ContextDerivative eta g1 g1' ->
   ContextDerivative eta' g2 g2' ->
   ContextDerivative (env_union eta eta') (CtxComma g1 g2) (CtxComma g1' g2').
 Proof.
-Admitted.
+  intros. constructor; [| apply context_derivative_overwrite; assumption].
+  apply context_derivative_noconflict; [| assumption].
+  apply no_conflict_anywhere. apply disjoint_no_conflict. assumption.
+Qed.
+Hint Resolve context_derivative_comma : core.
 
-(* TODO: will *)
 Theorem context_derivative_semic: forall eta eta' g1 g2 g1' g2',
   DisjointSets (dom eta) (dom eta') ->
   ContextDerivative eta g1 g1' ->
   ContextDerivative eta' g2 g2' ->
   ContextDerivative (env_union eta eta') (CtxSemic g1 g2) (CtxSemic g1' g2').
 Proof.
-Admitted.
+  intros. constructor; [| apply context_derivative_overwrite; assumption].
+  apply context_derivative_noconflict; [| assumption].
+  apply no_conflict_anywhere. apply disjoint_no_conflict. assumption.
+Qed.
+Hint Resolve context_derivative_semic : core.
 
-
-(* TODO: will. Other cases should go through just like this one.
-Ask me if you want to talk about this one, it's kind of big.
-
-
-d_eta (fill h d) = fill (d_eta h) (d_eta d)
-
-d_{eta u eta'} (fill h d') = fill (d_eta h) (d_eta' d')
-
-requires :NoConflictOn eta eta' (fv h)
-
-*)
 Theorem fill_derivative : forall eta h d hd d_hd,
   Fill h d hd ->
   ContextDerivative eta hd d_hd ->
@@ -351,27 +363,20 @@ Theorem fill_derivative : forall eta h d hd d_hd,
       exists d_hd0, Fill d_h d_d0 d_hd0 /\ ContextDerivative (env_union eta eta0) hd0 d_hd0
     ).
 Proof.
-intros.
-generalize dependent d_hd.
-generalize dependent eta.
-induction H; intros.
-- exists HoleHere. exists d_hd. split; try split; try split; [eauto | sauto lq: on rew: off | sauto lq: on rew: off | ].
-  intros. sinvert H. exists d_d0. split; [sfirstorder |].
-  clear H1. best use:context_derivative_overwrite.
-- sinvert H0. edestruct IHFill as [d_h [d_d [A [B [C D]]]]]; eauto.
-  exists (HoleCommaL d_h D'). exists d_d; split; try split; try split.
-  + sfirstorder.
-  + sauto lq: on.
-  + sfirstorder.
-  + intros. 
-    sinvert H0.
-    specialize (D d0 d_d0 hd1 eta0).
-    edestruct D as [d_hd0 [A' B']]; eauto. sfirstorder.
-    exists (CtxComma d_hd0 D'); hauto drew: off use: context_derivative_noconflict.
-- admit.
-- admit.
-- admit.
-Admitted.
+  intros.
+  generalize dependent d_hd.
+  generalize dependent eta.
+  induction H; intros; [repeat econstructor; [assumption |];
+    sinvert H; apply context_derivative_overwrite; assumption | | | |];
+  sinvert H0; (edestruct IHFill as [d_h [d_d [A [B [C D]]]]]; [eassumption |]);
+  eexists; eexists; (repeat split; [| constructor | constructor |]); try eassumption;
+  intros; sinvert H0; (edestruct D as [d_hd0 [A' B']]; try eassumption; [
+    intros x p p' Hx Ex Ex0; eapply H1; [right | |]; eassumption |]);
+  eexists; (split; [constructor; eassumption |]); constructor; try assumption;
+  (apply context_derivative_noconflict; [| assumption]);
+  intros x p p' Hx Ex Ex0; (eapply H1; [left | |]); eassumption.
+Qed.
+Hint Resolve fill_derivative : core.
 
 (* Theorem B.18 *)
 Theorem maximal_derivative_nullable : forall p s s',
