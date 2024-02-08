@@ -167,7 +167,17 @@ Proof.
         admit. (* this used to work: best use:hole_compose_fill. *)
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
     + admit.
-  - admit.
+  - edestruct (IHStep1) as [A [B [U V]]]; eauto.
+    assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | | | | ]. eauto. { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. admit. } eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. eauto. }
+    assert (WFContext Gxs) by admit.
+    edestruct IHStep2 as [A' [B' [U' V']]]; eauto.
+    split; try split; try split.
+    + eauto.
+    + intros.  admit.
+    + intros. assert (MaximalOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
+      eapply U'. eapply prop_on_minus. eapply U. hauto q: on. eauto.
+    + intros. assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
+      eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto.
   - split; try split; try split.
     + best use:emp_well_typed.
     + intros.

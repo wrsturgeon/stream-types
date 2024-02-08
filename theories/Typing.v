@@ -167,7 +167,7 @@ Proof.
 Qed.
 Hint Resolve fv_hole_minus : core.
 
-Theorem typing_fv : forall G e s i,
+Theorem typing_fv' : forall G e s i,
   Typed G e s i ->
   forall x,
   fv e x ->
@@ -198,6 +198,14 @@ Proof.
       apply IHHt1 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption. }
     apply IHHt2 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption.*)
 Admitted.
+
+Theorem typing_fv : forall G e s i,
+  Typed G e s i ->
+  Subset (fv e) (fv G).
+Proof.
+(* trivial from prev *)
+Admitted.
+
 Hint Resolve typing_fv : core.
 
 Theorem argstyping_fv : forall g e g',
@@ -208,7 +216,7 @@ Theorem argstyping_fv : forall g e g',
 Proof.
   intros.
   generalize dependent x.
-  induction H; hauto l:on use:fv_term.
+  induction H; hauto l:on use:typing_fv'.
 Qed.
 
 (* TODO: will *)
