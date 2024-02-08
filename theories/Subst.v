@@ -60,9 +60,10 @@ Proof. reflexivity. Qed.
 (* NOTE: Had to add non-equality of x & y and make it a bi-implication *)
 (* TODO: This still doesn't seem to work. Try `subst_var e x y = e <-> (x = y \/ ~fv e y)` *)
 Theorem subst_not_fv :
-  (forall e x y, x <> y -> ~fv e y <-> e = subst_var e x y) /\
-  (forall args x y, x <> y -> ~fv args y <-> args = subst_var_argsterm args x y).
+  (forall e x y, subst_var e x y = e <-> (x = y \/ ~fv e y)) /\
+  (forall args x y, subst_var_argsterm args x y = args <-> (x = y \/ ~fv args y)).
 Proof.
+(*
   apply term_mutual; intros.
   - hauto lq: on rew: off.
   - hauto lq: on rew: off.
@@ -83,4 +84,5 @@ Proof.
       apply H0 in E'; [| assumption]. destruct C as [C | [C _]]; [| apply E' in C as []].
       admit. (* okay, both cases are symmetrically wrong,
               * so there's probably something up with the theorem *)
+*)
 Admitted.

@@ -110,10 +110,10 @@ Theorem typing_sub_inert : forall g e s i,
   Typed g e s Jumpy
 .
 Proof.
-  intros. induction H; intros.
+  intros. induction H; cbn in *; intros.
   - econstructor; try eassumption; constructor.
   - econstructor; eassumption.
-  - econstructor; try eassumption. cbn. Locate inert_guard. fail. best. hfcrush.
+  - econstructor; try eassumption. cbn. intro C. discriminate C.
   - sfirstorder.
   - hauto l: on.
   - sauto lq: on.
@@ -124,7 +124,6 @@ Proof.
   - destruct i; econstructor; eauto.
   - best.
 Qed.
-
 
 (* TODO:
 Theorem typed_wf_term : forall G x T,
@@ -224,15 +223,13 @@ Theorem typing_subst_nofv : forall e x g t i y,
   Typed g e t i ->
   Typed g (subst_var e y x) t i.
 Proof.
-best use:subst_not_fv.
+  intros. assert (A : subst_var e y x = e); [| rewrite A; assumption].
+  apply subst_not_fv. right. assumption.
 Qed.
 
-
 (*
-
 If G(x : s) |- e : t
 then G(y : s) |- e[y/x] : t
-
 *)
 
 (* Todo: will. *)

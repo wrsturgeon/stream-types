@@ -119,7 +119,6 @@ Theorem sound : forall G e s i eta e' p,
   P_sound G e s i eta e' p.
 Proof.
   intros. generalize dependent G. generalize dependent s. generalize dependent i.
-  Check Step_mutual. apply Step_mutual.
   induction H; intros i s G Ht; intros;
   (dependent induction Ht; [| eapply sound_sub; try eassumption; hauto l: on]).
   - admit.
@@ -215,7 +214,7 @@ Proof.
       destruct (ltac:(scongruence) : PfxSumInl p = p0).
       sinvert H25.
       assert (WFContext Gx). { eapply wf_fill_reflect. eauto. hauto drew: off. }
-      edestruct (D'' (CtxHasTy x s) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply NoConflictOn_disjoint. right. eapply DisjointSets_inj. intros. admit. } eapply context_derivative_sng; eauto.
+      edestruct (D'' (CtxHasTy x s) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. admit. } eapply context_derivative_sng; eauto.
       eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
@@ -268,7 +267,7 @@ Proof.
   - sinvert H1; sinvert H2; sinvert H4; sinvert H3.
     edestruct IHArgsStep as [A [B [C D]]]; eauto.
     split; try split; try split.
-    + eapply env_typed_semic; [| eauto| sfirstorder use:empty_env_for_typed | hauto lq: on use:empty_env_for_empty] . 
+    + eapply env_typed_semic; [| eauto| sfirstorder use:empty_env_for_typed | hauto lq: on use:empty_env_for_empty_on] . 
       clear D; clear C; clear H13; clear H9; clear H11; clear H; clear H0; clear IHArgsStep.
       assert (Subset (fv g3) (dom eta)) by best use:envtyped_dom.
       assert (Subset (fv g0) (dom eta)) by best use:envtyped_dom.
