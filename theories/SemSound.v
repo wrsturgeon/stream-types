@@ -39,36 +39,29 @@ Proof.
 Qed. *)
 
 Definition Preserves i eta p s :=
-    (MaximalOn s eta -> MaximalPrefix p)
-    /\
-    (i = Inert -> EmptyOn s eta -> EmptyPrefix p)
-.
+    (MaximalOn s eta -> MaximalPrefix p) /\
+    (i = Inert -> EmptyOn s eta -> EmptyPrefix p).
+Arguments Preserves i eta p s/.
 
 Theorem preserves_downgrade : forall i eta p s,
   Preserves i eta p s -> Preserves Jumpy eta p s.
-Proof.
-hauto lq: on.
-Qed.
-
+Proof. split; intros; [| discriminate H0]. apply H. assumption. Qed.
 
 Theorem preserves_to_agree : forall i eta p s S' S x,
 Subset S' S ->
 Preserves i eta p S' ->
-Agree i eta (singleton_env x p)
-  S (fv (CtxHasTy x s))
-.
+Agree i eta (singleton_env x p) S (fv (CtxHasTy x s)).
 Proof.
-intros.
-unfold Preserves in *.
-unfold Agree in *.
-destruct H0 as [A B].
-split; intros.
-+ assert (MaximalOn S' eta) by best use:prop_on_contains.
-  cbn. intros. exists p. destruct H2. hauto lq: on use:eqb_refl.
-+ assert (EmptyOn S' eta) by best use:prop_on_contains.
-  cbn. intros. exists p. destruct H3. hauto lq: on use:eqb_refl.
+  intros.
+  unfold Preserves in *.
+  unfold Agree in *.
+  destruct H0 as [A B].
+  split; intros.
+  + assert (MaximalOn S' eta) by sfirstorder use:prop_on_contains.
+    cbn. intros. exists p. destruct H2. hauto lq: on use:eqb_refl.
+  + assert (EmptyOn S' eta) by hauto l: on use:prop_on_contains.
+    cbn. intros. exists p. destruct H3. hauto lq: on use:eqb_refl.
 Qed.
-
 
 Definition P_sound g (e : term) s (i : inertness) eta (e' : term) p :=
   Typed g e s i ->
@@ -76,8 +69,7 @@ Definition P_sound g (e : term) s (i : inertness) eta (e' : term) p :=
   EnvTyped eta g ->
     PrefixTyped p s /\
     (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed g' e' s' Inert) /\
-    Preserves i eta p (fv e)
-.
+    Preserves i eta p (fv e).
 Arguments P_sound g e s i eta e' p/.
 
 Definition P_sound_args g_in (e : argsterm) g_out eta_in (e' : argsterm) g_out' eta_out :=
@@ -87,29 +79,25 @@ Definition P_sound_args g_in (e : argsterm) g_out eta_in (e' : argsterm) g_out' 
     EnvTyped eta_out g_out /\
     SetEq (dom eta_out) (fv g_out) /\
     (Agree Jumpy eta_in eta_out (fv g_in) (fv g_out)) /\
-    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped g_in' e' g_out')
-.
-
+    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped g_in' e' g_out').
 Arguments P_sound_args g_in e g_out eta_in e' g_out' eta_out/.
 
-Theorem sound_sub : (forall (G G' : context) (e : term) (s : type) eta e' p i,
-        Step eta e e' p ->
-        Subcontext G G' ->
-        Typed G' e s i ->
-        P_sound G' e s i eta e' p ->
-        P_sound G e s i eta e' p
-)
-  .
+Theorem sound_sub : forall (G G' : context) (e : term) (s : type) eta e' p i,
+  Step eta e e' p ->
+  Subcontext G G' ->
+  Typed G' e s i ->
+  P_sound G' e s i eta e' p ->
+  P_sound G e s i eta e' p.
 Proof.
-  unfold P_sound in *.
-  intros.
-  edestruct H2 as [A [B C]]; [eauto | best use:subtcontext_wf | best use:sub_preserves_env|].
-  split; try split.
+  unfold P_sound. intros.
+  edestruct H2 as [A [B C]]; [eauto | sfirstorder use: subtcontext_wf | sfirstorder use: sub_preserves_env |].
+  repeat split.
   + sfirstorder.
   + intros.
     edestruct context_derivative_fun as [g'']. eapply sub_preserves_env; eauto.
     eapply TSubCtx. eapply subctx_deriv; eauto.
     hauto l:on.
+  + sfirstorder.
   + sfirstorder.
 Qed.
 
@@ -119,11 +107,12 @@ Theorem sound : forall G e s i eta e' p,
   P_sound G e s i eta e' p.
 Proof.
   intros. generalize dependent G. generalize dependent s. generalize dependent i.
-  induction H; intros i s G; intro Ht;  (dependent induction Ht; try solve [eapply sound_sub; eauto; unfold P_sound; eauto]); intros.
+  induction H; intros i s G Ht; intros;
+  (dependent induction Ht; [| eapply sound_sub; try eassumption; hauto l: on]).
   - admit.
   - admit.
   - split; try split.
-      + best use:maps_to_has_type_reflect.
+      + hauto l: on use:maps_to_has_type_reflect.
       + intros. edestruct fill_derivative as [h [d' [A [B C]]]]; eauto.
         sinvert A.
         assert (p = p0) by scongruence.
@@ -134,22 +123,27 @@ Proof.
   - admit.
   - admit.
   - assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by hauto l: on use: maps_to_has_type_reflect.
-    sinvert H00. edestruct IHStep as [A [B C]].
+    sinvert H00. edestruct IHStep as [A [B C]]; clear IHStep.
     + eassumption.
-    + clear IHHt. eapply wf_hole_iff in H6 as [Hh [Hc Hd]]; [| eassumption].
+    + eapply wf_hole_iff in H6 as [Hh [Hc Hd]]; [| eassumption].
       eapply wf_hole_iff; [eassumption |].
       repeat split; [assumption | constructor; constructor | |]; sfirstorder.
-    + split; try split.
+    + admit.
+    + repeat split.
       * sfirstorder.
-      * intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
-        sinvert A'.
-        sinvert H17.
-        destruct (ltac:(scongruence) : p1 = p0).
-        destruct (ltac:(scongruence) : p2 = p3).
-        specialize (D' (CtxComma (CtxHasTy x s) (CtxHasTy y t)) (CtxComma (CtxHasTy x s'1) (CtxHasTy y t')) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
-        edestruct D' as [u [A'' B'']]; eauto. admit. (* need a smart constructor here *) eapply context_derivative_comma; [admit | | ]; eapply context_derivative_sng; eauto. (* todo: will: check out this admit. for some reason the automation isn't working to establish this, but it should.*)
-        econstructor; [ eauto | | | | eauto | eauto ]; [ hauto q:on use: fv_hole_derivative | hauto q: on use: fv_hole_derivative | ]. eauto.
+      * intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]];
+        [| eassumption |]; [eassumption |]. sinvert A'. sinvert H17.
+        assert (p0 = p1) by congruence. assert (p3 = p2) by congruence. subst.
+        specialize (D' (CtxComma (CtxHasTy x s) (CtxHasTy y t))).
+        specialize (D' (CtxComma (CtxHasTy x s'1) (CtxHasTy y t'))).
+        specialize (D' Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
+        edestruct D' as [u [A'' B'']]; [eassumption | | |].
+        -- admit. (* need a smart constructor here *)
+        -- eapply context_derivative_comma; try (eapply context_derivative_sng; eassumption).
+           intro test. cbn. destruct (eqb_spec x test); destruct (eqb_spec y test); sfirstorder.
+        -- admit.
       * admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
+      * admit.
   - admit.
   - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply catrenvtyped2; eauto.
