@@ -9,14 +9,13 @@ From LambdaST Require Import
   Inert
   Prefix
   Sets
-  (* Terms *)
   Types.
 
 Definition env : Set := string -> option prefix.
 Hint Unfold env : core.
 
 Definition empty_env : env := fun x => None.
-Arguments empty_env/.
+Arguments empty_env x/.
 Hint Unfold empty_env : core.
 
 Definition singleton_env (id : string) (p : prefix) : env := fun x =>
@@ -47,20 +46,13 @@ Arguments dom n x/.
 Hint Unfold dom : core.
 
 Theorem dom_singleton : forall x p, SetEq (dom (singleton_env x p)) (singleton_set x).
-Proof.
-Admitted.
+Proof. cbn. intros. destruct (eqb_spec x x0); sfirstorder. Qed.
 
 Theorem dom_union : forall env1 env2, SetEq (dom (env_union env1 env2)) (set_union (dom env1) (dom env2)).
-Proof.
-Admitted.
+Proof. hauto q: on. Qed.
 
 Theorem dom_subst : forall env x p, SetEq (dom (env_subst x p env)) (set_union (dom env) (singleton_set x)).
-Proof.
-Admitted.
-
-
-
-
+Proof. cbn. intros. destruct (eqb_spec x x0); sfirstorder. Qed.
 
 (* Theorem B.10, part I *)
 Theorem maps_to_unique_literal : forall p x (n : env),
@@ -108,9 +100,7 @@ Theorem prop_on_minus : forall P x s eta p,
   P p ->
   PropOn P (set_minus s (singleton_set x)) eta ->
   PropOn P s (env_union eta (singleton_env x p)).
-Proof.
-Admitted.
-
+Proof. cbn. intros. destruct (eqb_spec x x0); sfirstorder. Qed.
 
 (* Agree Inert means "including empty on agreement";
  * Agree Jumpy means "not including empty on agreement." *)
@@ -129,7 +119,6 @@ Proof.
   sfirstorder.
 Qed.
 Hint Resolve agree_subset : core.
-
 
 Inductive EnvTyped : env -> context -> Prop :=
   | EnvTyEmpty : forall n,
@@ -156,7 +145,6 @@ Proof.
 intros; induction H; hauto q: on use:dom_union.
 Qed.
 
-
 Fixpoint empty_env_for (g : context) : env :=
   match g with
   | CtxEmpty => empty_env
@@ -164,12 +152,44 @@ Fixpoint empty_env_for (g : context) : env :=
   | CtxComma g1 g2 | CtxSemic g1 g2 => env_union (empty_env_for g1) (empty_env_for g2)
   end.
 
-(* TODO: will.
-use the above smart constructors (dom_union, dom_singleton). *)
 Theorem empty_env_for_dom : forall g, SetEq (dom (empty_env_for g)) (fv g).
 Proof.
-Admitted.
+  induction g; cbn in *; intros.
+  - sfirstorder.
+  - destruct (eqb_spec id x); sfirstorder.
+  - split. { intros [p Hp]. hauto lq: on rew: off. } hauto q: on.
+  - split. { intros [p Hp]. hauto lq: on rew: off. } hauto q: on.
+Qed.
 
+Theorem empty_env_for_empty_on : forall g,
+  WFContext g ->
+  EmptyOn (fv g) (empty_env_for g).
+Proof.
+  induction g; cbn in *; intros.
+  - destruct H0.
+  - subst. rewrite eqb_refl. eexists. split. { reflexivity. } apply emp_empty.
+  - sinvert H. destruct H0 as [H0 | H0];
+    [specialize (IHg1 H3 _ H0) as [p [Ep Hp]] | specialize (IHg2 H4 _ H0) as [p [Ep Hp]]];
+    eexists; (split; [| eassumption]); rewrite Ep; [| reflexivity].
+    specialize (H5 x) as [Hd _]. specialize (Hd H0). destruct (empty_env_for g2 x) eqn:E; [| reflexivity].
+    contradiction Hd. apply empty_env_for_dom. eexists. eassumption.
+  - sinvert H. destruct H0 as [H0 | H0];
+    [specialize (IHg1 H3 _ H0) as [p [Ep Hp]] | specialize (IHg2 H4 _ H0) as [p [Ep Hp]]];
+    eexists; (split; [| eassumption]); rewrite Ep; [| reflexivity].
+    specialize (H5 x) as [Hd _]. specialize (Hd H0). destruct (empty_env_for g2 x) eqn:E; [| reflexivity].
+    contradiction Hd. apply empty_env_for_dom. eexists. eassumption.
+Qed.
+
+Theorem empty_env_for_empty_prefix : forall g x p,
+  empty_env_for g x = Some p ->
+  EmptyPrefix p.
+Proof.
+  induction g; cbn in *; intros.
+  - discriminate H.
+  - destruct (eqb_spec id x); [| discriminate H]. sinvert H. apply emp_empty.
+  - hauto lq: on rew: off.
+  - hauto lq: on rew: off.
+Qed.
 
 Theorem maps_to_hole_reflect : forall g d gd n,
   Fill g d gd ->
@@ -322,7 +342,6 @@ Lemma prop_on_weakening_alt : forall P nl nr ctx,
 Proof. sfirstorder use: prop_on_item_weakening_alt. Qed.
 Hint Resolve prop_on_weakening_alt : core.
 
-
 Lemma empty_on_weakening_alt : forall nl nr ctx,
   NoConflict nl nr ->
   EmptyOn ctx nl ->
@@ -412,22 +431,21 @@ Proof.
 Qed.
 Hint Resolve env_typed_semic : core.
 
-
-(* todo: emptyenv_for *)
-(* need to use the empty_env_dom theorem, otherwise easy. *)
-Theorem empty_env_for_typed : forall g, EnvTyped (empty_env_for g) g.
+Theorem empty_env_for_typed : forall g, WFContext g -> EnvTyped (empty_env_for g) g.
 Proof.
-intros.
-induction g.
-Admitted.
-
-Theorem empty_env_for_empty : forall g, EmptyOn (fv g) (empty_env_for g).
-Proof.
-intros.
-induction g.
-Admitted.
-
-
+  induction g; cbn in *; intros.
+  - constructor.
+  - apply env_typed_singleton. apply emp_well_typed.
+  - sinvert H. constructor; [| apply env_typed_weakening; apply IHg2; assumption].
+    apply env_typed_weakening_alt; [| apply IHg1; assumption]. apply disjoint_no_conflict.
+    split; intros H C; apply empty_env_for_dom in H; apply empty_env_for_dom in C; sfirstorder.
+  - sinvert H. constructor; [| apply env_typed_weakening; apply IHg2; assumption |]. {
+      apply env_typed_weakening_alt; [| apply IHg1; assumption]. apply disjoint_no_conflict.
+      split; intros H C; apply empty_env_for_dom in H; apply empty_env_for_dom in C; sfirstorder. }
+    left. apply empty_on_weakening. Search EmptyOn. cbn. intros.
+    apply empty_env_for_dom in H as [p Hp]. eexists. split. { eassumption. }
+    eapply empty_env_for_empty_prefix. eassumption.
+Qed.
 
 Lemma agree_union : forall P n n' D D' lhs lhs' lhs'',
   NoConflict n n' ->
@@ -446,7 +464,6 @@ Proof.
   exists p; cbn; (destruct (n' x) eqn:E; split; [f_equal; symmetry; eapply Hn | | |]); eassumption.
 Qed.
 Hint Resolve agree_union : core.
-
 
 Theorem env_subctx_bind' : forall h d d' hd hd' eta eta',
   Fill h d hd ->

@@ -58,5 +58,3 @@ Inductive WFContext : context -> Prop :=
       WFContext (CtxSemic g g')
   .
 Hint Constructors WFContext : core.
-
-(* TODO: will need to prove that context derivatives preserve this... *)
