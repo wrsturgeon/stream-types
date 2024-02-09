@@ -18,6 +18,7 @@ From LambdaST Require Import
   Sets
   Terms
   Types
+  RecSig
   Typing.
 
 (* Theorem agree_step_inert : forall e e' eta p S x s,
@@ -63,31 +64,32 @@ Proof.
     cbn. intros. exists p. destruct H3. hauto lq: on use:eqb_refl.
 Qed.
 
-Definition P_sound g (e : term) s (i : inertness) eta (e' : term) p :=
-  Typed g e s i ->
+Definition P_sound g (rs : recsig) (e : term) s (i : inertness) eta (e' : term) p :=
+  Typed g NoRec e s i ->
   WFContext g ->
   EnvTyped eta g ->
     PrefixTyped p s /\
-    (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed g' e' s' Inert) /\
+    (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed g' NoRec e' s' Inert) /\
     Preserves i eta p (fv e).
-Arguments P_sound g e s i eta e' p/.
+Arguments P_sound g rs e s i eta e' p/.
 
 Definition P_sound_args g_in (e : argsterm) g_out eta_in (e' : argsterm) g_out' eta_out :=
+  ArgsTyped g_in NoRec e g_out ->
   WFContext g_out ->
   WFContext g_in ->
   EnvTyped eta_in g_in ->
     EnvTyped eta_out g_out /\
     SetEq (dom eta_out) (fv g_out) /\
     (Agree Jumpy eta_in eta_out (fv g_in) (fv g_out)) /\
-    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped g_in' e' g_out').
+    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped g_in' NoRec e' g_out').
 Arguments P_sound_args g_in e g_out eta_in e' g_out' eta_out/.
 
 Theorem sound_sub : forall (G G' : context) (e : term) (s : type) eta e' p i,
   Step eta e e' p ->
   Subcontext G G' ->
-  Typed G' e s i ->
-  P_sound G' e s i eta e' p ->
-  P_sound G e s i eta e' p.
+  Typed G' NoRec e s i ->
+  P_sound G' NoRec e s i eta e' p ->
+  P_sound G NoRec e s i eta e' p.
 Proof.
   unfold P_sound. intros.
   edestruct H2 as [A [B C]]; [eauto | sfirstorder use: subtcontext_wf | sfirstorder use: sub_preserves_env |].
@@ -104,7 +106,7 @@ Qed.
 
 Theorem sound : forall G e s i eta e' p,
   Step eta e e' p ->
-  P_sound G e s i eta e' p.
+  P_sound G NoRec e s i eta e' p.
 Proof.
   intros. generalize dependent G. generalize dependent s. generalize dependent i.
   induction H; intros i s G Ht; intros;
@@ -179,7 +181,7 @@ Proof.
     + intros GD' t'. intros.
       edestruct (fill_derivative eta G D GD GD') as [G' [D' [L [M [N O]]]]]; eauto.
       edestruct (derivative_fun p) as [s']; eauto.
-      assert (Typed D' e1' s' Inert) by hauto l: on.
+      assert (Typed D' NoRec e1' s' Inert) by hauto l: on.
       edestruct (O (CtxHasTy x s) (CtxHasTy x s') Gxs (singleton_env x p)) as [G'xs' [W X]]. eauto. eauto. hauto l: on.
       econstructor; [ | eauto | | eauto | ]. hauto q:on use:fv_hole_derivative. eauto.
       eapply B'; eauto. 
@@ -246,13 +248,12 @@ Admitted.
 
 (* this is basically how this theorem needs to go, but we have to figure out how to tie the knot with the regular soundness theorem. *)
 Theorem soundargs : forall g_in e g_out g_out' eta_in e' eta_out,
-    ArgsTyped g_in e g_out ->
     ArgsStep eta_in g_out e e' g_out' eta_out ->
     P_sound_args g_in e g_out eta_in e' g_out' eta_out.
 Proof.
   intros.
   generalize dependent g_in.
-  induction H0; unfold P_sound_args in *; intros.
+  induction H; unfold P_sound_args in *; intros.
   - best.
   - sinvert H1. 
     edestruct sound as [A [B C]]; eauto.
@@ -262,9 +263,9 @@ Proof.
     + sfirstorder use:dom_singleton.
     + eapply preserves_to_agree; [| hauto lq: on rew: off ]. hauto l: on use:typing_fv.
     + sauto lq: on.
-  - sinvert H. sinvert H0.
+  - sinvert H1. sinvert H2.
     edestruct IHArgsStep1 as [A [B [C D]]]; eauto.
-    edestruct IHArgsStep2 as [E [F [G H]]]; eauto.
+    edestruct IHArgsStep2 as [E [F [G L]]]; eauto.
     split; try split; try split.
     + eapply env_typed_comma; [| eauto | eauto]. hauto q: on.
     + hauto q: on.
@@ -276,7 +277,7 @@ Proof.
     split; try split; try split.
     + eapply env_typed_semic; [| eauto| sfirstorder use:empty_env_for_typed | hauto lq: on use:empty_env_for_empty_on] . 
       clear D; clear C; clear H13; clear H9; clear H11; clear H; clear H0; clear IHArgsStep.
-      assert (Subset (fv g3) (dom eta)) by best use:envtyped_dom.
+      assert (Subset (fv g1) (dom eta1)) by best use:envtyped_dom.
       assert (Subset (fv g0) (dom eta)) by best use:envtyped_dom.
       hauto lq:on rew: off use:empty_env_for_dom.
     + cbn. hauto q: on use:empty_env_for_dom.
@@ -289,7 +290,7 @@ Proof.
         eauto.
       (* contradictory. *)
       * sfirstorder.
-  - sinvert H0. sinvert H1. sinvert H3. sinvert H2.
+  - sinvert H2. sinvert H3. sinvert H5. sinvert H4.
     edestruct IHArgsStep1 as [A [B [C D]]]; eauto.
     edestruct IHArgsStep2 as [E [F [G H']]]; eauto.
     split; try split; try split.

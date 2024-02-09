@@ -14,57 +14,57 @@ From LambdaST Require Import
   Nullable
   Derivative
   Environment
+  RecSig
   Types.
 
-
-Inductive Typed : context -> term -> type -> inertness -> Prop :=
-  | TParR : forall G e1 e2 s t i1 i2 i3,
-      Typed G e1 s i1 ->
-      Typed G e2 t i2 ->
+Inductive Typed : context -> recsig -> term -> type -> inertness -> Prop :=
+  | TParR : forall G e1 e2 s t i1 i2 i3 rs,
+      Typed G rs e1 s i1 ->
+      Typed G rs e2 t i2 ->
       i_ub i1 i2 i3 ->
-      Typed G (e1, e2) (TyPar s t) i3
-  | TParL : forall G x y z s t e r Gxsyt Gzst i,
+      Typed G rs (e1, e2) (TyPar s t) i3
+  | TParL : forall G x y z s t e r Gxsyt Gzst i rs,
       x <> y ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxComma (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyPar s t)) Gzst ->
-      Typed Gxsyt e r i ->
-      Typed Gzst (TmLetPar x y z e) r i
-  | TCatR : forall G D e1 e2 s t i1 i2 i3,
-      Typed G e1 s i1 ->
-      Typed D e2 t i2 ->
+      Typed Gxsyt rs e r i ->
+      Typed Gzst rs (TmLetPar x y z e) r i
+  | TCatR : forall G D e1 e2 s t i1 i2 i3 rs,
+      Typed G rs e1 s i1 ->
+      Typed D rs e2 t i2 ->
       inert_guard (i1 = Inert /\ ~(Nullable s)) i3 ->
-      Typed (CtxSemic G D) (e1; e2) (TyDot s t) i3
-  | TCatL : forall G x y z s t e r Gxsyt Gzst i,
+      Typed (CtxSemic G D) rs (e1; e2) (TyDot s t) i3
+  | TCatL : forall G x y z s t e r Gxsyt Gzst i rs,
       x <> y ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
       Fill G (CtxHasTy z (TyDot s t)) Gzst ->
-      Typed Gxsyt e r i ->
-      Typed Gzst (TmLetCat t x y z e) r i
-  | TEpsR : forall G i,
-      Typed G TmSink TyEps i
-  | TOneR : forall G,
-      Typed G TmUnit TyOne Jumpy
-  | TVar : forall G x s Gxs i,
+      Typed Gxsyt rs e r i ->
+      Typed Gzst rs(TmLetCat t x y z e) r i
+  | TEpsR : forall G i rs,
+      Typed G rs TmSink TyEps i
+  | TOneR : forall G rs,
+      Typed G rs TmUnit TyOne Jumpy
+  | TVar : forall G x s Gxs i rs,
       Fill G (CtxHasTy x s) Gxs ->
-      Typed Gxs (TmVar x) s i
-  | TLet : forall G D Gxs x e e' s t GD i,
+      Typed Gxs rs (TmVar x) s i
+  | TLet : forall G D Gxs x e e' s t GD i rs,
       ~fv G x ->
-      Typed D e s Inert ->
+      Typed D rs e s Inert ->
       Fill G (CtxHasTy x s) Gxs ->
       Fill G D GD ->
-      Typed Gxs e' t i ->
-      Typed GD (TmLet x e e') t i
-  | TInl : forall G e s t i,
-      Typed G e s i ->
-      Typed G (TmInl e) (TySum s t) Jumpy
-  | TInr : forall G e s t i,
-      Typed G e s i ->
-      Typed G (TmInr e) (TySum s t) Jumpy
-  | TPlusCase : forall G x y z s t r Gz Gx Gy Gz' e1 e2 eta i i1 i2,
+      Typed Gxs rs e' t i ->
+      Typed GD rs (TmLet x e e') t i
+  | TInl : forall G e s t i rs,
+      Typed G rs e s i ->
+      Typed G rs (TmInl e) (TySum s t) Jumpy
+  | TInr : forall G e s t i rs,
+      Typed G rs e s i ->
+      Typed G rs (TmInr e) (TySum s t) Jumpy
+  | TPlusCase : forall G x y z s t r Gz Gx Gy Gz' e1 e2 eta i i1 i2 rs,
       ~ fv G x ->
       ~ fv G y ->
       Fill G (CtxHasTy z (TySum s t)) Gz ->
@@ -72,28 +72,28 @@ Inductive Typed : context -> term -> type -> inertness -> Prop :=
       Fill G (CtxHasTy y t) Gy ->
       EnvTyped eta Gz ->
       ContextDerivative eta Gz Gz' ->
-      Typed Gx e1 r i1 ->
-      Typed Gy e2 r i2 ->
+      Typed Gx rs e1 r i1 ->
+      Typed Gy rs e2 r i2 ->
       inert_guard (eta z = Some PfxSumEmp) i ->
-      Typed Gz' (TmPlusCase eta r z x e1 y e2) r i
-  | TSubCtx : forall G G' e s i,
+      Typed Gz' rs (TmPlusCase eta r z x e1 y e2) r i
+  | TSubCtx : forall G G' e s i rs,
       Subcontext G G' ->
-      Typed G' e s i ->
-      Typed G e s i
+      Typed G' rs e s i ->
+      Typed G rs e s i
       
-with ArgsTyped : context -> argsterm -> context -> Prop :=
-  | T_ATmEmpty : forall g, ArgsTyped g ATmEmpty CtxEmpty
-  | T_ATmSng : forall g e s x i,
-      Typed g e s i ->
-      ArgsTyped g (ATmSng e) (CtxHasTy x s)
-  | T_ATmComma : forall g g1 g2 e1 e2,
-      ArgsTyped g e1 g1 ->
-      ArgsTyped g e2 g2 ->
-      ArgsTyped g (ATmComma e1 e2) (CtxComma g1 g2)
-  | T_ATmSemic : forall g1 g2 g1' g2' e1 e2,
-      ArgsTyped g1 e1 g1' ->
-      ArgsTyped g2 e2 g2' ->
-      ArgsTyped (CtxSemic g1 g2) (ATmSemic e1 e2) (CtxSemic g1' g2')
+with ArgsTyped : context -> recsig -> argsterm -> context -> Prop :=
+  | T_ATmEmpty : forall g rs, ArgsTyped g rs ATmEmpty CtxEmpty
+  | T_ATmSng : forall g rs e s x i,
+      Typed g rs e s i ->
+      ArgsTyped g rs (ATmSng e) (CtxHasTy x s)
+  | T_ATmComma : forall g g1 g2 e1 e2 rs,
+      ArgsTyped g rs e1 g1 ->
+      ArgsTyped g rs e2 g2 ->
+      ArgsTyped g rs (ATmComma e1 e2) (CtxComma g1 g2)
+  | T_ATmSemic : forall g1 g2 g1' g2' e1 e2 rs,
+      ArgsTyped g1 rs e1 g1' ->
+      ArgsTyped g2 rs e2 g2' ->
+      ArgsTyped (CtxSemic g1 g2) rs (ATmSemic e1 e2) (CtxSemic g1' g2')
 .
 
 Scheme Typed_ind' := Induction for Typed Sort Prop
@@ -105,9 +105,9 @@ Hint Constructors ArgsTyped : core.
 
 Check Typed_mutual.
 
-Theorem typing_sub_inert : forall g e s i,
-  Typed g e s i ->
-  Typed g e s Jumpy
+Theorem typing_sub_inert : forall g e s i rs,
+  Typed g rs e s i ->
+  Typed g rs e s Jumpy
 .
 Proof.
   intros. induction H; cbn in *; intros.
@@ -168,17 +168,17 @@ Hint Resolve fv_hole_minus : core.
 (* (P : ∀ (c : context) (t : term) (t0 : type) (i : inertness),
        Typed c t t0 i → Prop) *)
 
-Definition P_typing_fv (g : context) (e : term) (s : type) (i : inertness) :=
+Definition P_typing_fv (g : context) (rs : recsig) (e : term) (s : type) (i : inertness) :=
   forall x, fv e x -> fv g x.
 
-Definition P_argstyping_fv (g : context) (args : argsterm) (g' : context) :=
+Definition P_argstyping_fv (g : context) (rs : recsig) (args : argsterm) (g' : context) :=
   forall x, fv args x -> fv g x.
 
 Check Typed_mutual.
 
 Theorem typing_fv' :
-  (forall g e s i, Typed g e s i -> P_typing_fv g e s i) /\
-  (forall g args g', ArgsTyped g args g' -> P_argstyping_fv g args g').
+  (forall g rs e s i, Typed g rs e s i -> P_typing_fv g rs e s i) /\
+  (forall g rs args g', ArgsTyped g rs args g' -> P_argstyping_fv g rs args g').
 Proof.
  apply Typed_mutual; intros; unfold P_typing_fv in *; unfold P_argstyping_fv in *.
  - sfirstorder.
@@ -244,8 +244,8 @@ Proof.
   induction H; hauto l:on use:typing_fv'.
 Qed. *)
 
-Theorem typing_fv : forall G e s i,
-  Typed G e s i ->
+Theorem typing_fv : forall G e s i rs,
+  Typed G rs e s i ->
   Subset (fv e) (fv G).
 Proof.
 best use:typing_fv'.
@@ -254,18 +254,18 @@ Qed.
 Hint Resolve typing_fv : core.
 
 (* TODO: will *)
-Theorem sink_tm_typing : forall g p s s',
+Theorem sink_tm_typing : forall g p s s' rs,
   PrefixTyped p s ->
   MaximalPrefix p ->
   Derivative p s s' ->
-  Typed g (sink_tm p) s' Inert.
+  Typed g rs (sink_tm p) s' Inert.
 Proof.
 Admitted.
 
-Theorem typing_subst_nofv : forall e x g t i y,
+Theorem typing_subst_nofv : forall e x g t i y rs,
   ~ fv e x ->
-  Typed g e t i ->
-  Typed g (subst_var e y x) t i.
+  Typed g rs e t i ->
+  Typed g rs (subst_var e y x) t i.
 Proof.
   intros. assert (A : subst_var e y x = e); [| rewrite A; assumption].
   apply subst_not_fv. right. assumption.
@@ -277,13 +277,13 @@ then G(y : s) |- e[y/x] : t
 *)
 
 (* Todo: will. *)
-Theorem typing_subst : forall h e x y s t i gx gy,
-  Typed gx e t i ->
+Theorem typing_subst : forall h e x y s t i gx gy rs,
+  Typed gx rs e t i ->
   WFContext gx ->
   ~ fv h y ->
   Fill h (CtxHasTy x s) gx ->
   Fill h (CtxHasTy y s) gy ->
-  Typed gy (subst_var e y x) t i.
+  Typed gy rs (subst_var e y x) t i.
 Proof.
   intros.
   generalize dependent x.
