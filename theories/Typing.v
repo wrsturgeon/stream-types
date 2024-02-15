@@ -1,6 +1,6 @@
-Require Import Coq.Program.Equality.
 From Coq Require Import
-  PString.
+  Program.Equality
+  String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
