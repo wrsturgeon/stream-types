@@ -393,10 +393,11 @@ Proof.
   - sinvert H0. sinvert H1. sinvert H2. sinvert H3.
     edestruct IHArgsStep as [A [B [C [D E]]]]; eauto.
     split; try split; try split; try split.
+    + eapply env_typed_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)); [| eauto | eauto]; hauto lq: on use:empty_env_for_dom. } hauto l:on use:empty_env_for_typed. eauto. { right.  eapply nullable_context_means_emptyon_implies_maximalon. eauto. hauto l:on use:empty_env_for_typed. hauto l:on use:empty_env_for_empty_on. }
     + admit.
     + admit.
     + admit.
     + admit.
-    + admit.
-    + admit.
+    + intros. sinvert H0. econstructor; eauto.
+    + eapply context_derivative_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)); [| eauto | eauto]; hauto lq: on use:empty_env_for_dom. } hauto l: on use:context_derivative_emp. eauto.
 Admitted.
