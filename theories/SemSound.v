@@ -128,7 +128,7 @@ Proof.
     + sauto lq: on.
     + intros. sinvert H4. econstructor; eauto. sfirstorder.
     + sfirstorder.
-    + intros.
+    + intros. rewrite -> H4 in *. edestruct i_ub_inert as [H00 H01]; eauto. rewrite H00 in *. rewrite H01 in *. sfirstorder.
   (* cat-R-1 *)
   - edestruct IHStep as [A [B [C L]]]; eauto.
     sinvert H2.
