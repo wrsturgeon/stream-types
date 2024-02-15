@@ -91,7 +91,7 @@ with ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop
         ArgsStep eta g1 e1 e1' g1' eta1 ->
         MaximalOn (fv g1) eta1 ->
         ArgsStep eta g2 e2 e2' g2' eta2 ->
-        ArgsStep eta (CtxSemic g1 g2) (ATmSemic1 e1 e2) (ATmSemic1 e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
+        ArgsStep eta (CtxSemic g1 g2) (ATmSemic1 e1 e2) (ATmSemic2 e2') (CtxSemic g1' g2') (env_union eta1 eta2)
   | ASSemic2 : forall eta g1 g2 g2' e2 e2' eta2,
         ArgsStep eta g2 e2 e2' g2' eta2 ->
         ArgsStep eta (CtxSemic g1 g2) (ATmSemic2 e2) (ATmSemic2 e2') (CtxSemic g1 g2') (env_union (empty_env_for g1) eta2)

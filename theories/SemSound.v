@@ -373,7 +373,7 @@ Proof.
     + eapply env_typed_semic; [| eauto | eauto | eauto]. hauto q: on.
     + hauto q: on.
     + hauto drew: off.
-    + intros. admit.
+    + intros. admit. (* FIXME *)
     + intros H00 H01; rewrite -> H00 in *. unfold inert_guard in *. assert (H02 : i1 = Inert) by best. rewrite -> H02 in *.
       (* if eta were empty, this shouldn't happen. because *)
       edestruct H15; eauto.
@@ -383,6 +383,15 @@ Proof.
       assert (EmptyOn (fv g1) eta1) by sauto lq: on.
       assert (NullableCtx g1) by hauto l: on use:emptyon_and_maximalon_means_nullable.
       scongruence. (* contradiction: g1 is and isn't nullable. *)
-    + intros. sinvert H2. econstructor. eauto. eauto. scongruence.
-  - admit.
+    + intros. sinvert H2. econstructor; [|eauto]. eapply maximal_context_derivative_nullable; eauto.
+    + eapply context_derivative_semic; [|eauto|eauto]. { admit. (* obvious*) }
+  - sinvert H0. sinvert H1. sinvert H2. sinvert H3.
+    edestruct IHArgsStep as [A [B [C [D E]]]]; eauto.
+    split; try split; try split; try split.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
 Admitted.

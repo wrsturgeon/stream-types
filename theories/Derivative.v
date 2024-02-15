@@ -381,6 +381,21 @@ dependent induction Hd; sauto lq: on rew: off.
 Qed.
 Hint Resolve maximal_derivative_nullable : core.
 
+Theorem maximal_context_derivative_nullable : forall eta g g',
+  ContextDerivative eta g g' ->
+  MaximalOn (fv g) eta ->
+  NullableCtx g'.
+Proof.
+  intros eta g g' Hd.
+  dependent induction Hd.
+  - sfirstorder.
+  - sauto use: maximal_derivative_nullable.
+  - sfirstorder.
+  - sfirstorder.
+Qed.
+Hint Resolve maximal_derivative_nullable : core.
+
+
 Theorem maximal_context_derivative_nullable' : forall eta G G',
   EnvTyped eta G ->
   ContextDerivative eta G G' ->
