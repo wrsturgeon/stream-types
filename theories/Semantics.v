@@ -66,8 +66,6 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         eta'' z = Some (PfxSumInr p) ->
         Step (env_union eta'' (singleton_env y p)) e2 e' p' ->
         Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
-  (* | SFix :   *)
-        (* Step eta (TmFix) *)
   | SFix : forall eta eta' g g' args args' e e' r p,
       ArgsStep eta  g args args' g' eta' ->
       Step eta' (fix_subst g r e e) e' p ->
@@ -108,8 +106,6 @@ Arguments Step n e e' p.
 Scheme Step_ind' := Induction for Step Sort Prop
 with ArgsStep_ind' := Induction for ArgsStep Sort Prop.
 Combined Scheme Step_mutual from Step_ind', ArgsStep_ind'.
-
-
 
 (* TODO:will eta eta', agree on fv e *)
 Theorem step_det : forall eta e e1 e2 p1 p2,

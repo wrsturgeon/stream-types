@@ -42,6 +42,8 @@ Inductive Typed : context -> recsig -> term -> type -> inertness -> Prop :=
       inert_guard (i1 = Inert /\ ~(Nullable s)) i3 ->
       Typed (CtxSemic G D) rs (e1; e2) (TyDot s t) i3
   | TCatL : forall G x y z s t e r Gxsyt Gzst i rs,
+      x <> z -> 
+      y <> z -> 
       x <> y ->
       ~fv G x ->
       ~fv G y ->
