@@ -243,6 +243,17 @@ Theorem env_cat_exists_when_typed : forall eta eta' g g',
   (forall g'', ContextDerivative eta' g' g'' ->
     ContextDerivative eta'' g g'').
 Proof.
+  intros eta eta' g g' Hd Ht Ht'. generalize dependent eta'. generalize dependent Ht.
+  induction Hd; cbn in *; intros.
+  - sinvert Ht. sinvert Ht'.
+    (* literally exact same case, copied steps from below: *)
+    eexists. (* nothing to work with in the context, so just figure it out later *)
+    split; [| split]; intros.
+    2: { constructor. (* anything is environment-typed in the empty context *) }
+    2: { sinvert H. constructor. (* any context maintains that derivative of empty is empty *) }
+    cbn in *; split; intros. (* effectively unfolding EnvConcat *)
+    admit. admit.
+  (*
   intros eta eta' g g' Hd Ht Ht'. generalize dependent eta'. generalize dependent g'.
   induction Ht; intros; sinvert Hd; sinvert Ht'.
   - (* EnvTyEmpty
@@ -284,6 +295,7 @@ Proof.
     *)
     destruct (derivative_fun _ _ H0) as [sp Hsp].
     destruct (pfx_cat_exists_when_typed _ _ _ _ Hsp H0 (emp_well_typed _)) as [pfx [Hpc [Hpt Hpd]]].
+  *)
 Admitted. (* yeah, this is still not looking good *)
 
 Theorem env_cat_maximal : forall s eta eta' eta'',
