@@ -323,15 +323,19 @@ Proof.
   - sinvert H1. sinvert H2.
     edestruct IHArgsStep1 as [A [B [C [D E]]]]; eauto.
     edestruct IHArgsStep2 as [F [G [L [I J]]]]; eauto.
+    assert (H00 : fv (CtxComma g1 g2) = set_union (fv g1) (fv g2)) by scongruence; rewrite -> H00 in *.
     split; try split; try split; try split.
     + eapply env_typed_comma; [| eauto | eauto]. hauto q: on.
     + hauto q: on.
     + hauto drew: off.
-    + intros. assert (fv (CtxComma g1 g2) = set_union (fv g1) (fv g2)) by best. rewrite -> H2 in *. eapply prop_on_set_union. split.
+    + intros.  eapply prop_on_set_union. split.
       * eapply prop_on_weakening_alt'. eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. qauto l: on use:empty_env_for_dom.
         hauto q: on.
       * eapply prop_on_weakening. sfirstorder.
-    + intros. edestruct i; try scongruence. assert (H00 : i1 = Inert /\ i2 = Inert) by best use:i_ub_inert. destruct H00 as [UU UU']. rewrite -> UU in *. rewrite -> UU' in *. admit.
+    + intros. edestruct i; try scongruence. assert (H00' : i1 = Inert /\ i2 = Inert) by hauto l:on use:i_ub_inert; destruct H00' as [UU UU']; rewrite -> UU in *; rewrite -> UU' in *.
+      eapply prop_on_set_union; split.
+      * eapply prop_on_weakening_alt'; [| sfirstorder]. { eapply no_conflict_on_disjoint. right. eapply (DisjointSets_eq string (fv g2) (fv g1)); [eauto | |]; sfirstorder. }
+      * eapply prop_on_weakening. sfirstorder.
     + intros; econstructor; eauto. sfirstorder.
     + eapply context_derivative_comma; [| eauto | eauto]. hauto q: on.
   - sinvert H1; sinvert H2; sinvert H4; sinvert H3.
@@ -392,12 +396,18 @@ Proof.
     + eapply context_derivative_semic; [|eauto|eauto]. { eapply (DisjointSets_eq string (fv g1) (fv g2)); eauto. }
   - sinvert H0. sinvert H1. sinvert H2. sinvert H3.
     edestruct IHArgsStep as [A [B [C [D E]]]]; eauto.
+      assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
     split; try split; try split; try split.
     + eapply env_typed_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)); [| eauto | eauto]; hauto lq: on use:empty_env_for_dom. } hauto l:on use:empty_env_for_typed. eauto. { right.  eapply nullable_context_means_emptyon_implies_maximalon. eauto. hauto l:on use:empty_env_for_typed. hauto l:on use:empty_env_for_empty_on. }
-    + admit.
-    + admit.
-    + admit.
-    + admit.
+    + hauto q: on use:empty_env_for_dom.
+    + hauto drew: off use:empty_env_for_dom.
+    + intros. eapply prop_on_set_union; split.
+      * eapply prop_on_weakening_alt'. { eapply no_conflict_on_disjoint. right. eapply (DisjointSets_eq string (fv g2) (fv g1)); [| | eauto]; sfirstorder. } {eapply nullable_context_means_emptyon_implies_maximalon. eauto. hauto l:on use:empty_env_for_typed. hauto l:on use:empty_env_for_empty_on. }
+      * eapply prop_on_weakening; sfirstorder.
+    + intros H00 H01. rewrite  -> H00 in *.
+      eapply prop_on_set_union; split.
+      * eapply prop_on_weakening_alt'; [| hauto q: on use:empty_env_for_empty_on]. { eapply no_conflict_on_disjoint. right. eapply (DisjointSets_eq string (fv g2) (fv g1)); [| | eauto]; sfirstorder. }
+      * eapply prop_on_weakening; hauto l: on.
     + intros. sinvert H0. econstructor; eauto.
     + eapply context_derivative_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)); [| eauto | eauto]; hauto lq: on use:empty_env_for_dom. } hauto l: on use:context_derivative_emp. eauto.
-Admitted.
+Qed.
