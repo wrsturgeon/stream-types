@@ -239,7 +239,8 @@ Definition Subfunc (eta : env) eta' :=
   forall x p, eta x = Some p -> eta' x = Some p.
 
 (* n'' is the greatest function defined some subset of dom(n) /\ dom(n') on which all concats exist -- and eta'' maps variables to those concats. *)
-Variable EnvConcat : env -> env -> env -> Prop.
+Definition EnvConcat : env -> env -> env -> Prop.
+Admitted.
 
 Axiom EnvConcat_char : forall eta eta' eta'',
   EnvConcat eta eta eta'' <-> (
@@ -303,7 +304,7 @@ Proof.
   generalize dependent p.
   generalize dependent p'.
   dependent induction H0; intros.
-  - best.
+  - sfirstorder.
   - sinvert H2. sinvert H3. hauto l: on use:pfx_cat_exists_when_typed.
   - sauto.
   - sauto.

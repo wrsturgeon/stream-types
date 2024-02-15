@@ -232,13 +232,13 @@ Proof.
     + intros.
       assert (Derivative (emp r) r r) by best use:derivative_emp.
       destruct (ltac:(sfirstorder use:derivative_det) : r = s').
-      edestruct (env_cat_exists_when_typed eta') as [eta''0 [A [B C]]]; eauto.
+      edestruct (env_cat_exists_when_typed Gz) as [eta''0 [A [B [C D]]]]; eauto.
       destruct (ltac:(hauto l:on use:env_cat_unique) : eta'' = eta''0).
       eapply TPlusCase; eauto. 
     + assert (Subset (singleton_set z) (fv (TmPlusCase eta' r z x e1 y e2))) by sfirstorder.
       intro HM. eapply (prop_on_contains) in HM; [|eauto].
-      edestruct (env_cat_maximal (singleton_set z) eta' eta eta''); eauto. { admit. } { admit. }
-      assert (Hcontra : MaximalPrefix PfxSumEmp) by best.
+      assert (MaximalOn (singleton_set z) eta''). { eapply env_cat_maximal. eauto. qauto l: on. hauto l:on. }
+      assert (Hcontra : MaximalPrefix PfxSumEmp) by qauto l:on.
       sinvert Hcontra.
     + best use:emp_empty.
   -  assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
@@ -246,7 +246,7 @@ Proof.
     destruct Hwf.
     assert (~ fv G z) by sfirstorder.
     assert (WFHole G). { eapply (wf_fill_reflect G (CtxHasTy z _)). eauto. sfirstorder use:context_derivative_wf'. }
-    edestruct (env_cat_exists_when_typed eta') as [eta''0 [A [B C]]]; eauto.
+    edestruct (env_cat_exists_when_typed Gz) as [eta''0 [A [B [C D]]]]; eauto.
     destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
     assert (Hty : exists p0, eta'' z = Some p0 /\ PrefixTyped p0 (TySum s t)) by best use:maps_to_has_type_reflect.
     edestruct Hty as [p0 [L M]].
@@ -256,7 +256,7 @@ Proof.
     split; try split; try split.
     + eauto.
     + intros.
-      edestruct (fill_derivative eta'' G (CtxHasTy z (TySum s t))) as [G' [d_s [A'' [B'' [C'' D'']]]]]; [eauto | eapply C; eauto |]. 
+      edestruct (fill_derivative eta'' G (CtxHasTy z (TySum s t))) as [G' [d_s [A'' [B'' [C'' D'']]]]]; [eauto | eapply D; eauto |]. 
       sinvert A''.
       destruct (ltac:(scongruence) : PfxSumInl p = p0).
       sinvert H25.
@@ -265,18 +265,22 @@ Proof.
       eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
-      assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | | ]. admit. admit. hauto lq: on rew: off.
+      assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | ].
+      admit. (* TODO: CHECKME *)
+      hauto lq: on rew: off.
       edestruct (H20 z) as [p00 [L' R]]. hauto lq: on rew: off.
       destruct (ltac:(scongruence) : PfxSumInl p = p00).
       sinvert R.
       eapply C'. eapply prop_on_minus. eauto. qauto l: on.
-    + intros.
+    + intros H00 H01.
+      rewrite -> H00 in *.
       assert (eta' z = Some PfxSumEmp) by sfirstorder.
       assert (EmptyOn (singleton_set z) eta) by hauto q: on use:prop_on_contains.
-      assert (EmptyOn (singleton_set z) eta''). eapply env_cat_empty'; [eauto | sauto].
-      edestruct (H22 z) as [p'' []]; eauto.
+      assert (EmptyOn (singleton_set z) eta') by sblast.
+      assert (H02 : EmptyOn (singleton_set z) eta''). eapply env_cat_empty'; [ | eauto | eauto | eauto]. scrush.
+      edestruct (H02 z) as [p'' [UU UU']]; eauto.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
-      sinvert H24.
+      sinvert UU'.
   - admit.
   - assert (forall g_in e g_out g_out' eta_in e' eta_out i,
   ArgsStep eta_in g_out e e' g_out' eta_out ->
