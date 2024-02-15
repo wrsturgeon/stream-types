@@ -252,7 +252,7 @@ Proof.
     + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
       sinvert A'.
       destruct (ltac:(scongruence) : (PfxCatBoth p1 p2) = p).
-      sinvert H17.
+      sinvert H19.
       edestruct (derivative_fun p1 s0) as [s'']; eauto.
       specialize (D' (CtxSemic (CtxHasTy x s0) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
       edestruct D' as [u [A'' B'']]. eauto. admit. eapply context_derivative_semic; [admit | |]; eapply context_derivative_sng; eauto.
