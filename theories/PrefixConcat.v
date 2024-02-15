@@ -235,21 +235,10 @@ and functions not actual finite maps for environments, we cannot
 prove that a concatenation exists. we must axiomatize a bunch of facts about this.
 *)
 
-Definition Subfunc (eta : env) eta' :=
-  forall x p, eta x = Some p -> eta' x = Some p.
-
 (* n'' is the greatest function defined some subset of dom(n) /\ dom(n') on which all concats exist -- and eta'' maps variables to those concats. *)
+
 Definition EnvConcat : env -> env -> env -> Prop.
 Admitted.
-
-Axiom EnvConcat_char : forall eta eta' eta'',
-  EnvConcat eta eta eta'' <-> (
-    forall eta''',
-        Subset (dom eta''') (dom eta) ->
-        Subset (dom eta''') (dom eta') ->
-        (forall x p p', dom eta''' x -> eta x = Some p -> eta' x = Some p' -> exists p'', PrefixConcat p p' p'' /\ eta''' x = Some p'') ->
-        Subfunc eta''' eta''
-  ).
 
 (* by "greatest" *)
 Theorem env_cat_unique : forall n n' n1 n2,

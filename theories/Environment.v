@@ -54,8 +54,14 @@ Qed.
 Theorem dom_singleton : forall x p, SetEq (dom (singleton_env x p)) (singleton_set x).
 Proof. cbn. intros. destruct (eqb_spec x x0); sfirstorder. Qed.
 
+Theorem dom_singleton' : forall x p x0, dom (singleton_env x p) x0  <-> x = x0.
+Proof. cbn. intros. destruct (eqb_spec x x0); sfirstorder. Qed.
+
 Theorem dom_union : forall env1 env2, SetEq (dom (env_union env1 env2)) (set_union (dom env1) (dom env2)).
 Proof. hauto q: on. Qed.
+
+Theorem dom_union' : forall eta eta' x0, dom (env_union eta eta') x0  <-> (dom eta x0 \/ dom eta' x0).
+Proof. sfirstorder use:dom_union. Qed.
 
 Theorem dom_subst : forall env x p, SetEq (dom (env_subst x p env)) (set_union (dom env) (singleton_set x)).
 Proof. cbn. intros. destruct (eqb_spec x x0); sfirstorder. Qed.

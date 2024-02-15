@@ -50,6 +50,15 @@ Definition Subset {T} (little big : set T) : Prop := forall x,
 Arguments Subset {T} little big/.
 Hint Unfold Subset : core.
 
+Theorem Subset_trans {T} : forall (s : set T) s' s'',
+  Subset s s' ->
+  Subset s' s'' ->
+  Subset s s''.
+Proof.
+sfirstorder.
+Qed.
+
+
 Definition SetEq {T} (a b : set T) : Prop := forall x,
   a x <-> b x.
 Arguments SetEq {T} a b/.
