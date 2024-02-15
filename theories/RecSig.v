@@ -12,3 +12,9 @@ Inductive recsig : Set :=
   | NoRec : recsig
   | Rec : context -> type -> inertness -> recsig.
 Hint Constructors recsig : core.
+
+Definition jumpify rs :=
+  match rs with
+    NoRec => NoRec
+  | Rec g s _ => Rec g s Jumpy
+  end.

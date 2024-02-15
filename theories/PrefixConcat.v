@@ -1,3 +1,4 @@
+Require Import Coq.Program.Equality.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Derivative
@@ -201,135 +202,195 @@ Proof.
 Qed.
 Hint Resolve pfx_cat_assoc_eq : core.
 
-Definition EnvConcat (n : env) (n' : env) (n'' : env) : Prop :=
-  (forall x, n x = None \/ n' x = None -> n'' x = None) /\ (* to ensure that n'' is unique, we need to restrict the domain. *)
-    forall x p p',
-    n x = Some p ->
-    n' x = Some p' ->
-    exists p'',
-    n'' x = Some p'' /\
-    PrefixConcat p p' p''.
-Arguments EnvConcat n n' n''/.
-Hint Unfold EnvConcat : core.
+Theorem pfx_cat_typed : forall p p' p'' s dps,
+  Derivative p s dps -> 
+  PrefixTyped p s ->
+  PrefixTyped p' dps ->
+  PrefixConcat p p' p'' ->
+  PrefixTyped p'' s.
+Proof.
+  intros.
+  edestruct pfx_cat_exists_when_typed as [p''0 [V [W X]]]; eauto.
+  destruct (ltac:(sfirstorder) : p'' = p''0).
+  sfirstorder.
+Qed.
 
-(* fuck it, i want this theorem to hold on the nose.  *)
-Axiom functional_extensionality : forall {A B} (f g : A -> B), (forall x, f x = g x) -> f = g.
+Theorem pfx_cat_deriv : forall p p' p'' s dps,
+  Derivative p s dps -> 
+  PrefixTyped p s ->
+  PrefixTyped p' dps ->
+  PrefixConcat p p' p'' ->
+  (forall dp'dps, Derivative p' dps dp'dps ->
+    Derivative p'' s dp'dps).
+Proof.
+intros.
+  edestruct (pfx_cat_exists_when_typed p p' s) as [p''0 [V [W X]]]; eauto.
+  destruct (ltac:(sfirstorder) : p'' = p''0).
+  sfirstorder.
+Qed.
 
+(*
+Because we're using prop-valued sets not actual finite sets for sets of strings,
+and functions not actual finite maps for environments, we cannot
+prove that a concatenation exists. we must axiomatize a bunch of facts about this.
+*)
+
+Definition Subfunc (eta : env) eta' :=
+  forall x p, eta x = Some p -> eta' x = Some p.
+
+(* n'' is the greatest function defined some subset of dom(n) /\ dom(n') on which all concats exist -- and eta'' maps variables to those concats. *)
+Definition EnvConcat : env -> env -> env -> Prop.
+Admitted.
+
+Axiom EnvConcat_char : forall eta eta' eta'',
+  EnvConcat eta eta eta'' <-> (
+    forall eta''',
+        Subset (dom eta''') (dom eta) ->
+        Subset (dom eta''') (dom eta') ->
+        (forall x p p', dom eta''' x -> eta x = Some p -> eta' x = Some p' -> exists p'', PrefixConcat p p' p'' /\ eta''' x = Some p'') ->
+        Subfunc eta''' eta''
+  ).
+
+(* by "greatest" *)
 Theorem env_cat_unique : forall n n' n1 n2,
   EnvConcat n n' n1 -> 
   EnvConcat n n' n2 -> 
   n1 = n2.
 Proof.
-  intros; eapply functional_extensionality; intros.
-  unfold EnvConcat in *.
-  destruct H as [A B].
-  destruct H0 as [A' B'].
-  remember (n x) as nx.
-  remember (n' x) as n'x.
-  destruct nx.
-  - destruct n'x; [|sauto lq: on].
-    hauto lq: on use:pfx_cat_unique.
-  - sauto lq: on.
+Admitted.
+
+Theorem EnvConcat_lookup : forall eta eta' eta'' p'' x,
+  EnvConcat eta eta' eta'' ->
+  eta'' x = Some p'' ->
+  exists p p', PrefixConcat p p' p'' /\ eta x = Some p /\ eta' x = Some p'.
+Admitted.
+
+(* defined on a subset of the intersection of the domains of eta and eta'. *)
+Theorem EnvConcat_neither : forall eta eta' eta'' x,
+  EnvConcat eta eta' eta'' ->
+  eta x = None \/ eta' x = None ->
+  eta'' x = None.
+Proof.
+Admitted.
+
+(* if eta and eta' have concatenations on some subset of their intersection, then the envconcat exists, and that subset is a subset of the domain. *)
+(* requires zorn's lemma *)
+Theorem env_concat_exists : forall eta eta' s,
+  Subset s (dom eta) ->
+  Subset s (dom eta') ->
+  (forall x p p', s x -> eta x = Some p -> eta' x = Some p' -> exists p'', PrefixConcat p p' p'') ->
+  exists eta'', (EnvConcat eta eta' eta'' /\ (Subset s (dom eta''))).
+Proof.
+  (* eta'' = if eta(x) \/ eta'(x) null then null, else eta(x) . eta'(x)*)
+Admitted.
+
+Theorem env_cat_exists : forall eta eta' g g',
+  WFContext g ->
+  ContextDerivative eta g g' ->
+  EnvTyped eta g ->
+  EnvTyped eta' g' ->
+  exists eta'', EnvConcat eta eta' eta'' /\ (Subset (fv g) (dom eta'')).
+Proof.
+  intros.
+  assert (Subset (fv g) (dom eta)) by sfirstorder use:envtyped_dom.
+  assert (Subset (fv g') (dom eta')) by sfirstorder use:envtyped_dom.
+  assert (Subset (fv g) (dom eta')) by hauto lq: on use:fv_context_derivative.
+  eapply (env_concat_exists eta eta' (fv g)); [eauto | eauto |].
+  intros.
+  clear H3.
+  clear H4.
+  clear H5.
+  generalize dependent eta'.
+  generalize dependent p.
+  generalize dependent p'.
+  dependent induction H0; intros.
+  - sfirstorder.
+  - sinvert H2. sinvert H3. hauto l: on use:pfx_cat_exists_when_typed.
+  - sauto.
+  - sauto.
 Qed.
 
-(* TODO: will (priority!) *)
-Theorem env_cat_exists_when_typed : forall eta eta' g g',
+Theorem env_cat_maximal : forall s eta eta' eta'',
+  EnvConcat eta eta' eta'' ->
+  Subset s (dom eta'') ->
+  MaximalOn s eta \/ MaximalOn s eta' -> MaximalOn s eta''.
+Proof.
+  intros.
+  unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
+  destruct H1; intros; edestruct subset_dom_lookup as [p'']; eauto; edestruct EnvConcat_lookup as [p [p' [U [V W]]]]; eauto; edestruct H1 as [p0 [A B]]; eauto.
+  - destruct (ltac:(scongruence) : p = p0).
+    exists p''.
+    sfirstorder use:pfx_cat_maximal.
+  - destruct (ltac:(scongruence) : p' = p0).
+    exists p''.
+    sfirstorder use:pfx_cat_maximal.
+Qed.
+
+Theorem env_cat_empty' : forall s eta eta' eta'',
+  Subset s (dom eta'') ->
+  EnvConcat eta eta' eta'' ->
+  EmptyOn s eta ->
+  EmptyOn s eta' ->
+  EmptyOn s eta''.
+Proof.
+  unfold EmptyOn in *. unfold PropOn in *. unfold PropOnItem in *; intros; edestruct subset_dom_lookup as [p'']; eauto; edestruct EnvConcat_lookup as [p [p' [U [V W]]]]; eauto; edestruct H1 as [p0 [A B]]; eauto; exists p''; hauto l: on use:pfx_cat_empty.
+Qed.
+
+Theorem env_cat_typed : forall eta eta' eta'' g g',
+  WFContext g ->
+  ContextDerivative eta g g'->
+  EnvTyped eta g ->
+  EnvTyped eta' g' ->
+  EnvConcat eta eta' eta'' ->
+  Subset (fv g) (dom eta'')  ->
+  EnvTyped eta'' g /\
+  (forall g'', ContextDerivative eta' g' g'' ->
+     ContextDerivative eta'' g g'').
+Proof.
+  intros.
+  generalize dependent eta''.
+  dependent induction H0; intros.
+  - split. sfirstorder. sauto lq: on.
+  - sinvert H. sinvert H2. sinvert H3.
+    assert (H00 : exists p'', eta'' x = Some p'') by sfirstorder. edestruct H00 as [p''].
+    edestruct EnvConcat_lookup as [p00 [p' [A [B C]]]]; eauto.
+    destruct (ltac:(scongruence) : p = p0).
+    destruct (ltac:(scongruence) : p = p00).
+    destruct (ltac:(scongruence) : p1 = p').
+    split.
+    + econstructor. eauto. eapply pfx_cat_typed; eauto.
+    + intros. sinvert H2. 
+      destruct (ltac:(scongruence) : p0 = p1).
+      econstructor. eauto. eapply pfx_cat_deriv; eauto.
+  - econstructor; sauto lq: on.
+  - sinvert H1. sinvert H2.
+    assert (Subset (fv G) (dom eta'')) by sfirstorder.
+    assert (Subset (fv D) (dom eta'')) by sfirstorder.
+    split;[|sauto lq: on rew: off]. econstructor.
+    + sauto lq: on.
+    + sauto lq: on.
+    + destruct H9; destruct H11.
+      * left. eapply env_cat_empty'; eauto. { eapply prop_on_contains; [|eauto]. hauto l: on use:fv_context_derivative. }
+      * right. eapply env_cat_maximal; eauto. { right. eapply prop_on_contains; [|eauto]. hauto l: on use:fv_context_derivative. }
+      * right. eapply env_cat_maximal; eauto.
+      * right. eapply env_cat_maximal; eauto.
+Qed.
+
+
+Theorem  env_cat_exists_when_typed : forall g g' eta eta',
+  WFContext g ->
   ContextDerivative eta g g'->
   EnvTyped eta g ->
   EnvTyped eta' g' ->
   exists eta'',
   EnvConcat eta eta' eta'' /\
+  Subset (fv g) (dom eta'') /\
   EnvTyped eta'' g /\
   (forall g'', ContextDerivative eta' g' g'' ->
-    ContextDerivative eta'' g g'').
-Proof.
-  intros eta eta' g g' Hd Ht Ht'. generalize dependent eta'. generalize dependent Ht.
-  induction Hd; cbn in *; intros.
-  - sinvert Ht. sinvert Ht'.
-    (* literally exact same case, copied steps from below: *)
-    eexists. (* nothing to work with in the context, so just figure it out later *)
-    split; [| split]; intros.
-    2: { constructor. (* anything is environment-typed in the empty context *) }
-    2: { sinvert H. constructor. (* any context maintains that derivative of empty is empty *) }
-    cbn in *; split; intros. (* effectively unfolding EnvConcat *)
-    admit. admit.
-  (*
-  intros eta eta' g g' Hd Ht Ht'. generalize dependent eta'. generalize dependent g'.
-  induction Ht; intros; sinvert Hd; sinvert Ht'.
-  - (* EnvTyEmpty
-     * (ContextDerivative n CtxEmpty g') told us that `g' = CtxEmpty`
-     * (EnvTyped eta' CtxEmpty) told us nothing
-     * goal:
-     *   exists eta'' : env,
-     *     EnvConcat n eta' eta'' /\
-     *     EnvTyped eta'' CtxEmpty /\
-     *     forall g'' : context,
-     *       ContextDerivative eta' CtxEmpty g'' ->
-     *       ContextDerivative eta'' CtxEmpty g'' *)
-    eexists. (* nothing to work with in the context, so just figure it out later *)
-    split; [| split]; intros.
-    2: { constructor. (* anything is environment-typed in the empty context *) }
-    2: { sinvert H. constructor. (* any context maintains that derivative of empty is empty *) }
-    cbn in *; split; intros. (* effectively unfolding EnvConcat *)
-    (* now the tricky part: have to instantiate `?eta''` s.t. opposing goals hold
-     * note that these two goals are exactly just unfolding the definition of `EnvConcat`
-     * on the one hand,
-     *   n x = None \/ eta' x = None ->
-     *   ?eta'' x = None
-     * on the other,
-     *   n x = Some p /\ eta' x = Some p' ->
-     *   exists p'', ?eta'' x = Some p'' /\ PrefixConcat p p' p''
-     * so the easiest solution to the first would be (fun _ => None),
-     *   but the second requires that the concatenation of `p` & `p'` on `x` is `Some`
-     * in the second case, we'd have to know that some concatenation exists,
-     *   but prefix concatenation isn't a function (only exists when typed),
-     *   so we'd have to use `pfx_cat_exists_when_typed`,
-     *   but we don't know anything about `p` and `p'`
-     *   other than where they came from
-     * the environment-typed hypotheses told us only that `g' = CtxEmpty`,
-     *   nothing else, so we really have nothing to go on here *)
-    admit. admit.
-  - (*
-    edestruct pfx_cat_exists_when_typed as [p'' Hp'']; try eassumption.
-    (* ^^ damn it, still need to know that `PrefixTyped p0 s` *)
-    *)
-    destruct (derivative_fun _ _ H0) as [sp Hsp].
-    destruct (pfx_cat_exists_when_typed _ _ _ _ Hsp H0 (emp_well_typed _)) as [pfx [Hpc [Hpt Hpd]]].
-  *)
-Admitted. (* yeah, this is still not looking good *)
-
-Theorem env_cat_maximal : forall s eta eta' eta'',
-  EnvConcat eta eta' eta'' ->
-  Subset s (dom eta) ->
-  Subset s (dom eta') ->
-  MaximalOn s eta \/ MaximalOn s eta' -> MaximalOn s eta''.
+     ContextDerivative eta'' g g'').
 Proof.
   intros.
-  unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
-  intros.
-  unfold EnvConcat in H.
-  destruct H as [Hn Hs].
-  destruct H2.
-  + edestruct H as [p []]; eauto.
-    assert (exists p', eta' x = Some p') by sfirstorder.
-    edestruct H5 as [p'].
-    edestruct Hs as [p'' [ U V]]; eauto.
-  + edestruct H as [p' []]; eauto.
-    assert (exists p, eta x = Some p) by sfirstorder.
-    edestruct H5 as [p].
-    edestruct Hs as [p'' [ U V]]; eauto.
-Qed.
-
-Theorem env_cat_empty : forall s eta eta' eta'',
-  EnvConcat eta eta' eta'' ->
-  EmptyOn s eta /\ EmptyOn s eta' <-> EmptyOn s eta''.
-Proof.
-  intros.
-Admitted.
-
-Theorem env_cat_empty' : forall s eta eta' eta'',
-  EnvConcat eta eta' eta'' ->
-  EmptyOn s eta /\ EmptyOn s eta' -> EmptyOn s eta''.
-Proof.
-  best use:env_cat_empty.
+  edestruct env_cat_exists as [eta'' [A B]]; eauto.
+  exists eta''.
+  hauto l:on use:env_cat_typed.
 Qed.

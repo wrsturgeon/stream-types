@@ -68,6 +68,10 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
   (* | SFix :   *)
         (* Step eta (TmFix) *)
+  | SFix : forall eta eta' g g' args args' e e' r p,
+      ArgsStep eta  g args args' g' eta' ->
+      Step eta' (fix_subst g r e e) e' p ->
+      Step eta (TmFix args g r e) (TmArgsLet args' g' e') p
   | SArgsLet : forall eta eta' g g' args args' e e' p,
         ArgsStep eta g args args' g' eta' ->
         Step eta' e e' p ->
@@ -103,7 +107,6 @@ Arguments Step n e e' p.
 
 (* TODO:will eta eta', agree on fv e *)
 Theorem step_det : forall eta e e1 e2 p1 p2,
-
     Step eta e e1 p1 ->
     Step eta e e2 p2 ->
     e1 = e2 /\ p1 = p2.
@@ -135,17 +138,3 @@ Proof.
   - admit.
 Admitted.
 Hint Resolve step_det : core.
-
-(* evalArgs (SemicCtx g1 g2) (SemicCtx e1 e2) = do
-    (env1,g1',e1') <- evalArgs g1 e1
-    if env1 `maximalOn` g1 then do
-        (env2,g2',e2') <- evalArgs g2 e2
-        env <- reThrow (\(x,p,p') -> UnionEnvError x p p') (unionDisjointEnv env1 env2)
-        return (env,SemicCtx g1' g2', SemicCtx e1' e2')
-    else do
-        let env2 = emptyEnvFor g2
-        env <- reThrow (\(x,p,p') -> UnionEnvError x p p') (unionDisjointEnv env1 env2)
-        return (env,SemicCtx g1' g2, SemicCtx e1' e2)
-        where
-            env `maximalOn` g = all (\(CE x _) -> isJust (lookupEnv x env >>= Values.maximalLift)) g
-            emptyEnvFor g = foldr (\(CE x s) rho -> bindEnv x (emptyPrefix s) rho) emptyEnv g *)
