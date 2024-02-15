@@ -330,6 +330,7 @@ Proof.
 Qed.
 Hint Resolve context_derivative_semic : core.
 
+
 Theorem fill_derivative : forall eta h d hd d_hd,
   Fill h d hd ->
   ContextDerivative eta hd d_hd ->

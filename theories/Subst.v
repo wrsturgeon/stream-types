@@ -59,12 +59,19 @@ Lemma no_explosions_please : forall e x y x' e',
   TmLet x' (if eqb y x' then e else subst_var e x y) (subst_var e' x y).
 Proof. reflexivity. Qed.
 
-(* NOTE: Had to add non-equality of x & y and make it a bi-implication *)
+(* NOTE: Had to add non-equality of x & y and make it a bi-implication
 (* TODO: This still doesn't seem to work. Try `subst_var e x y = e <-> (x = y \/ ~fv e y)` *)
 Theorem subst_not_fv :
-  (forall e x y, subst_var e x y = e <-> (x = y \/ ~fv e y)) /\
-  (forall args x y, subst_var_argsterm args x y = args <-> (x = y \/ ~fv args y)).
+  (forall e x y, ~fv e y -> subst_var e x y = e) /\
+  (forall args x y, ~fv args y -> subst_var_argsterm args x y = args).
 Proof.
+  apply term_mutual; intros.
+  - best.
+  - best.
+  - admit.
+  - qauto l: on.
+  - qauto l: on.
+  - asseut 
 (*
   apply term_mutual; intros.
   - hauto lq: on rew: off.
@@ -87,4 +94,4 @@ Proof.
       admit. (* okay, both cases are symmetrically wrong,
               * so there's probably something up with the theorem *)
 *)
-Admitted.
+Admitted. *)

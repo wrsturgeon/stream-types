@@ -7,7 +7,6 @@ From LambdaST Require Import
   FV
   Hole
   Derivative
-  Ind
   Inert
   Nullable
   Prefix
@@ -184,7 +183,9 @@ Proof.
       * admit. (* todo: will: figure out the lemma that needs to go here, from the pareserves i (env_union ...) to the goal. *)
       * admit.
       *)
+  (* cat-L-1*)
   - admit.
+  (* cat-L-1*)
   - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply catrenvtyped2; eauto.
     split; try split.
@@ -199,7 +200,6 @@ Proof.
       specialize (B u s').
       edestruct (fill_reflect_fun G' (CtxSemic CtxEmpty (CtxHasTy z s'0))) as [g''].
       eapply (TSubCtx g' g''); [ eapply (SubCong G'); eauto |].
-
       eapply (TLet (hole_compose G' (HoleSemicL HoleHere (CtxHasTy z s'0))) CtxEmpty (fill G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)))).
         admit. (* todo: will: theorem about hole compose free variables should be union. *)
         sfirstorder use:sink_tm_typing.
@@ -266,7 +266,7 @@ Proof.
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | ].
-      admit. (* TODO: CHECKME *)
+      { admit. (* TODO: CHECKME *) }
       hauto lq: on rew: off.
       edestruct (H20 z) as [p00 [L' R]]. hauto lq: on rew: off.
       destruct (ltac:(scongruence) : PfxSumInl p = p00).
@@ -294,9 +294,6 @@ Proof.
   + intros. eapply C'. eapply (prop_on_contains MaximalPrefix (fv g)). best use:typing_fv. eapply U. sfirstorder.
   + intros H00 H01. rewrite -> H00 in *. eapply D'. eauto. assert (Subset (fv e) (fv g)) by best use:typing_fv. eapply prop_on_contains. eauto. eapply V. eauto. sfirstorder.
 Admitted.
-
-
-
 
 
 (* this is basically how this theorem needs to go, but we have to figure out how to tie the knot with the regular soundness theorem. *)

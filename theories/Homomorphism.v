@@ -6,7 +6,6 @@ From LambdaST Require Import
   FV
   Hole
   Derivative
-  Ind
   Inert
   Nullable
   Prefix

@@ -116,12 +116,28 @@ Proof.
   - repeat constructor; sfirstorder.
 Qed.
 
-(* TODO: will. this shouldn't need any extra assumptions, but if it does, figure out the minimal ones. *)
 Theorem subctx_deriv : forall eta g1 g2 g1' g2',
   Subcontext g1 g2 ->
   ContextDerivative eta g1 g1' ->
   ContextDerivative eta g2 g2' ->
   Subcontext g1' g2'.
 Proof.
-Admitted.
+intros.
+generalize dependent g1'.
+generalize dependent g2'.
+dependent induction H; intros.
+- edestruct (fill_derivative eta g d) as [dg [d_d [A [B [C D]]]]]; eauto.
+  edestruct (fill_derivative eta g d') as [dg2 [d_d' [A' [B' [C' D']]]]]; eauto.
+  assert (H00 : dg2 = dg) by sfirstorder use:hole_derivative_det.
+  rewrite <- H00 in *.
+  edestruct (D d' d_d' gd' eta); eauto.
+- sauto lq:on use:context_derivative_det.
+- sinvert H1; sinvert H0. sauto lq: on use:context_derivative_det.
+- sinvert H0. sauto lq: on use:context_derivative_det.
+- sinvert H0. sauto lq: on use:context_derivative_det.
+- sinvert H0. sauto lq: on use:context_derivative_det.
+- sinvert H1. sinvert H6. destruct (ltac:(best use:context_derivative_det) : G' = g1'). sfirstorder.
+- sinvert H1. sinvert H6. destruct (ltac:(best use:context_derivative_det) : G' = g1'). sfirstorder.
+- sinvert H1. sinvert H4. destruct (ltac:(best use:context_derivative_det) : D' = g1'). sfirstorder.
+Qed.
   

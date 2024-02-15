@@ -1,3 +1,4 @@
+Require Import Coq.Program.Equality.
 From Coq Require Import String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
@@ -128,24 +129,74 @@ Hint Constructors ArgsTyped : core.
 
 Check Typed_mutual.
 
-Theorem typing_sub_inert : forall g e s i rs,
-  Typed g rs e s i ->
-  Typed g rs e s Jumpy
+
+Theorem typing_fix_subst_mut :
+  (forall (g' : context) (rs: recsig) e' t i', Typed g' rs e' t i' -> 
+    forall g e s i,
+      Typed g (Rec g s i) e s i ->
+      WFContext g ->
+      rs = Rec g s i ->
+      Typed g' NoRec (fix_subst g s e e') t i') /\
+  (forall g' (rs: recsig) args g'' i', ArgsTyped g' rs args g'' i' ->
+    forall g e s i,
+      Typed g (Rec g s i) e s i ->
+      WFContext g ->
+      rs = Rec g s i ->
+      ArgsTyped g' NoRec (fix_subst_args g s e args) g'' i').
+intros.
+  apply Typed_mutual; cbn; intros.
+  - econstructor. { eapply H; eauto. } { eapply H0; eauto. } hauto l: on.
+  - hauto l: on.
+  - hecrush.
+  - hauto l: on.
+  - sfirstorder.
+  - sfirstorder.
+  - sfirstorder.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - sauto lq: on.
+  - intros. econstructor. { eapply H; eauto. } { eapply H0; eauto. } sfirstorder.
+  - intros. econstructor. { eapply H; eauto. } { eapply H0; eauto. } sfirstorder.
+  - hauto l: on.
+Qed.
+
+Theorem typing_fix_subst : forall g g' e e' s t i i',
+  WFContext g ->
+  Typed g (Rec g s i) e s i ->
+  Typed g' (Rec g s i) e' t i' -> 
+  Typed g' NoRec (fix_subst g s e e') t i'.
+Proof.
+sfirstorder use:typing_fix_subst_mut.
+Qed.
+
+
+(* Theorem typing_sub_inert_mut :
+  (forall g rs e s i, Typed g rs e s i -> Typed g (jumpify rs) e s Jumpy)
+  /\
+  (forall g rs e g' i, ArgsTyped g rs e g' i -> ArgsTyped g (jumpify rs) e g' Jumpy)
 .
 Proof.
-  intros. induction H; cbn in *; intros.
-  - econstructor; try eassumption; constructor.
-  - econstructor; eassumption.
-  - econstructor; try eassumption. cbn. intro C. discriminate C.
+  apply Typed_mutual; intros.
+  - ecrush.
+  - sfirstorder.
+  - sblast.
   - sfirstorder.
   - hauto l: on.
   - sauto lq: on.
   - sfirstorder.
+  - econstructor. eauto. 
+  - sfirstorder.
   - best.
-  - best.
-  - best.
-  - destruct i; econstructor; eauto.
-Admitted.
+  - econstructor; eauto. scongruence.
+  - eapply TRec.
+Admitted. *)
 
 (* TODO:
 Theorem typed_wf_term : forall G x T,
@@ -285,28 +336,27 @@ Qed.
 
 Hint Resolve typing_fv : core.
 
-(* TODO: will *)
 Theorem sink_tm_typing : forall g p s s' rs,
   PrefixTyped p s ->
   MaximalPrefix p ->
   Derivative p s s' ->
   Typed g rs (sink_tm p) s' Inert.
 Proof.
-Admitted.
-
-Theorem typing_subst_nofv : forall e x g t i y rs,
-  ~ fv e x ->
-  Typed g rs e t i ->
-  Typed g rs (subst_var e y x) t i.
-Proof.
-  intros. assert (A : subst_var e y x = e); [| rewrite A; assumption].
-  apply subst_not_fv. right. assumption.
+intros g p s s' rs Ht Hm.
+generalize dependent s'.
+generalize dependent g.
+generalize dependent rs.
+dependent induction Ht; sinvert Hm; cbn; intros rs g s' Hd.
+- best.
+- best.
+- sinvert Hd. econstructor; sfirstorder.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
 Qed.
 
-(*
-If G(x : s) |- e : t
-then G(y : s) |- e[y/x] : t
-*)
 
 (* Todo: will. *)
 Theorem typing_subst : forall h e x y s t i gx gy rs,
@@ -324,10 +374,13 @@ Proof.
   generalize dependent h.
   generalize dependent s.
   induction H; intros.
-  - admit.
-  - admit.
-  - assert (subst_var (TmSemic e1 e2) y x = TmSemic (subst_var e1 y x) (subst_var e2 y x)) by best.
+  - assert (subst_var (TmComma e1 e2) y x = (TmComma (subst_var e1 y x) (subst_var e2 y x))) by best.
     rewrite -> H6 in *.
+    best.
+  - admit.
+  - sinvert H0.
+    assert (subst_var (TmSemic e1 e2) y x = TmSemic (subst_var e1 y x) (subst_var e2 y x)) by best.
+    rewrite -> H0.
     admit.
   - admit.
   - best.
