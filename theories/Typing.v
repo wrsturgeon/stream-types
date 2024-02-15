@@ -257,7 +257,12 @@ Theorem typing_fv' :
 Proof.
  apply Typed_mutual; intros; unfold P_typing_fv in *; unfold P_argstyping_fv in *.
  - sfirstorder.
- - admit.
+ - intros. cbn. cbn in H0.
+   assert (SetEq (fv Gzst) (set_union (fv G) (singleton_set z))) by hauto q:on use:fv_fill.
+   apply H1.
+   destruct H0 as [U | [[V W] X]].
+   + sfirstorder.
+   + eapply fv_fill in f. sfirstorder.
  - sfirstorder.
  - admit.
  - sfirstorder.

@@ -95,20 +95,10 @@ Qed.
 
 (* WILL: these preserves compat theorems! lets' work out the one for parl and catl2 *)
 Theorem  preserves_cat_1 : forall (eta : env) e z p p' i x y t,
-
-x <> y ->
-
-eta z = Some (PfxCatFst p) ->
-
-Preserves i
-      (env_union eta
-         (env_union (singleton_env x p)
-            (singleton_env y (emp t)))) p' 
-      (fv e) ->
-
-Preserves i
-      eta p' 
-      (fv (TmLetCat t x y z e)).
+  x <> y ->
+  eta z = Some (PfxCatFst p) ->
+  Preserves i (env_union eta (env_union (singleton_env x p) (singleton_env y (emp t)))) p'  (fv e) ->
+  Preserves i eta p' (fv (TmLetCat t x y z e)).
 Proof.
 intros.
 destruct H1.
@@ -134,8 +124,22 @@ split.
     exists p0.
     cbn. hauto lq:on use:eqb_neq.
 Admitted.
-  
 
+Theorem  preserves_cat_2 : forall (eta : env) e z p1 p2 p' i x y t,
+  x <> y ->
+  eta z = Some (PfxCatBoth p1 p2) ->
+  Preserves i (env_union eta (env_union (singleton_env x p1) (singleton_env y p2))) p'  (fv e) ->
+  Preserves i eta p' (fv (TmLetCat t x y z e)).
+Proof.
+Admitted.
+
+Theorem  preserves_par : forall (eta : env) e z p1 p2 p' i x y,
+  x <> y ->
+  eta z = Some (PfxParPair p1 p2) ->
+  Preserves i (env_union eta (env_union (singleton_env x p1) (singleton_env y p2))) p'  (fv e) ->
+  Preserves i eta p' (fv (TmLetPar x y z e)).
+Proof.
+Admitted.
 
 
 (* ArgsStep eta_in g_out e e' g_out' eta_out -> *)
