@@ -213,7 +213,7 @@ Arguments EnvConcat n n' n''/.
 Hint Unfold EnvConcat : core.
 
 (* fuck it, i want this theorem to hold on the nose.  *)
-Axiom functional_extensionality: forall {A B} (f g:A->B) , (forall x, f x = g x) -> f = g.
+Axiom functional_extensionality : forall {A B} (f g : A -> B), (forall x, f x = g x) -> f = g.
 
 Theorem env_cat_unique : forall n n' n1 n2,
   EnvConcat n n' n1 -> 
@@ -243,8 +243,48 @@ Theorem env_cat_exists_when_typed : forall eta eta' g g',
   (forall g'', ContextDerivative eta' g' g'' ->
     ContextDerivative eta'' g g'').
 Proof.
-  intros.
-Admitted.
+  intros eta eta' g g' Hd Ht Ht'. generalize dependent eta'. generalize dependent g'.
+  induction Ht; intros; sinvert Hd; sinvert Ht'.
+  - (* EnvTyEmpty
+     * (ContextDerivative n CtxEmpty g') told us that `g' = CtxEmpty`
+     * (EnvTyped eta' CtxEmpty) told us nothing
+     * goal:
+     *   exists eta'' : env,
+     *     EnvConcat n eta' eta'' /\
+     *     EnvTyped eta'' CtxEmpty /\
+     *     forall g'' : context,
+     *       ContextDerivative eta' CtxEmpty g'' ->
+     *       ContextDerivative eta'' CtxEmpty g'' *)
+    eexists. (* nothing to work with in the context, so just figure it out later *)
+    split; [| split]; intros.
+    2: { constructor. (* anything is environment-typed in the empty context *) }
+    2: { sinvert H. constructor. (* any context maintains that derivative of empty is empty *) }
+    cbn in *; split; intros. (* effectively unfolding EnvConcat *)
+    (* now the tricky part: have to instantiate `?eta''` s.t. opposing goals hold
+     * note that these two goals are exactly just unfolding the definition of `EnvConcat`
+     * on the one hand,
+     *   n x = None \/ eta' x = None ->
+     *   ?eta'' x = None
+     * on the other,
+     *   n x = Some p /\ eta' x = Some p' ->
+     *   exists p'', ?eta'' x = Some p'' /\ PrefixConcat p p' p''
+     * so the easiest solution to the first would be (fun _ => None),
+     *   but the second requires that the concatenation of `p` & `p'` on `x` is `Some`
+     * in the second case, we'd have to know that some concatenation exists,
+     *   but prefix concatenation isn't a function (only exists when typed),
+     *   so we'd have to use `pfx_cat_exists_when_typed`,
+     *   but we don't know anything about `p` and `p'`
+     *   other than where they came from
+     * the environment-typed hypotheses told us only that `g' = CtxEmpty`,
+     *   nothing else, so we really have nothing to go on here *)
+    admit. admit.
+  - (*
+    edestruct pfx_cat_exists_when_typed as [p'' Hp'']; try eassumption.
+    (* ^^ damn it, still need to know that `PrefixTyped p0 s` *)
+    *)
+    destruct (derivative_fun _ _ H0) as [sp Hsp].
+    destruct (pfx_cat_exists_when_typed _ _ _ _ Hsp H0 (emp_well_typed _)) as [pfx [Hpc [Hpt Hpd]]].
+Admitted. (* yeah, this is still not looking good *)
 
 Theorem env_cat_maximal : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->
@@ -252,20 +292,20 @@ Theorem env_cat_maximal : forall s eta eta' eta'',
   Subset s (dom eta') ->
   MaximalOn s eta \/ MaximalOn s eta' -> MaximalOn s eta''.
 Proof.
-intros.
-unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
-intros.
-unfold EnvConcat in H.
-destruct H as [Hn Hs].
-destruct H2.
-+ edestruct H as [p []]; eauto.
-  assert (exists p', eta' x = Some p') by sfirstorder.
-  edestruct H5 as [p'].
-  edestruct Hs as [p'' [ U V]]; eauto.
-+ edestruct H as [p' []]; eauto.
-  assert (exists p, eta x = Some p) by sfirstorder.
-  edestruct H5 as [p].
-  edestruct Hs as [p'' [ U V]]; eauto.
+  intros.
+  unfold MaximalOn in *. unfold PropOn in *. unfold PropOnItem in *.
+  intros.
+  unfold EnvConcat in H.
+  destruct H as [Hn Hs].
+  destruct H2.
+  + edestruct H as [p []]; eauto.
+    assert (exists p', eta' x = Some p') by sfirstorder.
+    edestruct H5 as [p'].
+    edestruct Hs as [p'' [ U V]]; eauto.
+  + edestruct H as [p' []]; eauto.
+    assert (exists p, eta x = Some p) by sfirstorder.
+    edestruct H5 as [p].
+    edestruct Hs as [p'' [ U V]]; eauto.
 Qed.
 
 Theorem env_cat_empty : forall s eta eta' eta'',
@@ -279,5 +319,5 @@ Theorem env_cat_empty' : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->
   EmptyOn s eta /\ EmptyOn s eta' -> EmptyOn s eta''.
 Proof.
-best use:env_cat_empty.
+  best use:env_cat_empty.
 Qed.
