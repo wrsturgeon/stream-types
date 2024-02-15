@@ -335,7 +335,6 @@ Proof.
   unfold EmptyOn in *. unfold PropOn in *. unfold PropOnItem in *; intros; edestruct subset_dom_lookup as [p'']; eauto; edestruct EnvConcat_lookup as [p [p' [U [V W]]]]; eauto; edestruct H1 as [p0 [A B]]; eauto; exists p''; hauto l: on use:pfx_cat_empty.
 Qed.
 
-(* TODO: will (priority!) *)
 Theorem env_cat_typed : forall eta eta' eta'' g g',
   WFContext g ->
   ContextDerivative eta g g'->
@@ -376,3 +375,21 @@ Proof.
       * right. eapply env_cat_maximal; eauto.
 Qed.
 
+
+Theorem  env_cat_exists_when_typed : forall g g' eta eta',
+  WFContext g ->
+  ContextDerivative eta g g'->
+  EnvTyped eta g ->
+  EnvTyped eta' g' ->
+  exists eta'',
+  EnvConcat eta eta' eta'' /\
+  Subset (fv g) (dom eta'') /\
+  EnvTyped eta'' g /\
+  (forall g'', ContextDerivative eta' g' g'' ->
+     ContextDerivative eta'' g g'').
+Proof.
+  intros.
+  edestruct env_cat_exists as [eta'' [A B]]; eauto.
+  exists eta''.
+  hauto l:on use:env_cat_typed.
+Qed.
