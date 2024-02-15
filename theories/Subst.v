@@ -51,8 +51,10 @@ with subst_var_argsterm (args : argsterm) (x : string) (y : string) :=
   | ATmSemic1 e1 e2 => ATmSemic1 (subst_var_argsterm e1 x y) (subst_var_argsterm e2 x y)
   | ATmSemic2 e2 => ATmSemic2 (subst_var_argsterm e2 x y)
   end.
-Arguments subst_var e x y/.
-Arguments subst_var_argsterm args x y/.
+(* unfolding these is a nightmare
+Arguments subst_var e x y.
+Arguments subst_var_argsterm args x y.
+*)
 
 Lemma no_explosions_please : forall e x y x' e',
   subst_var (TmLet x' e e') x y =

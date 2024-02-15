@@ -358,7 +358,7 @@ dependent induction Ht; sinvert Hm; cbn; intros rs g s' Hd.
 Qed.
 
 
-(* Todo: will. *)
+(* Todo: will: PRIORITY. *)
 Theorem typing_subst : forall h e x y s t i gx gy rs,
   Typed gx rs e t i ->
   WFContext gx ->
@@ -367,28 +367,27 @@ Theorem typing_subst : forall h e x y s t i gx gy rs,
   Fill h (CtxHasTy y s) gy ->
   Typed gy rs (subst_var e y x) t i.
 Proof.
-  intros.
-  generalize dependent x.
-  generalize dependent y.
+  intros h e x y s t i gx gy rs Ht Hw Hn Hx Hy.
   generalize dependent gy.
-  generalize dependent h.
   generalize dependent s.
-  induction H; intros.
-  - assert (subst_var (TmComma e1 e2) y x = (TmComma (subst_var e1 y x) (subst_var e2 y x))) by best.
-    rewrite -> H6 in *.
-    best.
-  - admit.
-  - sinvert H0.
-    assert (subst_var (TmSemic e1 e2) y x = TmSemic (subst_var e1 y x) (subst_var e2 y x)) by best.
-    rewrite -> H0.
+  generalize dependent y.
+  generalize dependent x.
+  generalize dependent h.
+  generalize dependent Hw.
+  induction Ht; cbn in *; intros.
+  - econstructor; [eapply IHHt1 | eapply IHHt2 |]; eassumption.
+  - econstructor; try eassumption. assert (HwG := wf_ctx_hole _ Hw _ _ H3).
+    assert (Hwfc : WFContext (CtxComma (CtxHasTy x s) (CtxHasTy y t))). {
+      repeat constructor; intros Hf C; cbn in *; subst; apply H; reflexivity. }
+    assert (Hd : DisjointSets (fv G) (fv (CtxComma (CtxHasTy x s) (CtxHasTy y t)))). {
+      constructor; [intros Hf [] | intros [] Hf]; cbn in *; subst; contradiction Hf. }
+    eassert (HwGxsyt := wf_ctx_fill _ _ _ H2 HwG Hwfc Hd).
+    Search gy. admit.
+  - assert (subst_var (TmSemic e1 e2) y x = TmSemic (subst_var e1 y x) (subst_var e2 y x)) by best.
     admit.
   - admit.
   - best.
   - best.
-  - cbn in *. 
-    destruct (string_dec x x0).
-    + rewrite -> e. assert (eqb x0 x0 = true) by best use:eqb_refl. rewrite -> H4. 
-      assert (h = G /\ s = s0) by best use:fill_reflect_var_localize.
-      best.
-    + admit.
+  - admit.
+  - admit.
 Admitted.
