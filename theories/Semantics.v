@@ -105,6 +105,12 @@ Hint Constructors Step : core.
 Hint Constructors ArgsStep : core.
 Arguments Step n e e' p.
 
+Scheme Step_ind' := Induction for Step Sort Prop
+with ArgsStep_ind' := Induction for ArgsStep Sort Prop.
+Combined Scheme Step_mutual from Step_ind', ArgsStep_ind'.
+
+
+
 (* TODO:will eta eta', agree on fv e *)
 Theorem step_det : forall eta e e1 e2 p1 p2,
     Step eta e e1 p1 ->
