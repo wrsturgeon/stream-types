@@ -42,6 +42,8 @@ Proof.
 sfirstorder use: em.
 Qed.
 
+
+
 (* Argument order matches notation: (Subset a b) === (a is a subset of b) *)
 Definition Subset {T} (little big : set T) : Prop := forall x,
   little x -> big x.
@@ -86,3 +88,13 @@ Proof. cbn. intros. split; intros []; try (left; assumption); right; assumption.
 Lemma set_eq_comm : forall T a b,
   @SetEq T a b <-> SetEq b a.
 Proof. cbn in *. split; intros H x; split; apply H. Qed.
+
+
+Theorem DisjointSets_eq : forall T s1' s2' s1 s2,
+  @SetEq T s1 s1' ->
+  @SetEq T s2 s2' ->
+  @DisjointSets T s1' s2' ->
+  @DisjointSets T s1 s2.
+Proof.
+sfirstorder.
+Qed.

@@ -365,7 +365,7 @@ Proof.
          scongruence.
       (* contradictory. *)
       * assert (MaximalOn (fv g1) eta1). { eapply C. eapply prop_on_contains; [|eauto]. hauto l:on use:typing_fv_args. } sfirstorder.
-    + eapply context_derivative_semic. { admit. (* obvious*) } eauto. hauto l: on use:context_derivative_emp.
+    + eapply context_derivative_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)). eauto. qauto l:on use:empty_env_for_dom. eauto. } eauto. hauto l: on use:context_derivative_emp.
   - sinvert H2. sinvert H3. sinvert H5. sinvert H4.
     edestruct IHArgsStep1 as [A [B [C [D DU]]]]; eauto.
     edestruct IHArgsStep2 as [E [F [G [H' H'U]]]]; eauto.
@@ -373,8 +373,13 @@ Proof.
     + eapply env_typed_semic; [| eauto | eauto | eauto]. hauto q: on.
     + hauto q: on.
     + hauto drew: off.
-    + intros. admit. (* FIXME *)
-    + intros H00 H01; rewrite -> H00 in *. unfold inert_guard in *. assert (H02 : i1 = Inert) by best. rewrite -> H02 in *.
+    + intros. 
+      assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
+      eapply prop_on_set_union.
+      split.
+      * eapply prop_on_weakening_alt';[|eauto]; eapply no_conflict_on_disjoint. right. { eapply (DisjointSets_eq string (fv g2) (fv g1)); [eauto | | ]; sfirstorder. }
+      * sfirstorder use: prop_on_weakening.
+    + intros H00 H01; rewrite -> H00 in *. unfold inert_guard in *. assert (H02 : i1 = Inert) by sfirstorder. rewrite -> H02 in *.
       (* if eta were empty, this shouldn't happen. because *)
       edestruct H15; eauto.
       assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
@@ -384,7 +389,7 @@ Proof.
       assert (NullableCtx g1) by hauto l: on use:emptyon_and_maximalon_means_nullable.
       scongruence. (* contradiction: g1 is and isn't nullable. *)
     + intros. sinvert H2. econstructor; [|eauto]. eapply maximal_context_derivative_nullable; eauto.
-    + eapply context_derivative_semic; [|eauto|eauto]. { admit. (* obvious*) }
+    + eapply context_derivative_semic; [|eauto|eauto]. { eapply (DisjointSets_eq string (fv g1) (fv g2)); eauto. }
   - sinvert H0. sinvert H1. sinvert H2. sinvert H3.
     edestruct IHArgsStep as [A [B [C [D E]]]]; eauto.
     split; try split; try split; try split.
