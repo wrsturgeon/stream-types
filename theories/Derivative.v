@@ -501,10 +501,22 @@ Qed. *)
 (* TODO: will (use derivative_emp)*)
 
 Theorem context_derivative_emp : forall g,
+  WFContext g ->
   ContextDerivative (empty_env_for g) g g.
 Proof.
   induction g; intros.
-Admitted.
+  - sauto q:on.
+  - assert (empty_env_for (CtxHasTy id ty) id = Some (emp ty)) by best use:eqb_refl.
+    sfirstorder use:derivative_emp.
+  - assert (empty_env_for (CtxComma g1 g2) = env_union (empty_env_for g1) (empty_env_for g2)) by hauto q: on.
+    rewrite -> H0.
+    sinvert H.
+    eapply context_derivative_comma; [|eauto|eauto]. hauto lq:on use:empty_env_for_dom.
+  - assert (empty_env_for (CtxSemic g1 g2) = env_union (empty_env_for g1) (empty_env_for g2)) by hauto q: on.
+    rewrite -> H0.
+    sinvert H.
+    eapply context_derivative_semic; [|eauto|eauto]. hauto lq:on use:empty_env_for_dom.
+Qed.
 
 Theorem context_derivative_emp' : forall g g' eta,
   EmptyOn (fv g) eta ->
