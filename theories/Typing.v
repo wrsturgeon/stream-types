@@ -111,7 +111,7 @@ with ArgsTyped : context -> recsig -> argsterm -> context -> inertness -> Prop :
   | T_ATmSemic1 : forall g1 g2 g1' g2' e1 e2 rs i1 i2 i3,
       ArgsTyped g1 rs e1 g1' i1 ->
       ArgsTyped g2 rs e2 g2' i2 ->
-      inert_guard (i1 = Inert /\ ~(NullableCtx g1)) i3 ->
+      inert_guard (i1 = Inert /\ ~(NullableCtx g1')) i3 ->
       ArgsTyped (CtxSemic g1 g2) rs (ATmSemic1 e1 e2) (CtxSemic g1' g2') i3
   | T_ATmSemic2 : forall g1 g2 g1' g2' e2 rs i,
       NullableCtx g1 ->

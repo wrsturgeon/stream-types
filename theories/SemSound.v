@@ -146,8 +146,7 @@ Proof.
     best.
 
   (* Cat-R-2 *)
-  - admit. 
-  (*edestruct IHStep1 as [A [B C]]; eauto.
+  - edestruct IHStep1 as [A [B C]]; eauto.
     edestruct IHStep2 as [A' [B' C']]; eauto.
     split; try split; try split.
     + hauto l: on.
@@ -156,11 +155,10 @@ Proof.
     + intros H00 H01. rewrite -> H00 in *. unfold inert_guard in *.
       edestruct H2 as [UU UU']; eauto; eauto.
       rewrite -> UU in *.
-      assert (EmptyOn (fv e1) n) by best use:prop_on_contains.
+      assert (EmptyOn (fv e1) n) by hauto q: on use:prop_on_contains.
       assert (EmptyPrefix p1) by best.
       assert (Nullable s) by best use:empty_and_maximal_means_nullable.
       best.
-    *)
     
   - admit.
     (*assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by hauto l: on use: maps_to_has_type_reflect.
@@ -363,27 +361,28 @@ Proof.
          intros. split; try split. auto.
          intro.
          assert (MaximalOn (fv g0) eta) by sfirstorder use: maximal_context_derivative_nullable'.
-         assert (MaximalOn (fv e1) eta) by best use:typing_fv'.
+         assert (MaximalOn (fv e1) eta) by best use:typing_fv_args.
          scongruence.
       (* contradictory. *)
-      * sfirstorder.
+      * assert (MaximalOn (fv g1) eta1). { eapply C. eapply prop_on_contains; [|eauto]. hauto l:on use:typing_fv_args. } sfirstorder.
+    + eapply context_derivative_semic. { admit. (* obvious*) } eauto. hauto l: on use:context_derivative_emp.
   - sinvert H2. sinvert H3. sinvert H5. sinvert H4.
-    edestruct IHArgsStep1 as [A [B [C D]]]; eauto.
-    edestruct IHArgsStep2 as [E [F [G H']]]; eauto.
+    edestruct IHArgsStep1 as [A [B [C [D DU]]]]; eauto.
+    edestruct IHArgsStep2 as [E [F [G [H' H'U]]]]; eauto.
     split; try split; try split; try split.
     + eapply env_typed_semic; [| eauto | eauto | eauto]. hauto q: on.
     + hauto q: on.
     + hauto drew: off.
     + intros. admit.
     + intros H00 H01; rewrite -> H00 in *. unfold inert_guard in *. assert (H02 : i1 = Inert) by best. rewrite -> H02 in *.
+      (* if eta were empty, this shouldn't happen. because *)
       edestruct H15; eauto.
-      assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by best. rewrite -> H03 in *. 
-      assert (H04 : fv (CtxSemic g0 g3) = set_union (fv g0) (fv g3)) by best. rewrite -> H04 in *. 
-      assert (EmptyOn (fv g0) eta) by best use:prop_on_set_union.
-      assert (EmptyOn (fv g3) eta) by best use:prop_on_set_union.
-      eapply prop_on_set_union. split.
-      * eapply prop_on_weakening_alt';[|qauto l: on]. eapply no_conflict_on_disjoint. right. (*best use:empty_env_for_dom.*) admit. (* this is doable. *)
-      * eapply prop_on_weakening. best.
+      assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
+      (* assert (H04 : fv (CtxSemic g0 g3) = set_union (fv g0) (fv g3)) by scongruence. *)
+      assert (EmptyOn (fv e1) eta) by hauto l:on use:prop_on_set_union.
+      assert (EmptyOn (fv g1) eta1) by sauto lq: on.
+      assert (NullableCtx g1) by hauto l: on use:emptyon_and_maximalon_means_nullable.
+      scongruence. (* contradiction: g1 is and isn't nullable. *)
     + intros. sinvert H2. econstructor. eauto. eauto. scongruence.
   - admit.
 Admitted.

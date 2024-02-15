@@ -237,28 +237,6 @@ Proof.
 Qed.
 Hint Resolve hole_derivative_wf : core.
 
-Theorem context_derivative_emp' : forall g g' eta,
-  EmptyOn (fv g) eta ->
-  ContextDerivative eta g g' ->
-  g = g'.
-Proof.
-  induction g; intros.
-  - sinvert H0. reflexivity.
-  - cbn in H. specialize (H id (ltac:(auto))).
-    edestruct H as [p [A B]].
-    sinvert H0.
-    destruct (ltac:(scongruence) : p = p0).
-    sfirstorder use:derivative_emp'.
-  - sinvert H0.
-    assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
-    assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
-    hauto lq: on.
-  - sinvert H0.
-    assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
-    assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
-    hauto lq: on.
-Qed.
-Hint Resolve context_derivative_emp' : core.
 
 Theorem hole_derivative_fun : forall eta h d hd,
   Fill h d hd ->
@@ -503,3 +481,34 @@ Proof.
   apply reflect_no_derivative in E.
   apply E in H. destruct H.
 Qed. *)
+
+(* TODO: will (use derivative_emp)*)
+
+Theorem context_derivative_emp : forall g,
+  ContextDerivative (empty_env_for g) g g.
+Proof.
+  induction g; intros.
+Admitted.
+
+Theorem context_derivative_emp' : forall g g' eta,
+  EmptyOn (fv g) eta ->
+  ContextDerivative eta g g' ->
+  g = g'.
+Proof.
+  induction g; intros.
+  - sinvert H0. reflexivity.
+  - cbn in H. specialize (H id (ltac:(auto))).
+    edestruct H as [p [A B]].
+    sinvert H0.
+    destruct (ltac:(scongruence) : p = p0).
+    sfirstorder use:derivative_emp'.
+  - sinvert H0.
+    assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
+    assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
+    hauto lq: on.
+  - sinvert H0.
+    assert (EmptyOn (fv g1) eta) by sfirstorder use:prop_on_set_union.
+    assert (EmptyOn (fv g2) eta) by sfirstorder use:prop_on_set_union.
+    hauto lq: on.
+Qed.
+Hint Resolve context_derivative_emp' : core.
