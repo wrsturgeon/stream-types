@@ -1,5 +1,6 @@
 Require Import Coq.Program.Equality.
-From Coq Require Import String.
+From Coq Require Import
+  PString.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
@@ -129,7 +130,6 @@ Hint Constructors ArgsTyped : core.
 
 Check Typed_mutual.
 
-
 Theorem typing_fix_subst_mut :
   (forall (g' : context) (rs: recsig) e' t i', Typed g' rs e' t i' -> 
     forall g e s i,
@@ -249,6 +249,7 @@ Definition P_argstyping_fv (g : context) (rs : recsig) (args : argsterm) (g' : c
 
 Check Typed_mutual.
 
+(* TODO: will: priority *)
 Theorem typing_fv' :
   (forall g rs e s i, Typed g rs e s i -> P_typing_fv g rs e s i) /\
   (forall g rs args g' i, ArgsTyped g rs args g' i -> P_argstyping_fv g rs args g' i).
