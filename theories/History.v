@@ -54,3 +54,11 @@ Inductive ToPrefix : type (* lambda-st type! *) -> stlc_type (* term? value? *) 
 Hint Constructors ToPrefix : core.
 
 (* TODO: Definition B.33 *)
+
+(* TODO:will
+Assume a set `histtm`
+
+Assume a prop-valued typing judgmetn for them, and a big-step semantics
+
+Assume type soundness
+*)

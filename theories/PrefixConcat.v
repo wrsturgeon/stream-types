@@ -232,7 +232,7 @@ Proof.
   - sauto lq: on.
 Qed.
 
-(* TODO: will. *)
+(* TODO: will (priority!) *)
 Theorem env_cat_exists_when_typed : forall eta eta' g g',
   ContextDerivative eta g g'->
   EnvTyped eta g ->
@@ -270,7 +270,14 @@ Qed.
 
 Theorem env_cat_empty : forall s eta eta' eta'',
   EnvConcat eta eta' eta'' ->
-  EmptyOn s eta /\ EmptyOn s eta' -> EmptyOn s eta''.
+  EmptyOn s eta /\ EmptyOn s eta' <-> EmptyOn s eta''.
 Proof.
   intros.
 Admitted.
+
+Theorem env_cat_empty' : forall s eta eta' eta'',
+  EnvConcat eta eta' eta'' ->
+  EmptyOn s eta /\ EmptyOn s eta' -> EmptyOn s eta''.
+Proof.
+best use:env_cat_empty.
+Qed.

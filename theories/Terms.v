@@ -24,12 +24,14 @@ Inductive term : Set :=
   | TmPlusCase (eta : env) (r : type) (z : string) (x : string) (e1 : term) (y : string) (e2 : term)
   | TmFix (args : argsterm) (g : context) (r : type) (e : term)
   | TmRec (args : argsterm)
+  | TmArgsLet (args : argsterm) (g : context) (e : term)
 with
 argsterm : Set :=
   | ATmEmpty
   | ATmSng (e : term)
   | ATmComma (e1 : argsterm) (e2 : argsterm)
-  | ATmSemic (e1 : argsterm) (e2 : argsterm)
+  | ATmSemic1 (e1 : argsterm) (e2 : argsterm)
+  | ATmSemic2 (e2 : argsterm)
 .
 
 Fixpoint fix_subst (g : context) (r : type) (e : term) (e' : term) :=
@@ -47,6 +49,8 @@ Fixpoint fix_subst (g : context) (r : type) (e : term) (e' : term) :=
   | TmPlusCase eta r z x e1 y e2 => TmPlusCase eta r z x (fix_subst g r e e1) y (fix_subst g r e e2)
   | TmFix args g' r' e' => TmFix (fix_subst_args g r e args) g' r' e'
   | TmRec args => TmFix (fix_subst_args g r e args) g r e
+  | TmArgsLet args g' e' => TmArgsLet (fix_subst_args g r e args) g' (fix_subst g r e e')
+  
   end
 with
 fix_subst_args (g : context) (r : type) (e : term) (args : argsterm) := 
@@ -54,7 +58,8 @@ fix_subst_args (g : context) (r : type) (e : term) (args : argsterm) :=
   | ATmEmpty => ATmEmpty
   | ATmSng e' => ATmSng (fix_subst g r e e')
   | ATmComma e1 e2 => ATmComma (fix_subst_args g r e e1) (fix_subst_args g r e e2)
-  | ATmSemic e1 e2 => ATmSemic (fix_subst_args g r e e1) (fix_subst_args g r e e2)
+  | ATmSemic1 e1 e2 => ATmSemic1 (fix_subst_args g r e e1) (fix_subst_args g r e e2)
+  | ATmSemic2 e2 => ATmSemic2 (fix_subst_args g r e e2)
   end
 .
 
@@ -102,13 +107,15 @@ Fixpoint fv_term e : set string :=
   | TmPlusCase _ _ z x e1 y e2 => set_union (singleton_set z) (set_union (set_minus (fv_term e1) (singleton_set x)) (set_minus (fv_term e2) (singleton_set y)))
   | TmFix args _ _ _ => fv_argsterm args
   | TmRec args => fv_argsterm args
+  | TmArgsLet args _ _ => fv_argsterm args
   end
 with
 fv_argsterm e : set string :=
   match e with
   | ATmEmpty => empty_set
   | ATmSng e => fv_term e
-  | ATmComma e1 e2 | ATmSemic e1 e2 => set_union (fv_argsterm e1) (fv_argsterm e2)
+  | ATmComma e1 e2 | ATmSemic1 e1 e2 => set_union (fv_argsterm e1) (fv_argsterm e2)
+  | ATmSemic2 e2 => fv_argsterm e2
   end.
 
 Instance fv_term_inst : FV term := { fv := fv_term }.

@@ -1,3 +1,4 @@
+Require Import Coq.Program.Equality.
 From Coq Require Import String.
 From LambdaST Require Import
   Context
@@ -34,6 +35,7 @@ Inductive Derivative : prefix -> type -> type -> Prop :=
     (* You can receive an (s . t') after an (s . t) if the `s` has already finished *)
   | DrvCatBoth : forall p1 p2 s t t',
       Derivative p2 t t' ->
+      (* MaximalPrefix p1 -> *)
       Derivative (PfxCatBoth p1 p2) (TyDot s t) t'
     (* If you haven't gotten anything yet, you can receive either side of a sum *)
   | DrvSumEmp : forall s t,
@@ -60,6 +62,7 @@ Inductive Derivative : prefix -> type -> type -> Prop :=
     (* If you've already received some of a star, receive one at a time (TODO: verify) *)
   | DrvStarRest : forall p p' s s',
       Derivative p' (TyStar s) s' ->
+      (* MaximalPrefix p -> *)
       Derivative (PfxStarRest p p') (TyStar s) s'
   .
 Hint Constructors Derivative : core.
@@ -131,11 +134,11 @@ Proof.
   try destruct IHPrefixTyped2 as [t' Hd2].
   - exists (TyPar s' t'). constructor; assumption.
   - exists (TyDot s' t). constructor. assumption.
-  - exists t'. constructor. assumption.
+  - exists t'. constructor; assumption.
   - exists s'. constructor. assumption.
   - exists s'. constructor. assumption.
   - exists (TyDot s' (TyStar s)). constructor. assumption.
-  - exists t'. constructor. assumption.
+  - exists t'. constructor; assumption.
 Qed.
 Hint Resolve derivative_fun : core.
 
@@ -389,6 +392,21 @@ Proof.
 Qed.
 Hint Resolve maximal_derivative_nullable : core.
 
+Theorem maximal_derivative_nullable' : forall p s s',
+  PrefixTyped p s ->
+  Derivative p s s' ->
+  Nullable s' ->
+  MaximalPrefix p.
+Proof.
+intros p s s' Ht Hd Hn.
+dependent induction Hd; sauto lq: on rew: off.
+Qed.
+Hint Resolve maximal_derivative_nullable : core.
+
+
+
+
+
 (* Theorem B.19 *)
 Theorem nullable_prefix_empty : forall p s,
   PrefixTyped p s ->
@@ -399,6 +417,7 @@ Proof.
   apply IHHn1 in H2. apply IHHn2 in H3. subst. reflexivity.
 Qed.
 Hint Resolve nullable_prefix_empty : core.
+
 
 (* Fixpoint maybe_derivative p s : option type :=
   match p, s with

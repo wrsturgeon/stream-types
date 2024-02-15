@@ -243,7 +243,7 @@ Proof.
 Qed.
 Hint Resolve disjoint_no_conflict : core.
 
-Definition NoConflictOn (n n' : env) s := forall x p p',
+Definition NoConflictOn (n n' : env) (s : set string) := forall x p p',
   s x ->
   n x = Some p ->
   n' x = Some p' ->
@@ -341,6 +341,23 @@ Lemma prop_on_weakening_alt : forall P nl nr ctx,
   PropOn P ctx (env_union nl nr).
 Proof. sfirstorder use: prop_on_item_weakening_alt. Qed.
 Hint Resolve prop_on_weakening_alt : core.
+
+Theorem prop_on_item_weakening_alt' : forall P nl nr vs (s : set string),
+  s vs ->
+  NoConflictOn nl nr s ->
+  PropOnItem P nl vs ->
+  PropOnItem P (env_union nl nr) vs.
+Proof.
+  cbn. intros. hauto drew: off.
+Qed.
+Hint Resolve prop_on_item_weakening_alt' : core.
+
+Lemma prop_on_weakening_alt' : forall P nl nr ctx,
+  NoConflictOn nl nr ctx ->
+  PropOn P ctx nl ->
+  PropOn P ctx (env_union nl nr).
+Proof. unfold PropOn in *. intros. unfold PropOnItem in *. hauto q: on. Qed.
+Hint Resolve prop_on_weakening_alt' : core.
 
 Lemma empty_on_weakening_alt : forall nl nr ctx,
   NoConflict nl nr ->

@@ -41,13 +41,15 @@ Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
       TmFix (subst_var_argsterm args x y) g r e
   | TmRec args =>
       TmRec (subst_var_argsterm args x y)
+  | TmArgsLet args g e => TmArgsLet (subst_var_argsterm args x y) g e
   end
 with subst_var_argsterm (args : argsterm) (x : string) (y : string) :=
   match args with
   | ATmEmpty => ATmEmpty
   | ATmSng e => ATmSng (subst_var e x y)
   | ATmComma e1 e2 => ATmComma (subst_var_argsterm e1 x y) (subst_var_argsterm e2 x y)
-  | ATmSemic e1 e2 => ATmSemic (subst_var_argsterm e1 x y) (subst_var_argsterm e2 x y)
+  | ATmSemic1 e1 e2 => ATmSemic1 (subst_var_argsterm e1 x y) (subst_var_argsterm e2 x y)
+  | ATmSemic2 e2 => ATmSemic2 (subst_var_argsterm e2 x y)
   end.
 Arguments subst_var e x y/.
 Arguments subst_var_argsterm args x y/.

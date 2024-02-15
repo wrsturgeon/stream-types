@@ -10,6 +10,11 @@ From LambdaST Require Import
   PrefixConcat
   Terms.
 
+
+(* TODO:will
+SInl, Sinr, nil, cons, (4?) star-case
+*)
+
 Inductive Step : env -> term -> term -> prefix -> Prop :=
   | SEpsR : forall n,
       Step n TmSink TmSink PfxEpsEmp
@@ -61,11 +66,13 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         eta'' z = Some (PfxSumInr p) ->
         Step (env_union eta'' (singleton_env y p)) e2 e' p' ->
         Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
-  .
-Hint Constructors Step : core.
-Arguments Step n e e' p.
-
-Inductive ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
+  (* | SFix :   *)
+        (* Step eta (TmFix) *)
+  | SArgsLet : forall eta eta' g g' args args' e e' p,
+        ArgsStep eta g args args' g' eta' ->
+        Step eta' e e' p ->
+        Step eta (TmArgsLet args g e) (TmArgsLet args' g' e') p
+with ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
   | ASEmpty : forall eta,
         ArgsStep eta CtxEmpty ATmEmpty ATmEmpty CtxEmpty empty_env
   | ASSng : forall eta x s s' e e' p,
@@ -76,19 +83,27 @@ Inductive ArgsStep : env -> context -> argsterm -> argsterm -> context -> env ->
         ArgsStep eta g1 e1 e1' g1' eta1 ->
         ArgsStep eta g2 e2 e2' g2' eta2 ->
         ArgsStep eta (CtxComma g1 g2) (ATmComma e1 e2) (ATmComma e1' e2') (CtxComma g1' g2') (env_union eta1 eta2)
-  | ASSemic1 : forall eta g1 g1' g2 e1 e2 e1' eta1,
+  | ASSemic11 : forall eta g1 g1' g2 e1 e2 e1' eta1,
         ArgsStep eta g1 e1 e1' g1' eta1 ->
         ~(MaximalOn (fv g1) eta1) ->
-        ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2) (CtxSemic g1' g2) (env_union eta1 (empty_env_for g2))
-  | ASSemic2 : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
+        ArgsStep eta (CtxSemic g1 g2) (ATmSemic1 e1 e2) (ATmSemic1 e1' e2) (CtxSemic g1' g2) (env_union eta1 (empty_env_for g2))
+  | ASSemic12 : forall eta g1 g1' g2 g2' e1 e2 e1' e2' eta1 eta2,
         ArgsStep eta g1 e1 e1' g1' eta1 ->
         MaximalOn (fv g1) eta1 ->
         ArgsStep eta g2 e2 e2' g2' eta2 ->
-        ArgsStep eta (CtxSemic g1 g2) (ATmSemic e1 e2) (ATmSemic e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
+        ArgsStep eta (CtxSemic g1 g2) (ATmSemic1 e1 e2) (ATmSemic1 e1' e2') (CtxSemic g1' g2') (env_union eta1 eta2)
+  | ASSemic2 : forall eta g1 g2 g2' e2 e2' eta2,
+        ArgsStep eta g2 e2 e2' g2' eta2 ->
+        ArgsStep eta (CtxSemic g1 g2) (ATmSemic2 e2) (ATmSemic2 e2') (CtxSemic g1 g2') (env_union (empty_env_for g1) eta2)
   .
-Hint Constructors ArgsStep : core.
 
+Hint Constructors Step : core.
+Hint Constructors ArgsStep : core.
+Arguments Step n e e' p.
+
+(* TODO:will eta eta', agree on fv e *)
 Theorem step_det : forall eta e e1 e2 p1 p2,
+
     Step eta e e1 p1 ->
     Step eta e e2 p2 ->
     e1 = e2 /\ p1 = p2.
@@ -117,7 +132,8 @@ Proof.
     assert (p = p0) by congruence. subst. specialize (IHStep _ _ H15) as [Ee Ep]. subst. sfirstorder.
   - sinvert H2; assert (A := env_cat_unique _ _ _ _ H H13); subst; [congruence | congruence |].
     assert (p = p0) by congruence. subst. specialize (IHStep _ _ H15) as [Ee Ep]. subst. sfirstorder.
-Qed.
+  - admit.
+Admitted.
 Hint Resolve step_det : core.
 
 (* evalArgs (SemicCtx g1 g2) (SemicCtx e1 e2) = do

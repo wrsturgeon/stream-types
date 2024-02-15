@@ -17,6 +17,10 @@ From LambdaST Require Import
   RecSig
   Types.
 
+(* TODO:will pull in the rest of the rules (nil, cons, star-case)
+   
+  if done wiht that, wait (requires histctx)
+*)
 Inductive Typed : context -> recsig -> term -> type -> inertness -> Prop :=
   | TParR : forall G e1 e2 s t i1 i2 i3 rs,
       Typed G rs e1 s i1 ->
@@ -76,24 +80,41 @@ Inductive Typed : context -> recsig -> term -> type -> inertness -> Prop :=
       Typed Gy rs e2 r i2 ->
       inert_guard (eta z = Some PfxSumEmp) i ->
       Typed Gz' rs (TmPlusCase eta r z x e1 y e2) r i
+  | TRec : forall G G' s i args,
+      ArgsTyped G' (Rec G s i) args G i ->
+      Typed G' (Rec G s i) (TmRec args) s i
+  | TFix : forall G G' rs args e r i,
+      ArgsTyped G' rs args G i ->
+      Typed G (Rec G r i) e r i ->
+      Typed G' rs (TmFix args G r e) r i
+  | TmArgsLet : forall G G' args e rs s i,
+      ArgsTyped G' rs args G i ->
+      Typed G rs e s i ->
+      Typed G' rs (TmArgsLet args G e)  s i
   | TSubCtx : forall G G' e s i rs,
       Subcontext G G' ->
       Typed G' rs e s i ->
       Typed G rs e s i
       
-with ArgsTyped : context -> recsig -> argsterm -> context -> Prop :=
-  | T_ATmEmpty : forall g rs, ArgsTyped g rs ATmEmpty CtxEmpty
+with ArgsTyped : context -> recsig -> argsterm -> context -> inertness -> Prop :=
+  | T_ATmEmpty : forall g rs i, ArgsTyped g rs ATmEmpty CtxEmpty i
   | T_ATmSng : forall g rs e s x i,
       Typed g rs e s i ->
-      ArgsTyped g rs (ATmSng e) (CtxHasTy x s)
-  | T_ATmComma : forall g g1 g2 e1 e2 rs,
-      ArgsTyped g rs e1 g1 ->
-      ArgsTyped g rs e2 g2 ->
-      ArgsTyped g rs (ATmComma e1 e2) (CtxComma g1 g2)
-  | T_ATmSemic : forall g1 g2 g1' g2' e1 e2 rs,
-      ArgsTyped g1 rs e1 g1' ->
-      ArgsTyped g2 rs e2 g2' ->
-      ArgsTyped (CtxSemic g1 g2) rs (ATmSemic e1 e2) (CtxSemic g1' g2')
+      ArgsTyped g rs (ATmSng e) (CtxHasTy x s) i
+  | T_ATmComma : forall g g1 g2 e1 e2 rs i1 i2 i3,
+      ArgsTyped g rs e1 g1 i1 ->
+      ArgsTyped g rs e2 g2 i2 ->
+      i_ub i1 i2 i3 ->
+      ArgsTyped g rs (ATmComma e1 e2) (CtxComma g1 g2) i3
+  | T_ATmSemic1 : forall g1 g2 g1' g2' e1 e2 rs i1 i2 i3,
+      ArgsTyped g1 rs e1 g1' i1 ->
+      ArgsTyped g2 rs e2 g2' i2 ->
+      inert_guard (i1 = Inert /\ ~(NullableCtx g1)) i3 ->
+      ArgsTyped (CtxSemic g1 g2) rs (ATmSemic1 e1 e2) (CtxSemic g1' g2') i3
+  | T_ATmSemic2 : forall g1 g2 g1' g2' e2 rs i,
+      NullableCtx g1 ->
+      ArgsTyped g2 rs e2 g2' i ->
+      ArgsTyped (CtxSemic g1 g2) rs (ATmSemic2 e2) (CtxSemic g1' g2') i
 .
 
 Scheme Typed_ind' := Induction for Typed Sort Prop
@@ -122,8 +143,7 @@ Proof.
   - best.
   - best.
   - destruct i; econstructor; eauto.
-  - best.
-Qed.
+Admitted.
 
 (* TODO:
 Theorem typed_wf_term : forall G x T,
@@ -171,14 +191,14 @@ Hint Resolve fv_hole_minus : core.
 Definition P_typing_fv (g : context) (rs : recsig) (e : term) (s : type) (i : inertness) :=
   forall x, fv e x -> fv g x.
 
-Definition P_argstyping_fv (g : context) (rs : recsig) (args : argsterm) (g' : context) :=
+Definition P_argstyping_fv (g : context) (rs : recsig) (args : argsterm) (g' : context) (i : inertness) :=
   forall x, fv args x -> fv g x.
 
 Check Typed_mutual.
 
 Theorem typing_fv' :
   (forall g rs e s i, Typed g rs e s i -> P_typing_fv g rs e s i) /\
-  (forall g rs args g', ArgsTyped g rs args g' -> P_argstyping_fv g rs args g').
+  (forall g rs args g' i, ArgsTyped g rs args g' i -> P_argstyping_fv g rs args g' i).
 Proof.
  apply Typed_mutual; intros; unfold P_typing_fv in *; unfold P_argstyping_fv in *.
  - sfirstorder.
@@ -192,6 +212,9 @@ Proof.
  - sfirstorder.
  - sfirstorder.
  - admit.
+ - sfirstorder.
+ - sfirstorder.
+ - sfirstorder.
  - sfirstorder use:subcontext_fv_subset.
  - sfirstorder.
  - sfirstorder.
