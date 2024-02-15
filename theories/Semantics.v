@@ -68,6 +68,10 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
   (* | SFix :   *)
         (* Step eta (TmFix) *)
+  | SFix : forall eta eta' g g' args args' e e' r p,
+      ArgsStep eta  g args args' g' eta' ->
+      Step eta' (fix_subst g r e e) e' p ->
+      Step eta (TmFix args g r e) (TmArgsLet args' g' e') p
   | SArgsLet : forall eta eta' g g' args args' e e' p,
         ArgsStep eta g args args' g' eta' ->
         Step eta' e e' p ->

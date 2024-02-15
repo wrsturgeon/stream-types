@@ -130,7 +130,8 @@ Proof.
     + sfirstorder.
     + intros. rewrite -> H4 in *. edestruct i_ub_inert as [H00 H01]; eauto. rewrite H00 in *. rewrite H01 in *. sfirstorder.
   (* cat-R-1 *)
-  - edestruct IHStep as [A [B [C L]]]; eauto.
+  - admit.
+    (* edestruct IHStep as [A [B [C L]]]; eauto.
     sinvert H2.
     sinvert H3.
     destruct H11;[|shelve].
@@ -143,9 +144,10 @@ Proof.
     assert (MaximalOn (fv e1) n). { eapply prop_on_contains. eapply typing_fv. eauto. eauto. }
     assert (MaximalPrefix p) by sauto lq: on.
     best.
-
+ *)
   (* Cat-R-2 *)
-  - edestruct IHStep1 as [A [B C]]; eauto.
+  - admit.
+    (* edestruct IHStep1 as [A [B C]]; eauto.
     edestruct IHStep2 as [A' [B' C']]; eauto.
     split; try split; try split.
     + hauto l: on.
@@ -158,7 +160,7 @@ Proof.
       assert (EmptyPrefix p1) by best.
       assert (Nullable s) by best use:empty_and_maximal_means_nullable.
       best.
-    
+     *)
   - admit.
     (*assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s t)) by hauto l: on use: maps_to_has_type_reflect.
     sinvert H00. edestruct IHStep as [A [B C]]; clear IHStep.
@@ -186,7 +188,8 @@ Proof.
   (* cat-L-1*)
   - admit.
   (* cat-L-1*)
-  - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
+  - admit.
+    (* assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply catrenvtyped2; eauto.
     split; try split.
     + sfirstorder.
@@ -206,8 +209,9 @@ Proof.
         admit. (* best use:hole_compose_fill,reflect_fill. *)
         admit. (* this used to work: best use:hole_compose_fill. *)
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
-    + admit.
-  - edestruct (IHStep1) as [A [B [U V]]]; eauto.
+    + admit. *)
+  - admit.
+    (* edestruct (IHStep1) as [A [B [U V]]]; eauto.
    (* todo: need better automation for disjoitnness *)
     assert (NoConflictOn eta (singleton_env x p) (fv G)). { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. intro. assert (x0 <> x) by scongruence. assert (x = x0) by qauto l: on use:dom_singleton. sfirstorder. }
     assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. sfirstorder. }
@@ -226,8 +230,9 @@ Proof.
     + intros. assert (MaximalOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
       eapply U'. eapply prop_on_minus. eapply U. hauto q: on. eauto.
     + intros. assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
-      eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto.
-  - split; try split; try split.
+      eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto. *)
+  - admit.
+    (* split; try split; try split.
     + best use:emp_well_typed.
     + intros.
       assert (Derivative (emp r) r r) by best use:derivative_emp.
@@ -240,8 +245,9 @@ Proof.
       assert (MaximalOn (singleton_set z) eta''). { eapply env_cat_maximal. eauto. qauto l: on. hauto l:on. }
       assert (Hcontra : MaximalPrefix PfxSumEmp) by qauto l:on.
       sinvert Hcontra.
-    + best use:emp_empty.
-  -  assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+    + best use:emp_empty. *)
+  - admit.
+   (*assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
     assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
     destruct Hwf.
     assert (~ fv G z) by sfirstorder.
@@ -281,7 +287,19 @@ Proof.
       edestruct (H02 z) as [p'' [UU UU']]; eauto.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
       sinvert UU'.
+      *)
   - admit.
+  - assert (forall g_in e g_out g_out' eta_in e' eta_out i,
+  ArgsStep eta_in g_out e e' g_out' eta_out ->
+  P_sound_args g_in i e g_out eta_in e' g_out' eta_out) by admit.
+  edestruct H5 as [A [B [[U V] [D E]]]]; eauto.
+  assert (Typed g NoRec (fix_subst g r e e) r i). eapply typing_fix_subst; eauto.
+  edestruct IHStep as [A' [B' [C' D']]]; eauto. 
+  split; try split; try split.
+  + eauto.
+  + intros. econstructor; [ hauto l:on use:context_derivative_wf|hauto l:on|hauto l: on].
+  + intros. eapply C'. eapply (prop_on_contains MaximalPrefix (fv g)); hauto l: on use:typing_fv.
+  + intros H00 H01. rewrite -> H00 in *. eapply D'; eauto. eapply (prop_on_contains EmptyPrefix (fv g)); hauto l: on use:typing_fv.
   - assert (forall g_in e g_out g_out' eta_in e' eta_out i,
   ArgsStep eta_in g_out e e' g_out' eta_out ->
   P_sound_args g_in i e g_out eta_in e' g_out' eta_out) by admit.
