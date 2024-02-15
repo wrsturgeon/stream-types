@@ -45,6 +45,12 @@ Definition dom (n : env) : set string :=
 Arguments dom n x/.
 Hint Unfold dom : core.
 
+Theorem subset_dom_lookup : forall x s eta , Subset s (dom eta) -> s x -> exists p, eta x = Some p.
+Proof.
+sfirstorder.
+Qed.
+
+
 Theorem dom_singleton : forall x p, SetEq (dom (singleton_env x p)) (singleton_set x).
 Proof. cbn. intros. destruct (eqb_spec x x0); sfirstorder. Qed.
 

@@ -185,8 +185,7 @@ Proof.
       * admit.
       *)
   - admit.
-  - admit.
-     (* assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
+  - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct IHStep as [A [B C]]. eauto. eauto. eapply catrenvtyped2; eauto.
     split; try split.
     + sfirstorder.
@@ -207,10 +206,8 @@ Proof.
         admit. (* best use:hole_compose_fill,reflect_fill. *)
         admit. (* this used to work: best use:hole_compose_fill. *)
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
-    + admit. *)
-  - 
-  admit.
-  (* edestruct (IHStep1) as [A [B [U V]]]; eauto.
+    + admit.
+  - edestruct (IHStep1) as [A [B [U V]]]; eauto.
    (* todo: need better automation for disjoitnness *)
     assert (NoConflictOn eta (singleton_env x p) (fv G)). { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. intro. assert (x0 <> x) by scongruence. assert (x = x0) by qauto l: on use:dom_singleton. sfirstorder. }
     assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. sfirstorder. }
@@ -229,9 +226,8 @@ Proof.
     + intros. assert (MaximalOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
       eapply U'. eapply prop_on_minus. eapply U. hauto q: on. eauto.
     + intros. assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
-      eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto. *)
-  - admit.
-  (* split; try split; try split.
+      eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto.
+  - split; try split; try split.
     + best use:emp_well_typed.
     + intros.
       assert (Derivative (emp r) r r) by best use:derivative_emp.
@@ -244,9 +240,8 @@ Proof.
       edestruct (env_cat_maximal (singleton_set z) eta' eta eta''); eauto. { admit. } { admit. }
       assert (Hcontra : MaximalPrefix PfxSumEmp) by best.
       sinvert Hcontra.
-    + best use:emp_empty. *)
-  - admit.
-  (* assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+    + best use:emp_empty.
+  -  assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
     assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
     destruct Hwf.
     assert (~ fv G z) by sfirstorder.
@@ -281,7 +276,7 @@ Proof.
       assert (EmptyOn (singleton_set z) eta''). eapply env_cat_empty'; [eauto | sauto].
       edestruct (H22 z) as [p'' []]; eauto.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
-      sinvert H24. *)
+      sinvert H24.
   - admit.
   - assert (forall g_in e g_out g_out' eta_in e' eta_out i,
   ArgsStep eta_in g_out e e' g_out' eta_out ->
