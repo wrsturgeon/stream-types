@@ -16,6 +16,7 @@ Hint Constructors Nullable : core.
 
 Inductive NullableCtx : context -> Prop :=
   | NullableCtxEmpty : NullableCtx CtxEmpty
+  | NullableCtxSng : forall x s, Nullable s -> NullableCtx (CtxHasTy x s)
   | NullableCtxComma : forall G G',
       NullableCtx G ->
       NullableCtx G' ->
@@ -23,7 +24,7 @@ Inductive NullableCtx : context -> Prop :=
   .
 Hint Constructors NullableCtx : core.
 
-Theorem hmm'' : forall p s,
+Theorem empty_and_maximal_means_nullable : forall p s,
   EmptyPrefix p ->
   MaximalPrefix p ->
   PrefixTyped p s ->

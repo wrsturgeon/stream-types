@@ -84,10 +84,12 @@ Inductive Typed : context -> recsig -> term -> type -> inertness -> Prop :=
       ArgsTyped G' (Rec G s i) args G i ->
       Typed G' (Rec G s i) (TmRec args) s i
   | TFix : forall G G' rs args e r i,
+      WFContext G ->
       ArgsTyped G' rs args G i ->
       Typed G (Rec G r i) e r i ->
       Typed G' rs (TmFix args G r e) r i
   | TmArgsLet : forall G G' args e rs s i,
+      WFContext G ->
       ArgsTyped G' rs args G i ->
       Typed G rs e s i ->
       Typed G' rs (TmArgsLet args G e)  s i
@@ -269,6 +271,13 @@ Qed. *)
 
 Theorem typing_fv : forall G e s i rs,
   Typed G rs e s i ->
+  Subset (fv e) (fv G).
+Proof.
+best use:typing_fv'.
+Qed.
+
+Theorem typing_fv_args : forall G G' e i rs,
+  ArgsTyped G rs e G' i ->
   Subset (fv e) (fv G).
 Proof.
 best use:typing_fv'.
