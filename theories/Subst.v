@@ -3,6 +3,7 @@ From Coq Require Import String.
 From LambdaST Require Import
   Terms
   FV
+  History
   Types.
 
 Definition subst_str (x y z : string) := if eqb z x then y else z.
@@ -37,11 +38,12 @@ Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
       TmInr (subst_var e x y)
   | TmPlusCase eta r z x' e1 y' e2 =>
       TmPlusCase eta r z x' (subst_var e1 x y) y' (subst_var e2 x y)
-  | TmFix args g r e =>
-      TmFix (subst_var_argsterm args x y) g r e
-  | TmRec args =>
-      TmRec (subst_var_argsterm args x y)
+  | TmFix args hpargs g r e =>
+      TmFix (subst_var_argsterm args x y) hpargs g r e
+  | TmRec args hpargs =>
+      TmRec (subst_var_argsterm args x y) hpargs
   | TmArgsLet args g e => TmArgsLet (subst_var_argsterm args x y) g e
+  | TmHistPgm hp r' => TmHistPgm hp r'
   end
 with subst_var_argsterm (args : argsterm) (x : string) (y : string) :=
   match args with

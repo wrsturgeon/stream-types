@@ -6,15 +6,16 @@ From LambdaST Require Import
   Sets
   Subcontext
   Inert
+  History
   Types.
 
 Inductive recsig : Set :=
   | NoRec : recsig
-  | Rec : context -> type -> inertness -> recsig.
+  | Rec : histctx -> context -> type -> inertness -> recsig.
 Hint Constructors recsig : core.
 
 Definition jumpify rs :=
   match rs with
     NoRec => NoRec
-  | Rec g s _ => Rec g s Jumpy
+  | Rec o g s _ => Rec o g s Jumpy
   end.

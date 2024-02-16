@@ -6,6 +6,7 @@ From LambdaST Require Import
   FV
   Context
   Sets
+  History
   Environment
   Types.
 
@@ -22,9 +23,10 @@ Inductive term : Set :=
   | TmInl (e : term)
   | TmInr (e : term)
   | TmPlusCase (eta : env) (r : type) (z : string) (x : string) (e1 : term) (y : string) (e2 : term)
-  | TmFix (args : argsterm) (g : context) (r : type) (e : term)
-  | TmRec (args : argsterm)
+  | TmFix (args : argsterm) (hpargs : histargs) (g : context) (r : type) (e : term)
+  | TmRec (args : argsterm) (hpargs : histargs)
   | TmArgsLet (args : argsterm) (g : context) (e : term)
+  | TmHistPgm (e : histtm) (s : type)
 with
 argsterm : Set :=
   | ATmEmpty
@@ -47,10 +49,10 @@ Fixpoint fix_subst (g : context) (r : type) (e : term) (e' : term) :=
   | TmInl e' => TmInl (fix_subst g r e e')
   | TmInr e' => TmInr (fix_subst g r e e')
   | TmPlusCase eta r' z x e1 y e2 => TmPlusCase eta r' z x (fix_subst g r e e1) y (fix_subst g r e e2)
-  | TmFix args g' r' e' => TmFix (fix_subst_args g r e args) g' r' e'
-  | TmRec args => TmFix (fix_subst_args g r e args) g r e
+  | TmFix args hpargs g' r' e' => TmFix (fix_subst_args g r e args) hpargs g' r' e'
+  | TmRec args hpargs => TmFix (fix_subst_args g r e args) hpargs g r e
   | TmArgsLet args g' e' => TmArgsLet (fix_subst_args g r e args) g' (fix_subst g r e e')
-  
+  | TmHistPgm hp r' => TmHistPgm hp r'
   end
 with
 fix_subst_args (g : context) (r : type) (e : term) (args : argsterm) := 
@@ -66,6 +68,35 @@ fix_subst_args (g : context) (r : type) (e : term) (args : argsterm) :=
 Scheme term_ind' := Induction for term Sort Prop
 with argsterm_ind' := Induction for argsterm Sort Prop.
 Combined Scheme term_mutual from term_ind', argsterm_ind'.
+
+Fixpoint histval_subst_all (vs : list histval) (e : term) :=
+  match e with
+  | TmSink => TmSink
+  | TmUnit => TmUnit
+  | TmVar x => TmVar x
+  | TmComma e1 e2 => TmComma (histval_subst_all vs e1) (histval_subst_all vs e2)
+  | TmSemic e1 e2 => TmSemic (histval_subst_all vs e1) (histval_subst_all vs e2)
+  | TmLet x e1 e2 => TmLet x (histval_subst_all vs e1) (histval_subst_all vs e2)
+  | TmLetPar x y z e' => TmLetPar x y z (histval_subst_all vs e')
+  | TmLetCat t x y z e' => TmLetCat t x y z (histval_subst_all vs e')
+  | TmInl e' => TmInl (histval_subst_all vs e')
+  | TmInr e' => TmInr (histval_subst_all vs e')
+  | TmPlusCase eta r' z x e1 y e2 => TmPlusCase eta r' z x (histval_subst_all vs e1) y (histval_subst_all vs e2)
+  | TmFix args hpargs g' r' e' => TmFix (histval_subst_all_args vs args) (histval_subst_all_histargs vs hpargs) g' r' e'
+  | TmRec args hpargs => TmRec (histval_subst_all_args vs args) (histval_subst_all_histargs vs hpargs)
+  | TmArgsLet args g' e' => TmArgsLet (histval_subst_all_args vs args) g' (histval_subst_all vs e')
+  | TmHistPgm hp r' => TmHistPgm (histval_subst_all_hist vs hp) r'
+  end
+with
+histval_subst_all_args vs (args : argsterm) := 
+  match args with
+  | ATmEmpty => ATmEmpty
+  | ATmSng e' => ATmSng (histval_subst_all vs e')
+  | ATmComma e1 e2 => ATmComma (histval_subst_all_args vs e1) (histval_subst_all_args vs e2)
+  | ATmSemic1 e1 e2 => ATmSemic1 (histval_subst_all_args vs e1) (histval_subst_all_args vs e2)
+  | ATmSemic2 e2 => ATmSemic2 (histval_subst_all_args vs e2)
+  end
+.
 
 
 Hint Constructors term : core.
@@ -105,9 +136,10 @@ Fixpoint fv_term e : set string :=
   | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
   | TmInl e | TmInr e => fv_term e
   | TmPlusCase _ _ z x e1 y e2 => set_union (singleton_set z) (set_union (set_minus (fv_term e1) (singleton_set x)) (set_minus (fv_term e2) (singleton_set y)))
-  | TmFix args _ _ _ => fv_argsterm args
-  | TmRec args => fv_argsterm args
+  | TmFix args _ _ _ _ => fv_argsterm args
+  | TmRec args _ => fv_argsterm args
   | TmArgsLet args _ _ => fv_argsterm args
+  | TmHistPgm fv _ => empty_set
   end
 with
 fv_argsterm e : set string :=

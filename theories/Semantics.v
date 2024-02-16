@@ -8,6 +8,7 @@ From LambdaST Require Import
   FV
   Derivative
   PrefixConcat
+  History
   Terms.
 
 
@@ -66,14 +67,19 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         eta'' z = Some (PfxSumInr p) ->
         Step (env_union eta'' (singleton_env y p)) e2 e' p' ->
         Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
-  | SFix : forall eta eta' g g' args args' e e' r p,
+  | SFix : forall eta eta' g g' args args' e e' r p hpargs vs,
+      HistArgsStep hpargs vs ->
       ArgsStep eta  g args args' g' eta' ->
-      Step eta' (fix_subst g r e e) e' p ->
-      Step eta (TmFix args g r e) (TmArgsLet args' g' e') p
+      Step eta' (histval_subst_all vs (fix_subst g r e e)) e' p ->
+      Step eta (TmFix args hpargs g r e) (TmArgsLet args' g' e') p
   | SArgsLet : forall eta eta' g g' args args' e e' p,
         ArgsStep eta g args args' g' eta' ->
         Step eta' e e' p ->
         Step eta (TmArgsLet args g e) (TmArgsLet args' g' e') p
+  | SHistPgm : forall hp s v p eta,
+        HistStep hp v ->
+        HistValLift s v p ->
+        Step eta (TmHistPgm hp s) (sink_tm p) p
 with ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
   | ASEmpty : forall eta,
         ArgsStep eta CtxEmpty ATmEmpty ATmEmpty CtxEmpty empty_env

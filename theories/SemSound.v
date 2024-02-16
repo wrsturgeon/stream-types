@@ -12,6 +12,7 @@ From LambdaST Require Import
   Prefix
   Subcontext
   Semantics
+  History
   PrefixConcat
   SinkTerm
   Sets
@@ -50,26 +51,26 @@ Definition P_sound_inner (eta : env) (e : term) e' p g (rs :recsig) s (i : inert
   WFContext g ->
   EnvTyped eta g ->
     PrefixTyped p s /\
-    (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed g' NoRec e' s' Inert) /\
+    (forall g' s', Derivative p s s' -> ContextDerivative eta g g' -> Typed nil g' NoRec e' s' Inert) /\
     Preserves i eta p (fv e).
 Arguments P_sound_inner eta e e' p g rs s i/.
 
 Definition P_sound eta e e' p :=
   forall g (rs : recsig) s (i : inertness),
-  Typed g NoRec e s i ->
+  Typed nil g NoRec e s i ->
   P_sound_inner eta e e' p g rs s i.
 Arguments P_sound eta e e' p/.
 
 Definition P_sound_args eta_in g_out (args : argsterm) (args' : argsterm) g_out' eta_out :=
   forall g_in (i : inertness),
-  ArgsTyped g_in NoRec args g_out i ->
+  ArgsTyped nil g_in NoRec args g_out i ->
   WFContext g_out ->
   WFContext g_in ->
   EnvTyped eta_in g_in ->
     EnvTyped eta_out g_out /\
     SetEq (dom eta_out) (fv g_out) /\
     (Agree i eta_in eta_out (fv args) (fv g_out)) /\
-    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped g_in' NoRec args' g_out' Inert) /\
+    (forall g_in', ContextDerivative eta_in g_in g_in' -> ArgsTyped nil g_in' NoRec args' g_out' Inert) /\
     ContextDerivative eta_out g_out g_out'.
 Arguments P_sound_args eta_in g_out args args' g_out' eta_out/.
 
@@ -77,7 +78,7 @@ Arguments P_sound_args eta_in g_out args args' g_out' eta_out/.
 Theorem sound_sub : forall (G G' : context) (e : term) (s : type) eta e' p i,
   Step eta e e' p ->
   Subcontext G G' ->
-  Typed G' NoRec e s i ->
+  Typed nil G' NoRec e s i ->
   P_sound_inner eta e e' p G' NoRec s i ->
   P_sound_inner eta e e' p G NoRec s i.
 Proof.
@@ -151,7 +152,7 @@ Theorem sound_mut :
     P_sound_args eta_in g_out args args' g_out' eta_out).
 Proof.
   apply Step_mutual.
-  1-15: (intros; intro G; intro rs; intro s00; intro i; intro Hty; dependent induction Hty; [|eapply sound_sub; try eassumption; hauto l: on]).
+  1-16: (intros; intro G; intro rs; intro s00; intro i; intro Hty; dependent induction Hty; [|eapply sound_sub; try eassumption; hauto l: on]).
   all: intros; unfold P_sound_args in *; unfold P_sound in *; unfold P_sound_inner in *; intros.
   (* eps *)
   - sauto lq: on.
@@ -230,7 +231,8 @@ Proof.
       * intros. eapply C. admit.
       * intros H00 H01. admit. *)
   (* cat-l-1 *)
-  - assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
+  - admit.
+    (*assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped1; eauto.
     assert (DisjointSets (dom (singleton_env x p)) (dom (singleton_env y (emp t)))). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_singleton in H00. eapply dom_singleton in H01. scongruence. }
     assert (DisjointSets (dom (env_union (singleton_env x p) (singleton_env y (emp t)))) (fv G)). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_union in H00. destruct H00; eapply dom_singleton in H10; scongruence. }
@@ -244,8 +246,10 @@ Proof.
       econstructor; [ eauto | eauto | eauto | | | eauto | | ]. hauto q: on use:fv_hole_derivative. hauto q: on use:fv_hole_derivative. eauto.
       hauto l: on.
     + eapply preserves_cat_1; eauto.
+    *)
   (* cat-l-2 *)
-  - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
+  - admit.
+    (*assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped2; eauto.
     split; try split.
     + sfirstorder.
@@ -268,10 +272,12 @@ Proof.
         sfirstorder use:sink_tm_typing.
         { eapply hole_compose_fill. eauto. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split. hauto l:on. hauto l: on use:reflect_fill. }
         { eapply hole_compose_fill. eapply reflect_hole_compose; eauto. exists (CtxSemic CtxEmpty (CtxHasTy z s'0)). split. hauto l:on. scongruence use:reflect_fill. }
-        eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } { intro H00. eapply hole_compose_fv_fn in H00. destruct H00. eapply fv_hole_derivative in H19;[|eauto]. sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l:on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)). sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l: on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split; best use:reflect_fill. }
+        eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } { intro H00. eapply hole_compose_fv_fn in H00. destruct H00. eapply fv_hole_derivative in H20;[|eauto]. sfirstorder. sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l:on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)). sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l: on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split; best use:reflect_fill. }
     + eapply preserves_cat_2; eauto.
+    *)
   (* Let *)
-  - edestruct H as [A [B [U V]]]; eauto.
+  - admit.
+    (*edestruct H as [A [B [U V]]]; eauto.
    (* todo: need better automation for disjoitnness *)
     assert (NoConflictOn eta (singleton_env x p) (fv G)). { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. intro. assert (x0 <> x) by scongruence. assert (x = x0) by qauto l: on use:dom_singleton. sfirstorder. }
     assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. sfirstorder. }
@@ -291,8 +297,10 @@ Proof.
       eapply U'. eapply prop_on_minus. eapply U. hauto q: on. eauto.
     + intros. assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
       eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto.
+      *)
   (* sum-l-1 *)
-  - split; try split; try split.
+  - admit.
+    (*split; try split; try split.
     + best use:emp_well_typed.
     + intros.
       assert (Derivative (emp r) r r) by best use:derivative_emp.
@@ -306,8 +314,10 @@ Proof.
       assert (Hcontra : MaximalPrefix PfxSumEmp) by qauto l:on.
       sinvert Hcontra.
     + best use:emp_empty.
+    *)
   (* sum-l-2 *)
-  - assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+  - admit.
+    (*assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
     assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
     destruct Hwf.
     assert (~ fv G z) by sfirstorder.
@@ -347,8 +357,10 @@ Proof.
       edestruct (H02 z) as [p'' [UU UU']]; eauto.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
       sinvert UU'.
+      *)
   (* sum-l-3 *)
-  - assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+  - admit.
+    (*assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
     assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
     destruct Hwf.
     assert (~ fv G z) by sfirstorder.
@@ -390,10 +402,11 @@ Proof.
       edestruct (H02 z) as [p'' [UU UU']]; eauto.
       destruct (ltac:(scongruence) : PfxSumInr p = p'').
       sinvert UU'.
+    *)
   (* fix *)
   - edestruct H as [A [B [[U V] [D E]]]]; eauto.
-    assert (Typed g NoRec (fix_subst g r e e) r i). eapply typing_fix_subst; eauto.
-    edestruct H0 as [A' [B' [C' D']]]; eauto. 
+    assert (Typed nil g NoRec (histval_subst_all vs (fix_subst g r e e)) r i). eapply typing_histval_subst_all. { eapply typing_fix_subst; eauto. } { eapply HistArgsStep_sound; eauto. }
+    edestruct H0 as [A' [B' [C' D']]]; eauto.
     split; try split; try split.
     + eauto.
     + intros. econstructor; [ hauto l:on use:context_derivative_wf|hauto l:on|hauto l: on].
@@ -405,9 +418,13 @@ Proof.
     edestruct H0 as [A' [B' [C' D']]]; eauto.
     split; try split; try split.
     + sfirstorder.
-    + best.
-    + intros. eapply C'. eapply (prop_on_contains MaximalPrefix (fv g)). best use:typing_fv. eapply U. sfirstorder.
-    + intros H00 H01. rewrite -> H00 in *. eapply D'. eauto. assert (Subset (fv e) (fv g)) by best use:typing_fv. eapply prop_on_contains. eauto. eapply V. eauto. sfirstorder.
+    + hauto l: on.
+    + intros. eapply C'. eapply (prop_on_contains MaximalPrefix (fv g)). hauto l:on use:typing_fv. eapply U. sfirstorder.
+    + intros H00 H01. rewrite -> H00 in *. eapply D'. eauto. assert (Subset (fv e) (fv g)) by hauto l:on use:typing_fv. eapply prop_on_contains. eauto. eapply V. eauto. sfirstorder.
+  - edestruct histval_lift_fun as [p' [A [B C]]]; eauto. eapply HistStep_sound; eauto.
+    destruct (ltac:(sfirstorder use:histval_lift_det) : p = p').
+    repeat split; hauto l: on use:sink_tm_typing.
+  (*** args ****)
   - best.
   - sinvert H0.
      edestruct H as [A [B C]]; eauto.
@@ -484,7 +501,7 @@ Proof.
       * sfirstorder use: prop_on_weakening.
     + intros H00 H01; rewrite -> H00 in *. unfold inert_guard in *. assert (H02 : i1 = Inert) by sfirstorder. rewrite -> H02 in *.
       (* if eta were empty, this shouldn't happen. because *)
-      edestruct H14; eauto.
+      edestruct H15; eauto.
       assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
       (* assert (H04 : fv (CtxSemic g0 g3) = set_union (fv g0) (fv g3)) by scongruence. *)
       assert (EmptyOn (fv e1) eta) by hauto l:on use:prop_on_set_union.
