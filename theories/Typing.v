@@ -530,7 +530,7 @@ intros.
   generalize dependent H0.
   induction H; intros.
   - cbn. econstructor. best. best. best.
-  - cbn. econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. admit. best.
+  - cbn. econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. { eapply ctx_subst_fill'; eauto. } best.
   - cbn. sinvert H4.
-    + admit.
+    + econstructor. best.  
 Admitted.

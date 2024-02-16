@@ -435,7 +435,5 @@ induction H0; intros.
 - sauto lq: on.
 - sauto lq: on use:eqb_refl.
 - sinvert H1; sinvert H.
-  + best.
-  + eapply FillCommaR.
 Admitted.
 

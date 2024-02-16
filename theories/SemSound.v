@@ -342,9 +342,9 @@ Proof.
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | ].
-      { intro x0. intro H00. destruct H00; [|hauto drew: off]. destruct H18. eapply B. eapply fv_fill. eauto. right. eapply fv_fill' in H2. eapply typing_fv in H18; [|eauto]. hauto q:on use:fv_fill. }
+      { intro x0. intro H00. destruct H00; [|hauto drew: off]. edestruct H20. eapply B. eapply fv_fill. eauto. right. eapply fv_fill' in H4. eapply typing_fv in H21; [|eauto]. hauto q:on use:fv_fill. }
       hauto lq: on rew: off.
-      edestruct (H18 z) as [p00 [L' R]]. hauto lq: on rew: off.
+      edestruct (H20 z) as [p00 [L' R]]. hauto lq: on rew: off.
       destruct (ltac:(scongruence) : PfxSumInl p = p00).
       sinvert R.
       eapply C'. eapply prop_on_minus. eauto. qauto l: on.
