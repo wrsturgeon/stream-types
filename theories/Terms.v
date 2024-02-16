@@ -27,6 +27,7 @@ Inductive term : Set :=
   | TmRec (args : argsterm) (hpargs : histargs)
   | TmArgsLet (args : argsterm) (g : context) (e : term)
   | TmHistPgm (e : histtm) (s : type)
+  | TmWait (eta : env) (r : type) (s : type) (x : string) (e : term)
 with
 argsterm : Set :=
   | ATmEmpty
@@ -53,6 +54,7 @@ Fixpoint fix_subst (g : context) (r : type) (e : term) (e' : term) :=
   | TmRec args hpargs => TmFix (fix_subst_args g r e args) hpargs g r e
   | TmArgsLet args g' e' => TmArgsLet (fix_subst_args g r e args) g' (fix_subst g r e e')
   | TmHistPgm hp r' => TmHistPgm hp r'
+  | TmWait eta r' s' x e' => TmWait eta r' s' x (fix_subst g r e e')
   end
 with
 fix_subst_args (g : context) (r : type) (e : term) (args : argsterm) := 
@@ -69,35 +71,47 @@ Scheme term_ind' := Induction for term Sort Prop
 with argsterm_ind' := Induction for argsterm Sort Prop.
 Combined Scheme term_mutual from term_ind', argsterm_ind'.
 
-Fixpoint histval_subst_all (vs : list histval) (e : term) :=
+Fixpoint histval_subst (v : histval) (n : nat) (e : term) :=
   match e with
   | TmSink => TmSink
   | TmUnit => TmUnit
   | TmVar x => TmVar x
-  | TmComma e1 e2 => TmComma (histval_subst_all vs e1) (histval_subst_all vs e2)
-  | TmSemic e1 e2 => TmSemic (histval_subst_all vs e1) (histval_subst_all vs e2)
-  | TmLet x e1 e2 => TmLet x (histval_subst_all vs e1) (histval_subst_all vs e2)
-  | TmLetPar x y z e' => TmLetPar x y z (histval_subst_all vs e')
-  | TmLetCat t x y z e' => TmLetCat t x y z (histval_subst_all vs e')
-  | TmInl e' => TmInl (histval_subst_all vs e')
-  | TmInr e' => TmInr (histval_subst_all vs e')
-  | TmPlusCase eta r' z x e1 y e2 => TmPlusCase eta r' z x (histval_subst_all vs e1) y (histval_subst_all vs e2)
-  | TmFix args hpargs g' r' e' => TmFix (histval_subst_all_args vs args) (histval_subst_all_histargs vs hpargs) g' r' e'
-  | TmRec args hpargs => TmRec (histval_subst_all_args vs args) (histval_subst_all_histargs vs hpargs)
-  | TmArgsLet args g' e' => TmArgsLet (histval_subst_all_args vs args) g' (histval_subst_all vs e')
-  | TmHistPgm hp r' => TmHistPgm (histval_subst_all_hist vs hp) r'
+  | TmComma e1 e2 => TmComma (histval_subst v n e1) (histval_subst v n e2)
+  | TmSemic e1 e2 => TmSemic (histval_subst v n e1) (histval_subst v n e2)
+  | TmLet x e1 e2 => TmLet x (histval_subst v n e1) (histval_subst v n e2)
+  | TmLetPar x y z e' => TmLetPar x y z (histval_subst v n e')
+  | TmLetCat t x y z e' => TmLetCat t x y z (histval_subst v n e')
+  | TmInl e' => TmInl (histval_subst v n e')
+  | TmInr e' => TmInr (histval_subst v n e')
+  | TmPlusCase eta r' z x e1 y e2 => TmPlusCase eta r' z x (histval_subst v n e1) y (histval_subst v n e2)
+  | TmFix args hpargs g' r' e' => TmFix (histval_subst_args v n args) (histval_subst_histargs v n hpargs) g' r' e'
+  | TmRec args hpargs => TmRec (histval_subst_args v n args) (histval_subst_histargs v n hpargs)
+  | TmArgsLet args g' e' => TmArgsLet (histval_subst_args v n args) g' (histval_subst v n e')
+  | TmHistPgm hp r' => TmHistPgm (histval_subst_hist v n hp) r'
+  | TmWait eta r' s' x e => TmWait eta r' s' x (histval_subst v (S n) e)
   end
 with
-histval_subst_all_args vs (args : argsterm) := 
+histval_subst_args v (n : nat) (args : argsterm) := 
   match args with
   | ATmEmpty => ATmEmpty
-  | ATmSng e' => ATmSng (histval_subst_all vs e')
-  | ATmComma e1 e2 => ATmComma (histval_subst_all_args vs e1) (histval_subst_all_args vs e2)
-  | ATmSemic1 e1 e2 => ATmSemic1 (histval_subst_all_args vs e1) (histval_subst_all_args vs e2)
-  | ATmSemic2 e2 => ATmSemic2 (histval_subst_all_args vs e2)
+  | ATmSng e' => ATmSng (histval_subst v n e')
+  | ATmComma e1 e2 => ATmComma (histval_subst_args v n e1) (histval_subst_args v n e2)
+  | ATmSemic1 e1 e2 => ATmSemic1 (histval_subst_args v n e1) (histval_subst_args v n e2)
+  | ATmSemic2 e2 => ATmSemic2 (histval_subst_args v n e2)
   end
 .
 
+Fixpoint histval_subst_all vs e :=
+  match vs with
+    nil => e
+  | cons v vs => histval_subst_all vs (histval_subst v 0 e)
+  end.
+
+Fixpoint histval_subst_all_args vs (e : argsterm) :=
+  match vs with
+    nil => e
+  | cons v vs => histval_subst_all_args vs (histval_subst_args v 0 e)
+  end.
 
 Hint Constructors term : core.
 
@@ -140,6 +154,7 @@ Fixpoint fv_term e : set string :=
   | TmRec args _ => fv_argsterm args
   | TmArgsLet args _ _ => fv_argsterm args
   | TmHistPgm fv _ => empty_set
+  | TmWait _ _ _ x e => set_union (singleton_set x) (fv_term e)
   end
 with
 fv_argsterm e : set string :=

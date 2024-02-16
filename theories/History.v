@@ -1,4 +1,5 @@
-From Coq Require Import String.
+(* From Coq Require Import String. *)
+From Coq Require Import List.
 From LambdaST Require Import
   Context
   Prefix
@@ -182,45 +183,35 @@ Theorem HistArgsStep_sound : forall args ts vs,
 Proof.
 Admitted.
 
-Definition histval_subst_hist (v : histval) (e : histtm) : histtm.
+Definition histval_subst_hist (v : histval) (n : nat) (e : histtm) : histtm.
 Admitted.
 
 Fixpoint histval_subst_all_hist (vs : list histval) (e : histtm) : histtm :=
   match vs with
     nil => e
-  | cons v vs' => histval_subst_all_hist vs' (histval_subst_hist v e)
+  | cons v vs' => histval_subst_all_hist vs' (histval_subst_hist v 0 e)
   end.
 
-Fixpoint histval_subst_all_histargs (vs : list histval) (e : histargs) : histargs :=
+Fixpoint histval_subst_histargs (v : histval) (n : nat) (e : histargs) : histargs :=
   match e with
     nil => nil
-  | cons e es => cons (histval_subst_all_hist vs e) (histval_subst_all_histargs vs es)
+  | cons e es => cons (histval_subst_hist v n e) (histval_subst_histargs v n es)
   end.
 
-Theorem histval_subst_hist_thm : forall t ts e t' v,
-  HistTyped (cons t ts) e t' ->
+Theorem histval_subst_hist_thm : forall t ts ts' e t' v n,
+  HistTyped (app ts (cons t ts')) e t' ->
+  length ts = n ->
   HistValTyped v t ->
-  HistTyped ts (histval_subst_hist v e) t'.
+  HistTyped (app ts ts') (histval_subst_hist v n e) t'.
 Proof.
 Admitted.
 
 (* TODO: will *)
-Theorem histval_subst_all_hist_thm : forall ts e t' vs,
-  HistTyped ts e t' ->
-  HistValAllTyped vs ts ->
-  HistTyped nil (histval_subst_all_hist vs e) t'.
+Theorem histval_subst_histargs_thm : forall t ts es ts' ts0' v n,
+  HistArgsTyped (app ts (cons t ts')) es ts0' ->
+  length ts = n ->
+  HistValTyped v t ->
+  HistArgsTyped (app ts ts') (histval_subst_histargs v n es) ts0'.
 Proof.
 Admitted.
-
-(* TODO: will *)
-Theorem histval_subst_all_histargs_thm : forall ts es ts' vs,
-  HistArgsTyped ts es ts' ->
-  HistValAllTyped vs ts ->
-  HistArgsTyped nil (histval_subst_all_histargs vs es) ts'.
-Proof.
-Admitted.
-
-
-
-
 

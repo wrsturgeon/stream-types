@@ -1,6 +1,7 @@
 From Coq Require Import
   Program.Equality
-  String.
+  List.
+  (* String. *)
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
@@ -103,6 +104,12 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
   | TmHistPgm : forall G rs hp s o,
       HistTyped o hp (flatten_type s) ->
       Typed o G rs (TmHistPgm hp s) s Jumpy
+  | TWait : forall o G Gx Gemp z s r i i' e rs eta,
+      Fill G (CtxHasTy z s) Gx ->
+      Fill G CtxEmpty Gemp ->
+      Typed (cons (flatten_type s) o) Gemp rs e r i ->
+      inert_guard ((forall p, eta z = Some p -> ~ MaximalPrefix p) /\ ~Nullable s) i' ->
+      Typed o Gx rs (TmWait eta r s z e) r i'
   | TSubCtx : forall G G' e s i rs o,
       Subcontext G G' ->
       Typed o G' rs e s i ->
@@ -168,6 +175,7 @@ intros.
   - hauto l: on.
   - hauto l: on.
   - hauto l: on.
+  - econstructor; sfirstorder.
   - hauto l: on.
   - hauto l: on.
   - sauto lq: on.
@@ -287,6 +295,7 @@ Proof.
  - sfirstorder.
  - sfirstorder.
  - sfirstorder.
+ - hauto q:on use:fv_fill.
  - sfirstorder use:subcontext_fv_subset.
  - sfirstorder.
  - sfirstorder.
@@ -413,30 +422,47 @@ Proof.
   - admit.
 Admitted.
 
-Theorem typing_histval_subst_all : 
-  (forall o g rs e s i, Typed o g rs e s i -> forall vs, HistValAllTyped vs o -> Typed nil g rs (histval_subst_all vs e) s i) /\ 
-  (forall o g rs args g' i, ArgsTyped o g rs args g' i -> forall vs, HistValAllTyped vs o -> ArgsTyped nil g rs (histval_subst_all_args vs args) g' i).
+Theorem typing_histval_subst : 
+  (forall o g rs e s i, Typed o g rs e s i -> forall ts t ts' v n, o = app ts (cons t ts') -> length ts = n -> HistValTyped v t -> Typed (app ts ts') g rs (histval_subst v n e) s i) /\ 
+  (forall o g rs args g' i, ArgsTyped o g rs args g' i -> forall ts t ts' v n, o = app ts (cons t ts') -> length ts = n -> HistValTyped v t -> ArgsTyped (app ts ts') g rs (histval_subst_args v n args) g' i).
 Proof.
   apply Typed_mutual; intros.
   - cbn. econstructor. eauto. eauto. sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder use: histval_subst_all_histargs_thm.
-  - hauto l:on use: histval_subst_all_histargs_thm.
-  - sfirstorder.
-  - sfirstorder use:histval_subst_all_hist_thm.
-  - sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
-  - cbn. econstructor; sfirstorder.
-  - sfirstorder.
-  - sfirstorder.
+  - hauto drew: off.
+  - sblast.
+  - hauto drew: off.
+  - hauto drew: off.
+  - hauto drew: off.
+  - hauto drew: off.
+  - hauto drew: off.
+  - hauto drew: off.
+  - hauto drew: off.
+  - hauto drew: off.
+  - best use:histval_subst_histargs_thm.
+  - hauto l: on use:histval_subst_histargs_thm.
+  - hauto l: on.
+  - sfirstorder use: histval_subst_hist_thm.
+  - cbn.
+    assert (H00 : cons (flatten_type s) (app ts ts') = app (cons (flatten_type s) ts) ts') by scongruence.
+    econstructor; [eauto|eauto|sauto lq: on drew:off|eauto].
+  - hauto l: on.
+  - sfirstorder use: histval_subst_histargs_thm.
+  - hauto l:on use: histval_subst_histargs_thm.
+  - cbn. econstructor; eauto.
+  - cbn. econstructor; eauto.
+  - cbn. econstructor; eauto.
+Qed.
+
+Theorem typing_histval_subst_all : 
+  forall ts g rs e s i vs,
+    Typed ts g rs e s i ->
+    HistValAllTyped vs ts ->
+    Typed nil g rs (histval_subst_all vs e) s i.
+Proof.
+  intros; generalize dependent e; generalize dependent rs; generalize dependent g; generalize dependent s; generalize dependent i.
+  induction H0; intros.
+  - hauto q: on.
+  - cbn. eapply IHHistValAllTyped. 
+    assert (H00 : ts = app nil ts) by scongruence. rewrite -> H00.
+    hauto lq: on rew: off use: typing_histval_subst.
 Qed.
