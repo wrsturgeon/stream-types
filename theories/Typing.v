@@ -1,5 +1,6 @@
-Require Import Coq.Program.Equality.
-From Coq Require Import String.
+From Coq Require Import
+  Program.Equality
+  String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
@@ -131,7 +132,6 @@ Hint Constructors ArgsTyped : core.
 
 Check Typed_mutual.
 
-
 Theorem typing_fix_subst_mut :
   (forall (g' : context) (rs: recsig) e' t i', Typed g' rs e' t i' -> 
     forall g e s i,
@@ -245,33 +245,37 @@ Hint Resolve fv_hole_minus : core.
 
 Definition P_typing_fv (g : context) (rs : recsig) (e : term) (s : type) (i : inertness) :=
   forall x, fv e x -> fv g x.
+Arguments P_typing_fv g rs e s i/.
 
 Definition P_argstyping_fv (g : context) (rs : recsig) (args : argsterm) (g' : context) (i : inertness) :=
   forall x, fv args x -> fv g x.
+Arguments P_argstyping_fv g rs args g' i/.
 
-Check Typed_mutual.
-
+(* TODO: will: priority *)
 Theorem typing_fv' :
   (forall g rs e s i, Typed g rs e s i -> P_typing_fv g rs e s i) /\
   (forall g rs args g' i, ArgsTyped g rs args g' i -> P_argstyping_fv g rs args g' i).
 Proof.
- apply Typed_mutual; intros; unfold P_typing_fv in *; unfold P_argstyping_fv in *.
+  apply Typed_mutual; cbn in *; intros.
  - sfirstorder.
- - intros. cbn. cbn in H0.
-   assert (SetEq (fv Gzst) (set_union (fv G) (singleton_set z))) by hauto q:on use:fv_fill.
-   apply H1.
-   destruct H0 as [U | [[V W] X]].
-   + sfirstorder.
-   + eapply fv_fill in f. sfirstorder.
+ - apply (fv_fill _ _ _ f0). cbn. destruct H0 as [| [[Hfx Hx] Hy]]. { left. assumption. }
+   apply H in Hfx. apply (fv_fill _ _ _ f) in Hfx. cbn in Hfx.
+   destruct Hfx. { destruct H0; subst; contradiction. }
+   right. assumption.
  - sfirstorder.
- - admit.
+ - apply (fv_fill _ _ _ f0). cbn. destruct H0 as [| [[Hfx Hx] Hy]]. { left. assumption. }
+   apply H in Hfx. apply (fv_fill _ _ _ f) in Hfx. cbn in Hfx.
+   destruct Hfx. { destruct H0; subst; contradiction. }
+   right. assumption.
  - sfirstorder.
  - sfirstorder.
  - hauto q: on use:fv_fill.
- - admit.
+ - apply (fv_fill _ _ _ f0). cbn. destruct H1 as [He | [He' Hx]]. { left. apply H. assumption. }
+   right. apply H0 in He'. apply (fv_fill _ _ _ f) in He'.
+   cbn in He'. destruct He'. { contradiction Hx. } assumption.
  - sfirstorder.
  - sfirstorder.
- - admit.
+ - admit. (* last remaining case *)
  - sfirstorder.
  - sfirstorder.
  - sfirstorder.
