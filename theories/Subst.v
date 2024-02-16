@@ -3,6 +3,7 @@ From Coq Require Import String.
 From LambdaST Require Import
   Terms
   FV
+  Environment
   History
   Types.
 
@@ -10,10 +11,12 @@ Definition subst_str (x y z : string) := if eqb z x then y else z.
 Arguments subst_str x y/ z.
 Hint Unfold subst_str : core.
 
+(* TODO: the substitution for environments too! the terms with the built-in buffers need their vars swapped *)
 (* subst_var e x y = e[x/y]. y goes away, x takes its place. *)
 Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
   match e with
   | TmSink
+  | TmNil
   | TmUnit =>
       e
   | TmVar z =>
@@ -36,15 +39,17 @@ Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
       TmInl (subst_var e x y)
   | TmInr e =>
       TmInr (subst_var e x y)
-  | TmPlusCase eta r z x' e1 y' e2 =>
-      TmPlusCase eta r (subst_str x y z) x' (subst_var e1 x y) y' (subst_var e2 x y)
+  | TmPlusCase eta r z x' e1 y' e2 => TmPlusCase (env_subst_var x y eta) r (subst_str x y z) x' (subst_var e1 x y) y' (subst_var e2 x y)
+  | TmCons lhs rhs =>
+      TmCons (subst_var lhs x y) (subst_var rhs x y)
+  | TmStarCase eta r z e1 x' xs' e2 => TmStarCase (env_subst_var x y eta) r (subst_str x y z) (subst_var e1 x y) x' xs' (subst_var e2 x y)
   | TmFix args hpargs g r e =>
       TmFix (subst_var_argsterm args x y) hpargs g r e
   | TmRec args hpargs =>
       TmRec (subst_var_argsterm args x y) hpargs
   | TmArgsLet args g e => TmArgsLet (subst_var_argsterm args x y) g e
   | TmHistPgm hp r' => TmHistPgm hp r'
-  | TmWait eta r' s' z e => TmWait eta r' s' (subst_str x y z) (subst_var e x y)
+  | TmWait eta r' s' z e => TmWait (env_subst_var x y eta) r' s' (subst_str x y z) (subst_var e x y)
   end
 with subst_var_argsterm (args : argsterm) (x : string) (y : string) :=
   match args with

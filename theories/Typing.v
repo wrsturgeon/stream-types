@@ -1,7 +1,8 @@
 From Coq Require Import
   Program.Equality
-  List.
+  List
   (* String. *)
+.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
@@ -63,6 +64,7 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o Gxs rs (TmVar x) s i
   | TLet : forall G D Gxs x e e' s t GD i rs o,
       ~fv G x ->
+      ~fv D x ->
       Typed o D rs e s Inert ->
       Fill G (CtxHasTy x s) Gxs ->
       Fill G D GD ->
@@ -72,7 +74,7 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o G rs e s i ->
       Typed o G rs (TmInl e) (TySum s t) Jumpy
   | TInr : forall G e s t i rs o,
-      Typed o G rs e s i ->
+      Typed o G rs e t i ->
       Typed o G rs (TmInr e) (TySum s t) Jumpy
   | TPlusCase : forall G x y z s t r Gz Gx Gy Gz' e1 e2 eta i i1 i2 rs o,
       ~ fv G x ->
@@ -86,6 +88,12 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o Gy rs e2 r i2 ->
       inert_guard (eta z = Some PfxSumEmp) i ->
       Typed o Gz' rs (TmPlusCase eta r z x e1 y e2) r i
+  | TNil : forall o G rs s,
+      Typed o G rs TmNil (TyStar s) Jumpy
+  | TCons : forall G D e1 e2 s i1 i2 rs o,
+      Typed o G rs e1 s i1 ->
+      Typed o D rs e2 (TyStar s) i2 ->
+      Typed o (CtxSemic G D) rs (TmCons e1 e2) (TyStar s) Jumpy
   | TRec : forall G G' s i args o o' hpargs,
       HistArgsTyped o hpargs o' ->
       ArgsTyped o G' (Rec o' G s i) args G i ->
@@ -138,6 +146,7 @@ with ArgsTyped : histctx -> context -> recsig -> argsterm -> context -> inertnes
       ArgsTyped o (CtxSemic g1 g2) rs (ATmSemic2 e2) (CtxSemic g1' g2') i
 .
 
+
 Scheme Typed_ind' := Induction for Typed Sort Prop
 with ArgsTyped_ind' := Induction for ArgsTyped Sort Prop.
 Combined Scheme Typed_mutual from Typed_ind', ArgsTyped_ind'.
@@ -173,6 +182,8 @@ intros.
   - hauto l: on.
   - hauto l: on.
   - hauto l: on.
+  - hauto l: on.
+  - cbn. econstructor;sfirstorder.
   - hauto l: on.
   - hauto l: on.
   - hauto l: on.
@@ -293,6 +304,8 @@ Proof.
  - sfirstorder.
  - sfirstorder.
  - admit. (* last remaining case *)
+ - sfirstorder.
+ - sfirstorder.
  - sfirstorder.
  - sfirstorder.
  - sfirstorder.
@@ -440,6 +453,8 @@ Proof.
   - hauto drew: off.
   - hauto drew: off.
   - hauto drew: off.
+  - hauto drew: off.
+  - cbn. econstructor; sfirstorder.
   - best use:histval_subst_histargs_thm.
   - hauto l: on use:histval_subst_histargs_thm.
   - hauto l: on.

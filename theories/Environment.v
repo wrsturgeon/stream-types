@@ -1,6 +1,7 @@
 From Coq Require Import
   List
   Logic.FunctionalExtensionality
+  Program.Equality
   String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
@@ -57,6 +58,12 @@ Theorem subset_dom_lookup : forall x s eta , Subset s (dom eta) -> s x -> exists
 Proof.
 sfirstorder.
 Qed.
+
+Definition env_subst_var (x : string) (y : string) (rho : env) :=
+    fun z => if eqb z x then rho y else rho z
+.
+
+Hint Unfold env_subst_var : core.
 
 
 Theorem dom_singleton : forall x p, SetEq (dom (singleton_env x p)) (singleton_set x).
@@ -467,6 +474,7 @@ Proof.
     cbn in *. intros. specialize (H x) as [H _]. contradiction H; eexists; eassumption.
 Qed.
 Hint Resolve env_typed_semic : core.
+  
 
 Theorem empty_env_for_typed : forall g, WFContext g -> EnvTyped (empty_env_for g) g.
 Proof.
@@ -737,3 +745,61 @@ Theorem sumcaseenvtyped2 : forall G Gz Gx x z p s r n,
     (env_union n (singleton_env x p)) Gx.
 Proof.
 Admitted.
+
+Theorem env_subst_var_nop : forall D x y eta,
+  ~ fv_ctx D x ->
+  EnvTyped eta D ->
+  EnvTyped (env_subst_var x y eta) D /\
+  (forall P, PropOn P (fv D) eta -> PropOn P (fv D) (env_subst_var x y eta)).
+Proof.
+  intros.
+  generalize dependent y.
+  generalize dependent x.
+  induction H0; intros.
+  - sfirstorder.
+  - cbn in H1. split.
+    + econstructor. unfold env_subst_var. hauto lq: on use:eqb_neq. sfirstorder.
+    + intros. cbn in *. edestruct (H2 x); eauto.
+      intros x2 e. rewrite <- e in *. exists x1. unfold env_subst_var. hauto b: on use:eqb_neq.
+  - edestruct IHEnvTyped1. hauto l:on.
+    edestruct IHEnvTyped2. hauto l:on.
+    sauto q: on.
+  - edestruct IHEnvTyped1. hauto l:on.
+    edestruct IHEnvTyped2. hauto l:on.
+    scrush.
+Qed.
+
+Theorem env_subst_var_typed : forall G Gx Gy x y s eta,
+  WFContext Gx ->
+  Fill G (CtxHasTy x s) Gx ->
+  Fill G (CtxHasTy y s) Gy ->
+  ~ fv G y ->
+  EnvTyped eta Gy ->
+  EnvTyped (env_subst_var x y eta) Gx /\
+  (forall P, PropOn P (fv Gy) eta -> PropOn P (fv Gx) (env_subst_var x y eta)).
+Proof.
+  intros.
+  generalize dependent x.
+  generalize dependent G.
+  generalize dependent s.
+  generalize dependent y.
+  generalize dependent Gx.
+  dependent induction H3; intros.
+  - sinvert H1.
+  - sinvert H2. sinvert H4. sinvert H1.
+    split.
+    + econstructor. unfold env_subst_var. sauto lq: on dep: on use:eqb_refl. hauto lq: on.
+    + intros. cbn in *. intros. rewrite H2 in *.
+      edestruct (H1 x); eauto.
+      exists x2. unfold env_subst_var. sauto drew: off use:eqb_refl.
+  - sinvert H1; sinvert H0; sinvert H. 
+    + edestruct (IHEnvTyped1 hd). sfirstorder. sfirstorder. sfirstorder. sfirstorder.
+      edestruct (env_subst_var_nop D x y). hauto q:on use:fv_fill. sfirstorder. sfirstorder.
+    + edestruct (IHEnvTyped2 hd). sfirstorder. sfirstorder. sfirstorder. sfirstorder.
+      edestruct (env_subst_var_nop G x y).  hauto q: on use: fv_fill. sfirstorder. sfirstorder.
+  - sinvert H1; sinvert H3; sinvert H0.
+    + edestruct (IHEnvTyped1 hd). sfirstorder. sfirstorder. sfirstorder. sfirstorder.
+      edestruct (env_subst_var_nop D x y). hauto q:on use:fv_fill. sfirstorder. sfirstorder.
+    + edestruct (IHEnvTyped2 hd). sfirstorder. sfirstorder. sfirstorder. sfirstorder.
+      edestruct (env_subst_var_nop G x y). hauto q: on use:fv_fill. sfirstorder. sfirstorder.
+Qed.

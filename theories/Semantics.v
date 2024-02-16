@@ -12,8 +12,8 @@ From LambdaST Require Import
   Terms.
 
 
-(* TODO:will
-SInl, Sinr, nil, cons, (4?) star-case
+(* 
+(4?) star-case
 *)
 
 Inductive Step : env -> term -> term -> prefix -> Prop :=
@@ -53,6 +53,12 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       Step eta e1 e1' p ->
       Step (env_subst x p eta) e2 e2' p' ->
       Step eta (TmLet x e1 e2) (TmLet x e1' e2') p'
+  | SInl : forall eta e e' p,
+        Step eta e e' p ->
+        Step eta (TmInl e) e' (PfxSumInl p)
+  | SInr : forall eta e e' p,
+        Step eta e e' p ->
+        Step eta (TmInr e) e' (PfxSumInr p)
   | SPlusCase1 : forall eta eta' eta'' r z x y e1 e2,
         EnvConcat eta' eta eta'' ->
         eta'' z = Some PfxSumEmp ->
@@ -67,6 +73,17 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         eta'' z = Some (PfxSumInr p) ->
         Step (env_union eta'' (singleton_env y p)) e2 e' p' ->
         Step eta (TmPlusCase eta' r z x e1 y e2) (subst_var e' z y) p'
+  | SNil : forall eta,
+        Step eta TmNil TmSink PfxStarDone
+  | SCons1 : forall n e1 e1' e2 p,
+      Step n e1 e1' p ->
+      ~MaximalPrefix p ->
+      Step n (TmCons e1 e2) (e1'; e2) (PfxStarFirst p)
+  | SCons2 : forall n e1 e1' e2 e2' p1 p2,
+      Step n e1 e1' p1 ->
+      MaximalPrefix p1 ->
+      Step n e2 e2' p2 ->
+      Step n (TmCons e1 e2) e2' (PfxStarRest p1 p2)
   | SFix : forall eta eta' g g' args args' e e' r p hpargs vs,
       HistArgsStep hpargs vs ->
       ArgsStep eta  g args args' g' eta' ->
@@ -150,6 +167,8 @@ Proof.
     specialize (IHStep _ _ H11) as [Ee Ep]. subst. repeat constructor.
   - sinvert H1. specialize (IHStep1 _ _ H8) as [Ee Ep]. subst.
     edestruct IHStep2 as [Ee Ep]; [| split; f_equal]; eassumption.
+  - sauto lq: on rew: off.
+  - sauto lq: on rew: off.
   - sinvert H1; assert (A := env_cat_unique _ _ _ _ H H12); subst; [repeat constructor | |]; congruence.
   - sinvert H2; assert (A := env_cat_unique _ _ _ _ H H13); subst; [congruence | | congruence].
     assert (p = p0) by congruence. subst. specialize (IHStep _ _ H15) as [Ee Ep]. subst. sfirstorder.
