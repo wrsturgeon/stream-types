@@ -335,10 +335,10 @@ Proof.
       edestruct (fill_derivative eta'' G (CtxHasTy z (TySum s0 t))) as [G' [d_s [A'' [B'' [C'' D'']]]]]; [eauto | eapply D; eauto |]. 
       sinvert A''.
       destruct (ltac:(scongruence) : PfxSumInl p = p0).
-      sinvert H23.
+      sinvert H25.
       assert (WFContext Gx). { eapply wf_fill_reflect. eauto. hauto drew: off. }
-      edestruct (D'' (CtxHasTy x s0) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply no_conflict_on_disjoint. right. eapply wf_fill_reflect in H18;[|eauto]. eapply DisjointSets_inj. intros. destruct H18 as [_ [_ U]]. eapply U. eapply dom_singleton in H19. scongruence. } eapply context_derivative_sng; eauto.
-      eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
+      edestruct (D'' (CtxHasTy x s0) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply no_conflict_on_disjoint. right. eapply wf_fill_reflect in H20;[|eauto]. eapply DisjointSets_inj. intros. destruct H20 as [_ [_ U]]. eapply U. eapply dom_singleton in H21. scongruence. } eapply context_derivative_sng; eauto.
+      eapply (typing_subst'). eauto. admit. admit. { eapply ctx_subst_fill; eauto. }
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | ].

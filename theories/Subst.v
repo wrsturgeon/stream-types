@@ -7,7 +7,8 @@ From LambdaST Require Import
   History
   Types.
 
-Definition subst_str (x y z : string) := if eqb z x then y else z.
+(* [x/y]z *)
+Definition subst_str (x y z : string) := if eqb z y then x else z.
 Arguments subst_str x y/ z.
 Hint Unfold subst_str : core.
 

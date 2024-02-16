@@ -409,3 +409,33 @@ Proof.
   apply hole_compose_fv. assumption.
 Qed.
 Hint Resolve hole_compose_fv_fn : core.
+
+Theorem ctx_subst_fill : forall G G1 G2 x y s,
+  Fill G (CtxHasTy y s) G1 ->
+  Fill G (CtxHasTy x s) G2 ->
+  CtxSubst x y G1 G2.
+Proof.
+intro G.
+induction G; intros; sauto q: on.
+Qed.
+
+(* TODO: will? *)
+Theorem ctx_subst_fill' : forall G G1 G2 x y z s,
+  WFContext G1 ->
+  CtxSubst x y G1 G2 ->
+  Fill G (CtxHasTy z s) G1 ->
+  Fill G (CtxHasTy (if String.eqb z y then x else z) s) G2.
+Proof.
+intros.
+generalize dependent z.
+generalize dependent s.
+generalize dependent G.
+generalize dependent H.
+induction H0; intros.
+- sauto lq: on.
+- sauto lq: on use:eqb_refl.
+- sinvert H1; sinvert H.
+  + best.
+  + eapply FillCommaR.
+Admitted.
+

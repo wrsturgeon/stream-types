@@ -77,6 +77,8 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o G rs e t i ->
       Typed o G rs (TmInr e) (TySum s t) Jumpy
   | TPlusCase : forall G x y z s t r Gz Gx Gy Gz' e1 e2 eta i i1 i2 rs o,
+      x <> z ->
+      y <> z ->
       ~ fv G x ->
       ~ fv G y ->
       Fill G (CtxHasTy z (TySum s t)) Gz ->
@@ -402,8 +404,8 @@ dependent induction Ht; sinvert Hm; cbn; intros o rs g s' Hd.
 - sauto lq: on.
 Qed.
 
-
-(* Todo: will: PRIORITY. *)
+(* 
+Todo: will: PRIORITY.
 Theorem typing_subst : forall h e x y s t i gx gy rs o,
   Typed o gx rs e t i ->
   WFContext gx ->
@@ -435,7 +437,18 @@ Proof.
   - best.
   - admit.
   - admit.
-Admitted.
+  - admit.
+  - admit.
+  - admit.
+  - sfirstorder.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - best.
+  - admit.
+  - admit.
+Admitted. *)
 
 Theorem typing_histval_subst : 
   (forall o g rs e s i, Typed o g rs e s i -> forall ts t ts' v n, o = app ts (cons t ts') -> length ts = n -> HistValTyped v t -> Typed (app ts ts') g rs (histval_subst v n e) s i) /\ 
@@ -483,3 +496,41 @@ Proof.
     assert (H00 : ts = app nil ts) by scongruence. rewrite -> H00.
     hauto lq: on rew: off use: typing_histval_subst.
 Qed.
+
+Theorem typing_subst_nop : forall G e x y t i rs o,
+  Typed o G rs e t i ->
+  WFContext G ->
+  ~ fv G x ->
+  ~ fv G y ->
+  Typed o G rs (subst_var e x y) t i.
+Proof.
+  intros.
+  generalize dependent y.
+  generalize dependent x.
+  generalize dependent H0.
+  induction H; intros.
+  - cbn. econstructor. best. best. best.
+  - cbn. econstructor. eauto. eauto. eauto. eauto. admit. best.
+  - cbn. econstructor. best. best. admit.
+  - cbn. econstructor. admit. admit.
+Admitted.
+
+
+Theorem typing_subst' : forall G G' e x y t i rs o,
+  Typed o G rs e t i ->
+  WFContext G ->
+  ~ fv G x ->
+  CtxSubst x y G G' ->
+  Typed o G' rs (subst_var e x y) t i.
+Proof.
+intros.
+  generalize dependent G'.
+  generalize dependent y.
+  generalize dependent x.
+  generalize dependent H0.
+  induction H; intros.
+  - cbn. econstructor. best. best. best.
+  - cbn. econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. admit. best.
+  - cbn. sinvert H4.
+    + admit.
+Admitted.

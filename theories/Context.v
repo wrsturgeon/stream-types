@@ -58,3 +58,32 @@ Inductive WFContext : context -> Prop :=
       WFContext (CtxSemic g g')
   .
 Hint Constructors WFContext : core.
+
+Inductive CtxSubst (x : string) (y : string) : context -> context -> Prop :=
+| CSEmp : CtxSubst x y CtxEmpty CtxEmpty
+| CSSng : forall s, CtxSubst x y (CtxHasTy y s) (CtxHasTy x s)
+| CSComma1 : forall g g' d,
+    CtxSubst x y g g' ->
+    CtxSubst x y (CtxComma g d) (CtxComma g' d)
+| CSComma2 : forall g g' d,
+    CtxSubst x y g g' ->
+    CtxSubst x y (CtxComma d g) (CtxComma d g')
+| CSSemic1 : forall g g' d,
+    CtxSubst x y g g' ->
+    CtxSubst x y (CtxSemic g d) (CtxSemic g' d)
+| CSSemic2 : forall g g' d,
+    CtxSubst x y g g' ->
+    CtxSubst x y (CtxSemic d g) (CtxSemic d g').
+
+Theorem ctx_subst_exists : forall x y g, fv g y -> exists g', CtxSubst x y g g'.
+Proof.
+Admitted.
+  
+Theorem ctx_subst_det : forall x y g g' g'',
+  WFContext g ->
+  CtxSubst x y g g' ->
+  CtxSubst x y g g'' ->
+  g' = g''.
+Proof.
+Admitted.
+
