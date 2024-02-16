@@ -152,7 +152,7 @@ Theorem sound_mut :
     P_sound_args eta_in g_out args args' g_out' eta_out).
 Proof.
   apply Step_mutual.
-  1-16: (intros; intro G; intro rs; intro s00; intro i; intro Hty; dependent induction Hty; [|eapply sound_sub; try eassumption; hauto l: on]).
+  1-18: (intros; intro G; intro rs; intro s00; intro i; intro Hty; dependent induction Hty; [|eapply sound_sub; try eassumption; hauto l: on]).
   all: intros; unfold P_sound_args in *; unfold P_sound in *; unfold P_sound_inner in *; intros.
   (* eps *)
   - sauto lq: on.
@@ -168,17 +168,17 @@ Proof.
         sfirstorder.
       + qauto l: on.
   (* Par-R *)
-  - 
-    edestruct H as [A [B [C L]]]; eauto.
+  - admit.
+    (* edestruct H as [A [B [C L]]]; eauto.
     edestruct H0 as [A' [B' [C' L']]]; eauto.
     split; try split; try split.
     + sauto lq: on.
     + intros. sinvert H4. econstructor; eauto. sfirstorder.
     + sfirstorder.
-    + intros. rewrite -> H4 in *. edestruct i_ub_inert as [H00 H01]; eauto. rewrite H00 in *. rewrite H01 in *. sfirstorder.
+    + intros. rewrite -> H4 in *. edestruct i_ub_inert as [H00 H01]; eauto. rewrite H00 in *. rewrite H01 in *. sfirstorder. *)
   (* Cat-R-1 *)
-  - 
-    edestruct H as [A [B [C L]]]; eauto.
+  - admit.
+    (* edestruct H as [A [B [C L]]]; eauto.
     sinvert H1.
     sinvert H2.
     destruct H10;[|shelve].
@@ -190,10 +190,10 @@ Proof.
     Unshelve.
     assert (MaximalOn (fv e1) n). { eapply prop_on_contains. eapply typing_fv. eauto. eauto. }
     assert (MaximalPrefix p) by sauto lq: on.
-    best.
+    best. *)
   (* Cat-R-2 *)
-  - 
-    edestruct H as [A [B C]]; eauto.
+  - admit.
+    (* edestruct H as [A [B C]]; eauto.
     edestruct H0 as [A' [B' C']]; eauto.
     split; try split; try split.
     + hauto l: on.
@@ -206,10 +206,10 @@ Proof.
       assert (EmptyOn (fv e1) n) by hauto q: on use:prop_on_contains.
       assert (EmptyPrefix p1) by best.
       assert (Nullable s1) by best use:empty_and_maximal_means_nullable.
-      best.
+      best. *)
   (* Par-L *)
-  - 
-    assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s0 t)) by hauto l: on use: maps_to_has_type_reflect.
+  - admit.
+    (* assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s0 t)) by hauto l: on use: maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]].
     + sfirstorder.
     + eassumption.
@@ -229,10 +229,10 @@ Proof.
            intro test. cbn. destruct (eqb_spec x test); destruct (eqb_spec y test); sfirstorder.
         -- econstructor; [| | | eauto | eauto |]. eauto. hauto q:on drew:off use:fv_hole_derivative. hauto q:on drew:off use:fv_hole_derivative. eapply B; eauto.
       * intros. eapply C. admit.
-      * intros H00 H01. admit.
+      * intros H00 H01. admit. *)
   (* cat-l-1 *)
-  - 
-    assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
+  - admit.
+    (* assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped1; eauto.
     assert (DisjointSets (dom (singleton_env x p)) (dom (singleton_env y (emp t)))). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_singleton in H00. eapply dom_singleton in H01. scongruence. }
     assert (DisjointSets (dom (env_union (singleton_env x p) (singleton_env y (emp t)))) (fv G)). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_union in H00. destruct H00; eapply dom_singleton in H10; scongruence. }
@@ -245,10 +245,10 @@ Proof.
       edestruct (D' (CtxSemic (CtxHasTy x s0) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'1) (CtxHasTy y t)) Gxsyt (env_union (singleton_env x p) (singleton_env y (emp t)))) as [G'xs'1yt [U V]]. eauto. { eapply no_conflict_on_disjoint. hauto l: on. } { eapply context_derivative_semic; [eauto| |]; eapply context_derivative_sng. eauto. hauto l:on use:derivative_emp. }
       econstructor; [ eauto | eauto | eauto | | | eauto | | ]. hauto q: on use:fv_hole_derivative. hauto q: on use:fv_hole_derivative. eauto.
       hauto l: on.
-    + eapply preserves_cat_1; eauto.
+    + eapply preserves_cat_1; eauto. *)
   (* cat-l-2 *)
-  - 
-    assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
+  - admit.
+    (* assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped2; eauto.
     split; try split.
     + sfirstorder.
@@ -272,10 +272,10 @@ Proof.
         { eapply hole_compose_fill. eauto. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split. hauto l:on. hauto l: on use:reflect_fill. }
         { eapply hole_compose_fill. eapply reflect_hole_compose; eauto. exists (CtxSemic CtxEmpty (CtxHasTy z s'0)). split. hauto l:on. scongruence use:reflect_fill. }
         eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } { intro H00. eapply hole_compose_fv_fn in H00. destruct H00. eapply fv_hole_derivative in H20;[|eauto]. sfirstorder. sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l:on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)). sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l: on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split; best use:reflect_fill. }
-    + eapply preserves_cat_2; eauto.
+    + eapply preserves_cat_2; eauto. *)
   (* Let *)
-  - 
-    edestruct H as [A [B [U V]]]; eauto.
+  - admit.
+    (* edestruct H as [A [B [U V]]]; eauto.
    (* todo: need better automation for disjoitnness *)
     assert (NoConflictOn eta (singleton_env x p) (fv G)). { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. intro. assert (x0 <> x) by scongruence. assert (x = x0) by qauto l: on use:dom_singleton. sfirstorder. }
     assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. sfirstorder. }
@@ -294,9 +294,9 @@ Proof.
     + intros. assert (MaximalOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
       eapply U'. eapply prop_on_minus. eapply U. hauto q: on. eauto.
     + intros. assert (EmptyOn (set_minus (fv e2) (singleton_set x)) eta) by hauto q: on.
-      eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto.
+      eapply V'. eauto. eapply prop_on_minus. eapply V. eauto. hauto q: on. eauto. *)
   (* sum-l-1 *)
-  - 
+  -
     split; try split; try split.
     + best use:emp_well_typed.
     + intros.
@@ -354,8 +354,8 @@ Proof.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
       sinvert UU'.
   (* sum-l-3 *)
-  - 
-    assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+  - admit.
+    (* assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
     assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
     destruct Hwf.
     assert (~ fv G z) by sfirstorder.
@@ -396,7 +396,7 @@ Proof.
       assert (H02 : EmptyOn (singleton_set z) eta''). eapply env_cat_empty'; [ | eauto | eauto | eauto]. scrush.
       edestruct (H02 z) as [p'' [UU UU']]; eauto.
       destruct (ltac:(scongruence) : PfxSumInr p = p'').
-      sinvert UU'.
+      sinvert UU'. *)
   (* fix *)
   - edestruct H as [A [B [[U V] [D E]]]]; eauto.
     assert (Typed nil g NoRec (histval_subst_all vs (fix_subst g r e e)) r i). eapply typing_histval_subst_all. { eapply typing_fix_subst; eauto. } { eapply HistArgsStep_sound; eauto. }
@@ -418,6 +418,61 @@ Proof.
   - edestruct histval_lift_fun as [p' [A [B C]]]; eauto. eapply HistStep_sound; eauto.
     destruct (ltac:(sfirstorder use:histval_lift_det) : p = p').
     repeat split; hauto l: on use:sink_tm_typing.
+  (* wait 1 *)
+  - repeat split.
+    + sfirstorder use:emp_well_typed.
+    + intros. destruct (ltac:(sfirstorder use: derivative_emp') : r = s').
+      edestruct (env_cat_exists_when_typed Gx) as [eta''0 [A [B [C D]]]]; [ sfirstorder use:context_derivative_wf' |eauto|eauto|eauto|eauto]. 
+      destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
+      econstructor; eauto. { cbn. intros. split; [scongruence|]. intro. assert (H00 : PrefixTyped p s) by hauto l: on use:maps_to_has_type_reflect. eapply nullable_means_maximal in H00;[|eauto]. sfirstorder. }
+    + intros.
+      edestruct (EnvConcat_lookup z) as [p0 [p1 [A' [B' C']]]]. eauto. eauto.
+      assert (MaximalPrefix p1) by best.
+      hauto lq: on use:pfx_cat_maximal.
+    + sfirstorder use:emp_empty.
+  (* wait 2 *)
+  - edestruct (env_cat_exists_when_typed Gx) as [eta''0 [A [B [C D]]]]; [ sfirstorder use:context_derivative_wf' |eauto|eauto|eauto|eauto]. 
+    destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
+    assert (PrefixTyped p s) by hauto l:on use:maps_to_has_type_reflect.
+    assert (WFContext Gemp). { eapply wf_fill_reflect;[eauto|]. repeat split; [ | eauto|eauto|eauto]. eapply context_derivative_wf' in H5;[ | eauto]. sfirstorder use:wf_fill_reflect. }
+    (* edestruct (fill_derivative eta') as [G' [d_d [U [V [W X]]]]]; [|eauto|]. eauto. *)
+    (* sinvert U. *)
+    assert (EnvTyped eta'' Gemp). { eapply (fill_preserves_env (CtxHasTy z s)). eauto. eauto. hauto l: on. sfirstorder. eauto. }
+    edestruct H as [A' [B' C']]; [eauto | | eauto | eauto | ]. { assert (H00 : app (nil : list histty) nil = nil) by scongruence. rewrite <- H00. eapply typing_histval_subst. eauto. sfirstorder. sfirstorder. eapply maximal_prefix_flatten'; eauto. } 
+    assert (H00 : SetEq (fv (histval_subst v 0 e)) (fv e)) by best use:fv_histval_subst.
+    repeat split.
+    + eauto.
+    + intros. 
+      assert (ContextDerivative eta'' Gx g'). eapply D; eauto.
+      edestruct (fill_derivative eta'') as [G'' [d_d [U [V [W X]]]]]; [|eauto|]; eauto.
+      sinvert U.
+      destruct (ltac:(scongruence) : p = p1).
+      edestruct (X CtxEmpty CtxEmpty Gemp eta'') as [G''emp [L M]]; [eauto|scongruence|sfirstorder|]. 
+      eapply (TSubCtx g' G''emp); [eapply SubCong; eauto|]; eapply B'; [eauto| scongruence use:env_union_idemp].
+    + intros.
+      assert (MaximalOn (fv e) eta) by hauto q: on use:prop_on_contains.
+      eapply C'. eapply (prop_on_contains MaximalPrefix (fv e)); [hauto q: on|].
+      eapply env_cat_maximal; [eauto| |eauto]. { intro x0; intro H01; eapply B; eapply fv_fill; [eauto|]; right. eapply typing_fv in H01;[|eauto]. hauto q:on use:fv_fill. }
+    + intros. rewrite -> H10 in *.
+      edestruct H3; eauto.
+      assert (H01 : EmptyOn (singleton_set z) eta) by hauto q: on use:prop_on_contains.
+      edestruct (H01 z) as [p1 [U V]]; eauto.
+      edestruct (EnvConcat_lookup z) as [p0' [p1' [L [M N]]]]; eauto.
+      edestruct (ltac:(scongruence) : p1 = p1').
+      edestruct (maps_to_has_type_reflect eta') as [p0'' [UU VV]]; [|eauto|]; eauto.
+      destruct (ltac:(scongruence) : p0' = p0'').
+      edestruct (fill_derivative eta' G (CtxHasTy z s)) as [G' [d_d [L' [M' [N' O']]]]]; eauto.
+      sinvert L'.
+      destruct (ltac:(scongruence) : p0' = p2).
+      assert (~ MaximalPrefix p0') by sfirstorder.
+      assert (H02 : ~ Nullable s') by hauto l:on use:maximal_derivative_nullable'.
+      assert (MaximalPrefix p1) by hauto l: on use:pfx_cat_maximal'.
+      assert (~ MaximalPrefix p). {
+        intro.
+        eapply H02.
+        eapply empty_and_maximal_means_nullable; eauto. hauto l: on use:maps_to_has_type_reflect.
+      }
+      scongruence.
   (*** args ****)
   - best.
   - sinvert H0.

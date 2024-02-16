@@ -1,5 +1,6 @@
 From Coq Require Import
   List
+  Logic.FunctionalExtensionality
   String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
@@ -30,6 +31,13 @@ Definition env_union (n n' : env) : env := fun x =>
   end.
 Arguments env_union n n' x/.
 Hint Unfold env_union : core.
+
+
+Theorem env_union_idemp : forall n, env_union n n = n.
+Proof.
+hauto l: on use: functional_extensionality.
+Qed.
+
 
 Definition env_subst (x : string) (p : prefix) (rho : env) : env :=
   env_union rho (singleton_env x p).

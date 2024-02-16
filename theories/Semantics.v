@@ -80,6 +80,18 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
         HistStep hp v ->
         HistValLift s v p ->
         Step eta (TmHistPgm hp s) (sink_tm p) p
+  | SWait1 : forall eta eta' eta'' z p s r e,
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some p ->
+        ~(MaximalPrefix p) ->
+        Step eta (TmWait eta' r s z e) (TmWait eta'' r s z e) (emp r)
+  | SWait2 : forall eta eta' eta'' z p p' s r e e' v,
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some p ->
+        MaximalPrefix p ->
+        PrefixFlatten p v ->
+        Step eta'' (histval_subst v 0 e) e' p' ->
+        Step eta (TmWait eta' r s z e) e' p'
 with ArgsStep : env -> context -> argsterm -> argsterm -> context -> env -> Prop :=
   | ASEmpty : forall eta,
         ArgsStep eta CtxEmpty ATmEmpty ATmEmpty CtxEmpty empty_env

@@ -103,6 +103,15 @@ Theorem maximal_prefix_flatten : forall p s,
 Proof.
 Admitted.
 
+(* TODO: will *)
+Theorem maximal_prefix_flatten' : forall p s v,
+  PrefixTyped p s ->
+  MaximalPrefix p ->
+  PrefixFlatten p v ->
+  HistValTyped v (flatten_type s).
+Proof.
+Admitted.
+
 Inductive HistValLift : type -> histval -> prefix -> Prop :=
 | PFEps : HistValLift eps HVUnit PfxEpsEmp 
 | PFOne : HistValLift TyOne HVUnit PfxOneFull 

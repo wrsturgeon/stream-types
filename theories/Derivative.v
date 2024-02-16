@@ -371,6 +371,16 @@ Proof.
 Qed.
 Hint Resolve maximal_derivative_nullable : core.
 
+Theorem maximal_nullable' : forall p s s',
+  Nullable s ->
+  Derivative p s s' ->
+  Nullable s'.
+Proof.
+  intros.
+  generalize dependent s'. generalize dependent p.
+  induction H; intros; sauto lq: on.
+Qed.
+
 Theorem maximal_derivative_nullable' : forall p s s',
   PrefixTyped p s ->
   Derivative p s s' ->

@@ -248,7 +248,7 @@ Theorem env_cat_unique : forall n n' n1 n2,
 Proof.
 Admitted.
 
-Theorem EnvConcat_lookup : forall eta eta' eta'' p'' x,
+Theorem EnvConcat_lookup : forall x eta eta' eta'' p'',
   EnvConcat eta eta' eta'' ->
   eta'' x = Some p'' ->
   exists p p', PrefixConcat p p' p'' /\ eta x = Some p /\ eta' x = Some p'.

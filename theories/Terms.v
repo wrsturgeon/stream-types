@@ -168,13 +168,7 @@ fv_argsterm e : set string :=
 Instance fv_term_inst : FV term := { fv := fv_term }.
 Instance fv_argsterm_inst : FV argsterm := { fv := fv_argsterm }.
 
-(*
-
-term_ind
-	 : 
-argsterm_ind
-	 : forall P : argsterm -> Prop,
-       
-       forall a : argsterm, P a
-
-*)
+(* TODO: will *)
+Theorem fv_histval_subst : forall v n e, SetEq (fv e) (fv (histval_subst v n e)).
+Proof.
+Admitted.

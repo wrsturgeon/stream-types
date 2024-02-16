@@ -21,6 +21,7 @@ Inductive Subcontext : context -> context -> Prop :=
       Subcontext gd gd'
   | SubRefl : forall g,
       Subcontext g g
+  | SubSngWkn : forall x s, Subcontext (CtxHasTy x s) CtxEmpty
   | SubCommaExc : forall g d,
       Subcontext (CtxComma g d) (CtxComma d g)
   | SubCommaWkn : forall g d,
@@ -46,7 +47,7 @@ Theorem subcontext_fv_subset : forall g g',
   Subcontext g g' ->
   Subset (fv g') (fv g).
 Proof.
-  intros. induction H; cbn in *; intros; [shelve | | | | | | | |]; sfirstorder.
+  intros. induction H; cbn in *; intros; [shelve | | | | | | | | | ]; sfirstorder.
   (* Only interesting case is `Fill`, covered below: *)
   Unshelve. eapply fv_fill; [eassumption |]. apply fv_fill in H. apply fv_fill in H0. cbn in *.
   apply H0 in H2. destruct H2; [| right; assumption]. left. apply IHSubcontext. assumption.
@@ -60,6 +61,7 @@ intros.
 dependent induction H.
 - eapply wf_fill_reflect in H.
   eapply wf_fill_reflect. eauto. sfirstorder use:subcontext_fv_subset.
+- sauto.
 - sauto.
 - sauto.
 - sauto.
@@ -111,6 +113,7 @@ Proof.
   - sinvert He. repeat split; sfirstorder.
   - sinvert He. repeat split; sfirstorder.
   - sinvert He. repeat split; sfirstorder.
+  - sinvert He. repeat split; sfirstorder.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
   - repeat constructor; sfirstorder.
@@ -132,6 +135,7 @@ dependent induction H; intros.
   rewrite <- H00 in *.
   edestruct (D d' d_d' gd' eta); eauto.
 - sauto lq:on use:context_derivative_det.
+- sauto lq: on rew: off.
 - sinvert H1; sinvert H0. sauto lq: on use:context_derivative_det.
 - sinvert H0. sauto lq: on use:context_derivative_det.
 - sinvert H0. sauto lq: on use:context_derivative_det.
@@ -140,4 +144,3 @@ dependent induction H; intros.
 - sinvert H1. sinvert H6. destruct (ltac:(best use:context_derivative_det) : G' = g1'). sfirstorder.
 - sinvert H1. sinvert H4. destruct (ltac:(best use:context_derivative_det) : D' = g1'). sfirstorder.
 Qed.
-  

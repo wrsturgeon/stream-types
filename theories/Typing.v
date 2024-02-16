@@ -104,12 +104,14 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
   | TmHistPgm : forall G rs hp s o,
       HistTyped o hp (flatten_type s) ->
       Typed o G rs (TmHistPgm hp s) s Jumpy
-  | TWait : forall o G Gx Gemp z s r i i' e rs eta,
+  | TWait : forall o G Gx Gx' Gemp z s r i i' e rs eta,
       Fill G (CtxHasTy z s) Gx ->
+      EnvTyped eta Gx ->
+      ContextDerivative eta Gx Gx' ->
       Fill G CtxEmpty Gemp ->
       Typed (cons (flatten_type s) o) Gemp rs e r i ->
       inert_guard ((forall p, eta z = Some p -> ~ MaximalPrefix p) /\ ~Nullable s) i' ->
-      Typed o Gx rs (TmWait eta r s z e) r i'
+      Typed o Gx' rs (TmWait eta r s z e) r i'
   | TSubCtx : forall G G' e s i rs o,
       Subcontext G G' ->
       Typed o G' rs e s i ->
@@ -295,7 +297,7 @@ Proof.
  - sfirstorder.
  - sfirstorder.
  - sfirstorder.
- - hauto q:on use:fv_fill.
+ - hauto q:on use:fv_fill, fv_context_derivative.
  - sfirstorder use:subcontext_fv_subset.
  - sfirstorder.
  - sfirstorder.
@@ -444,7 +446,7 @@ Proof.
   - sfirstorder use: histval_subst_hist_thm.
   - cbn.
     assert (H00 : cons (flatten_type s) (app ts ts') = app (cons (flatten_type s) ts) ts') by scongruence.
-    econstructor; [eauto|eauto|sauto lq: on drew:off|eauto].
+    econstructor; hauto lq: on drew: off.
   - hauto l: on.
   - sfirstorder use: histval_subst_histargs_thm.
   - hauto l:on use: histval_subst_histargs_thm.
