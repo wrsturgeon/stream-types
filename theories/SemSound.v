@@ -232,8 +232,8 @@ Proof.
   (* cat-l-1 *)
   - assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped1; eauto.
-    assert (DisjointSets (dom (singleton_env x p)) (dom (singleton_env y (emp t)))) by admit.
-    assert (DisjointSets (dom (env_union (singleton_env x p) (singleton_env y (emp t)))) (fv G)) by admit.
+    assert (DisjointSets (dom (singleton_env x p)) (dom (singleton_env y (emp t)))). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_singleton in H00. eapply dom_singleton in H01. scongruence. }
+    assert (DisjointSets (dom (env_union (singleton_env x p) (singleton_env y (emp t)))) (fv G)). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_union in H00. destruct H00; eapply dom_singleton in H10; scongruence. }
     split; try split.
     + sfirstorder.
     + intros. edestruct (fill_derivative n) as [G' [dzst [A' [B' [C' D']]]]];[|eauto|]. eauto.
@@ -254,18 +254,22 @@ Proof.
       destruct (ltac:(scongruence) : (PfxCatBoth p1 p2) = p).
       sinvert H19.
       edestruct (derivative_fun p1 s0) as [s'']; eauto.
+      assert (DisjointSets (dom (singleton_env x p1)) (dom (singleton_env y p2))). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_singleton in H00. eapply dom_singleton in H01. scongruence. }
       specialize (D' (CtxSemic (CtxHasTy x s0) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
-      edestruct D' as [u [A'' B'']]. eauto. admit. eapply context_derivative_semic; [admit | |]; eapply context_derivative_sng; eauto.
+      edestruct D' as [u [A'' B'']]. eauto. { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H16; scongruence. } eapply context_derivative_semic; [eauto | | ]; eapply context_derivative_sng; eauto.
       specialize (B u s').
       edestruct (fill_reflect_fun G' (CtxSemic CtxEmpty (CtxHasTy z s'0))) as [g''].
       eapply (TSubCtx g' g''); [ eapply (SubCong G'); eauto |].
-      eapply (TLet (hole_compose G' (HoleSemicL HoleHere (CtxHasTy z s'0))) CtxEmpty (fill G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)))).
-        admit. (* todo: will: theorem about hole compose free variables should be union. *)
+      remember (hole_compose G' (HoleSemicL HoleHere (CtxHasTy z s'0))).
+      assert (DisjointSets (fv G) (singleton_set z)). { edestruct (wf_fill_reflect G); eauto. hauto l: on. }
+      assert (HoleCompose G' (HoleSemicL HoleHere (CtxHasTy z s'0)) h) by best use:reflect_hole_compose.
+      eapply (TLet h CtxEmpty (fill G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)))).
+        { intro H00. eapply hole_compose_fv in H00;[|eauto]. edestruct H00. hauto q:on use:fv_hole_derivative. sfirstorder. }
         sfirstorder use:sink_tm_typing.
-        admit. (* best use:hole_compose_fill,reflect_fill. *)
-        admit. (* this used to work: best use:hole_compose_fill. *)
-        eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } admit. admit. admit.
-    + admit.
+        { eapply hole_compose_fill. eauto. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split. hauto l:on. hauto l: on use:reflect_fill. }
+        { eapply hole_compose_fill. eapply reflect_hole_compose; eauto. exists (CtxSemic CtxEmpty (CtxHasTy z s'0)). split. hauto l:on. scongruence use:reflect_fill. }
+        eapply (typing_subst (hole_compose G' (HoleSemicR (CtxHasTy x s'') HoleHere))). eauto. { eapply context_derivative_wf; [|eauto]; eauto. } { intro H00. eapply hole_compose_fv_fn in H00. destruct H00. eapply fv_hole_derivative in H19;[|eauto]. sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l:on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)). sfirstorder. } { eapply (hole_compose_fill G' ((HoleSemicR (CtxHasTy x s'') HoleHere))). hauto l: on use:reflect_hole_compose. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split; best use:reflect_fill. }
+    + eapply preserves_cat_2; eauto.
   (* Let *)
   - edestruct H as [A [B [U V]]]; eauto.
    (* todo: need better automation for disjoitnness *)
@@ -323,12 +327,12 @@ Proof.
       destruct (ltac:(scongruence) : PfxSumInl p = p0).
       sinvert H23.
       assert (WFContext Gx). { eapply wf_fill_reflect. eauto. hauto drew: off. }
-      edestruct (D'' (CtxHasTy x s0) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. admit. } eapply context_derivative_sng; eauto.
+      edestruct (D'' (CtxHasTy x s0) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply no_conflict_on_disjoint. right. eapply wf_fill_reflect in H18;[|eauto]. eapply DisjointSets_inj. intros. destruct H18 as [_ [_ U]]. eapply U. eapply dom_singleton in H19. scongruence. } eapply context_derivative_sng; eauto.
       eapply (typing_subst G'); [ | | | eauto | eauto ]. { eapply B'; eauto. } { hauto l: on use:context_derivative_wf. } { hauto q: on use:fv_hole_derivative. }
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | ].
-      { assert (Subset (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) (fv Gz)) by admit.  sblast. }
+      { intro x0. intro H00. destruct H00; [|hauto drew: off]. destruct H18. eapply B. eapply fv_fill. eauto. right. eapply fv_fill' in H2. eapply typing_fv in H18; [|eauto]. hauto q:on use:fv_fill. }
       hauto lq: on rew: off.
       edestruct (H18 z) as [p00 [L' R]]. hauto lq: on rew: off.
       destruct (ltac:(scongruence) : PfxSumInl p = p00).
@@ -465,150 +469,3 @@ Proof.
     + intros. sinvert H0. econstructor; eauto.
     + eapply context_derivative_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)); [| eauto | eauto]; hauto lq: on use:empty_env_for_dom. } hauto l: on use:context_derivative_emp. eauto.
 Admitted.
-
-(* 
-Theorem sound : forall G e s i eta e' p,
-  Step eta e e' p ->
-  P_sound G NoRec e s i eta e' p.
-Proof.
-  intros. generalize dependent G. generalize dependent s. generalize dependent i.
-  induction H; intros i s G Ht; intros;
-  (dependent induction Ht; [| eapply sound_sub; try eassumption; hauto l: on]).
-  - admit.
-  - admit.
-  (* Cat-R-2 *)
-  - admit.
-    
-  - admit.
-    
-  (* cat-L-1*)
-  - admit.
-  (* cat-L-2*)
-  - admit.
-    
-  - admit.
-  
-  - admit.
-    
-  - admit.
-   
-  - admit.
-  - assert (forall g_in e g_out g_out' eta_in e' eta_out i,
-  ArgsStep eta_in g_out e e' g_out' eta_out ->
-  P_sound_args g_in i e g_out eta_in e' g_out' eta_out) by admit.
-  
-  
-Admitted.
-
-
-(* this is basically how this theorem needs to go, but we have to figure out how to tie the knot with the regular soundness theorem. *)
-Theorem soundargs : forall g_in e g_out g_out' eta_in e' eta_out i,
-    ArgsStep eta_in g_out e e' g_out' eta_out ->
-    P_sound_args g_in i e g_out eta_in e' g_out' eta_out.
-Proof.
-  intros.
-  generalize dependent g_in.
-  generalize dependent i.
-  induction H; unfold P_sound_args in *; intros.
-  - best.
-  - sinvert H1. 
-    edestruct sound as [A [B C]]; eauto.
-    split; try split; try split; try split.
-    + eapply env_typed_singleton; eauto.
-    + sfirstorder use:dom_singleton.
-    + sfirstorder use:dom_singleton.
-    + eapply preserves_to_agree; [| hauto lq: on rew: off ]. hauto l: on use:typing_fv.
-    + eapply preserves_to_agree; [| hauto lq: on rew: off ]. hauto l: on use:typing_fv.
-    + intros. hauto l: on.
-    + hauto l: on.
-  - sinvert H1. sinvert H2.
-    edestruct IHArgsStep1 as [A [B [C [D E]]]]; eauto.
-    edestruct IHArgsStep2 as [F [G [L [I J]]]]; eauto.
-    assert (H00 : fv (CtxComma g1 g2) = set_union (fv g1) (fv g2)) by scongruence; rewrite -> H00 in *.
-    split; try split; try split; try split.
-    + eapply env_typed_comma; [| eauto | eauto]. hauto q: on.
-    + hauto q: on.
-    + hauto drew: off.
-    + intros.  eapply prop_on_set_union. split.
-      * eapply prop_on_weakening_alt'. eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. qauto l: on use:empty_env_for_dom.
-        hauto q: on.
-      * eapply prop_on_weakening. sfirstorder.
-    + intros. edestruct i; try scongruence. assert (H00' : i1 = Inert /\ i2 = Inert) by hauto l:on use:i_ub_inert; destruct H00' as [UU UU']; rewrite -> UU in *; rewrite -> UU' in *.
-      eapply prop_on_set_union; split.
-      * eapply prop_on_weakening_alt'; [| sfirstorder]. { eapply no_conflict_on_disjoint. right. eapply (DisjointSets_eq string (fv g2) (fv g1)); [eauto | |]; sfirstorder. }
-      * eapply prop_on_weakening. sfirstorder.
-    + intros; econstructor; eauto. sfirstorder.
-    + eapply context_derivative_comma; [| eauto | eauto]. hauto q: on.
-  - sinvert H1; sinvert H2; sinvert H4; sinvert H3.
-    edestruct IHArgsStep as [A [B [C [D E]]]]; eauto.
-    split; try split; try split; try split.
-    + eapply env_typed_semic; [| eauto| sfirstorder use:empty_env_for_typed | hauto lq: on use:empty_env_for_empty_on] . 
-      clear D; clear C; clear H13; clear H9; clear H11; clear H; clear H0; clear IHArgsStep.
-      assert (Subset (fv g1) (dom eta1)) by best use:envtyped_dom.
-      assert (Subset (fv g0) (dom eta)) by best use:envtyped_dom.
-      hauto lq:on rew: off use:empty_env_for_dom.
-    + cbn. hauto q: on use:empty_env_for_dom.
-    + cbn. hauto q: on use:empty_env_for_dom.
-    + intros. sfirstorder.
-    + intros H00 H01. rewrite -> H00 in *.
-      unfold inert_guard in *. assert (i1 = Inert) by best. rewrite -> H1 in *.
-      assert (H02 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by best. rewrite -> H02 in *. eapply prop_on_set_union. split.
-      * eapply prop_on_weakening_alt'. eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. qauto l: on use:empty_env_for_dom.
-        hauto q: on.
-      * eapply prop_on_weakening. hauto q: on use:empty_env_for_empty_on.
-    + intros. sinvert H1.
-      destruct H12.
-      *  assert (H00 : D' = g3) by best use:context_derivative_emp'.
-         rewrite <- H00 in *.
-         econstructor; eauto.
-         assert (~(MaximalOn (fv e1) eta)) by best.
-         unfold inert_guard in *.
-         intros. split; try split. auto.
-         intro.
-         assert (MaximalOn (fv g0) eta) by sfirstorder use: maximal_context_derivative_nullable'.
-         assert (MaximalOn (fv e1) eta) by best use:typing_fv_args.
-         scongruence.
-      (* contradictory. *)
-      * assert (MaximalOn (fv g1) eta1). { eapply C. eapply prop_on_contains; [|eauto]. hauto l:on use:typing_fv_args. } sfirstorder.
-    + eapply context_derivative_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)). eauto. qauto l:on use:empty_env_for_dom. eauto. } eauto. hauto l: on use:context_derivative_emp.
-  - sinvert H2. sinvert H3. sinvert H5. sinvert H4.
-    edestruct IHArgsStep1 as [A [B [C [D DU]]]]; eauto.
-    edestruct IHArgsStep2 as [E [F [G [H' H'U]]]]; eauto.
-    split; try split; try split; try split.
-    + eapply env_typed_semic; [| eauto | eauto | eauto]. hauto q: on.
-    + hauto q: on.
-    + hauto drew: off.
-    + intros. 
-      assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
-      eapply prop_on_set_union.
-      split.
-      * eapply prop_on_weakening_alt';[|eauto]; eapply no_conflict_on_disjoint. right. { eapply (DisjointSets_eq string (fv g2) (fv g1)); [eauto | | ]; sfirstorder. }
-      * sfirstorder use: prop_on_weakening.
-    + intros H00 H01; rewrite -> H00 in *. unfold inert_guard in *. assert (H02 : i1 = Inert) by sfirstorder. rewrite -> H02 in *.
-      (* if eta were empty, this shouldn't happen. because *)
-      edestruct H15; eauto.
-      assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
-      (* assert (H04 : fv (CtxSemic g0 g3) = set_union (fv g0) (fv g3)) by scongruence. *)
-      assert (EmptyOn (fv e1) eta) by hauto l:on use:prop_on_set_union.
-      assert (EmptyOn (fv g1) eta1) by sauto lq: on.
-      assert (NullableCtx g1) by hauto l: on use:emptyon_and_maximalon_means_nullable.
-      scongruence. (* contradiction: g1 is and isn't nullable. *)
-    + intros. sinvert H2. econstructor; [|eauto]. eapply maximal_context_derivative_nullable; eauto.
-    + eapply context_derivative_semic; [|eauto|eauto]. { eapply (DisjointSets_eq string (fv g1) (fv g2)); eauto. }
-  - sinvert H0. sinvert H1. sinvert H2. sinvert H3.
-    edestruct IHArgsStep as [A [B [C [D E]]]]; eauto.
-      assert (H03 : fv (CtxSemic g1 g2) = set_union (fv g1) (fv g2)) by scongruence. rewrite -> H03 in *. 
-    split; try split; try split; try split.
-    + eapply env_typed_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)); [| eauto | eauto]; hauto lq: on use:empty_env_for_dom. } hauto l:on use:empty_env_for_typed. eauto. { right.  eapply nullable_context_means_emptyon_implies_maximalon. eauto. hauto l:on use:empty_env_for_typed. hauto l:on use:empty_env_for_empty_on. }
-    + hauto q: on use:empty_env_for_dom.
-    + hauto drew: off use:empty_env_for_dom.
-    + intros. eapply prop_on_set_union; split.
-      * eapply prop_on_weakening_alt'. { eapply no_conflict_on_disjoint. right. eapply (DisjointSets_eq string (fv g2) (fv g1)); [| | eauto]; sfirstorder. } {eapply nullable_context_means_emptyon_implies_maximalon. eauto. hauto l:on use:empty_env_for_typed. hauto l:on use:empty_env_for_empty_on. }
-      * eapply prop_on_weakening; sfirstorder.
-    + intros H00 H01. rewrite  -> H00 in *.
-      eapply prop_on_set_union; split.
-      * eapply prop_on_weakening_alt'; [| hauto q: on use:empty_env_for_empty_on]. { eapply no_conflict_on_disjoint. right. eapply (DisjointSets_eq string (fv g2) (fv g1)); [| | eauto]; sfirstorder. }
-      * eapply prop_on_weakening; hauto l: on.
-    + intros. sinvert H0. econstructor; eauto.
-    + eapply context_derivative_semic. { eapply (DisjointSets_eq string (fv g1) (fv g2)); [| eauto | eauto]; hauto lq: on use:empty_env_for_dom. } hauto l: on use:context_derivative_emp. eauto.
-Qed. *)

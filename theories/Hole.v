@@ -90,6 +90,12 @@ Lemma fv_fill : forall h plug ctx,
 Proof. intros. induction H; sfirstorder. Qed.
 Hint Resolve fv_fill : core.
 
+Lemma fv_fill' : forall h plug ctx,
+  Fill h plug ctx ->
+  SetEq (set_union (fv plug) (fv h)) (fv ctx).
+Proof. intros. induction H; sfirstorder. Qed.
+Hint Resolve fv_fill : core.
+
 Lemma fv_fill_fn : forall h plug,
   SetEq (fv_ctx (fill h plug)) (set_union (fv plug) (fv h)).
 Proof. intros. remember (fill h plug) as ctx eqn:E. apply reflect_fill in E. apply fv_fill. assumption. Qed.
