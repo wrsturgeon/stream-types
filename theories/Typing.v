@@ -49,6 +49,7 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       x <> z -> 
       y <> z -> 
       x <> y ->
+      ~ bv_term e z ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
@@ -81,6 +82,8 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       y <> z ->
       ~ fv G x ->
       ~ fv G y ->
+      ~ bv_term e1 z ->
+      ~ bv_term e2 z ->
       Fill G (CtxHasTy z (TySum s t)) Gz ->
       Fill G (CtxHasTy x s) Gx ->
       Fill G (CtxHasTy y t) Gy ->
@@ -176,15 +179,15 @@ intros.
   - econstructor. { eapply H; eauto. } { eapply H0; eauto. } hauto l: on.
   - hauto l: on.
   - hecrush.
-  - hauto l: on.
+  - econstructor. best. best. best. best use:bv_fixsubst. best. best. best. best. best.
   - sfirstorder.
   - sfirstorder.
   - sfirstorder.
   - hauto l: on.
   - hauto l: on.
   - hauto l: on.
-  - hauto l: on.
-  - hauto l: on.
+  - econstructor; hauto q: on use:bv_fixsubst. 
+  - econstructor; hauto q:on use:bv_fixsubst.
   - cbn. econstructor;sfirstorder.
   - hauto l: on.
   - hauto l: on.
@@ -458,14 +461,14 @@ Proof.
   - cbn. econstructor. eauto. eauto. sfirstorder.
   - hauto drew: off.
   - sblast.
+  - econstructor. best. best. best. best use:bv_histval_subst. best. best. best. best. best.
   - hauto drew: off.
   - hauto drew: off.
   - hauto drew: off.
   - hauto drew: off.
   - hauto drew: off.
   - hauto drew: off.
-  - hauto drew: off.
-  - hauto drew: off.
+  - econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. hauto q: on use:bv_histval_subst. hauto q: on use:bv_histval_subst. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder.
   - hauto drew: off.
   - cbn. econstructor; sfirstorder.
   - best use:histval_subst_histargs_thm.
@@ -520,6 +523,7 @@ Theorem typing_subst' : forall G G' e x y t i rs o,
   Typed o G rs e t i ->
   WFContext G ->
   ~ fv G x ->
+  ~ bv_term e x ->
   CtxSubst x y G G' ->
   Typed o G' rs (subst_var e x y) t i.
 Proof.
@@ -531,6 +535,10 @@ intros.
   induction H; intros.
   - cbn. econstructor. best. best. best.
   - cbn. econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. { eapply ctx_subst_fill'; eauto. } best.
-  - cbn. sinvert H4.
-    + econstructor. best.  
+  - cbn. sinvert H5.
+    + econstructor. sauto lq: on rew: off. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. sauto use:ctx_subst_found_fv. } sfirstorder.
+    + econstructor. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. sauto use:ctx_subst_found_fv. } sauto lq: on rew: off. sfirstorder.
+  - cbn. cbn in H10. econstructor. admit. admit. sfirstorder. { admit. (* both z and x0 are not bvs in e.*) } sfirstorder. sfirstorder. sfirstorder. eapply ctx_subst_fill'; eauto. best.
+  - best.
+  - best.
 Admitted.

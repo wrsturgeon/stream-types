@@ -65,6 +65,38 @@ Arguments subst_var e x y.
 Arguments subst_var_argsterm args x y.
 *)
 
+Theorem bv_var_subst :
+  (forall e, forall x y, bv_term e = bv_term (subst_var e x y)) /\
+  (forall e, forall x y, bv_argsterm e = bv_argsterm (subst_var_argsterm e x y)).
+Proof.
+  apply term_mutual.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+  - best.
+Qed.
+
+
 Lemma no_explosions_please : forall e x y x' e',
   subst_var (TmLet x' e e') x y =
   TmLet x' (if eqb y x' then e else subst_var e x y) (subst_var e' x y).

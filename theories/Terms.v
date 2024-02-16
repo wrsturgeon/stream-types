@@ -135,8 +135,6 @@ Notation "'let' x '=' bound 'in' body" :=
   (TmLet x bound body) (at level 97, right associativity) : term_scope.
 Notation "'let' '(' lhs ',' rhs ')' '=' both 'in' body" :=
   (TmLetPar lhs rhs both body) (at level 97, right associativity) : term_scope.
-Notation "'let' '(' lhs ';' rhs ')' '=' both 'in' body" :=
-  (TmLetCat lhs rhs both body) (at level 97, right associativity) : term_scope.
 
 (* Scheme Equality for term.
 Theorem eqb_spec_term : forall a b : term, Bool.reflect (a = b) (term_beq a b).
@@ -178,7 +176,44 @@ fv_argsterm e : set string :=
 Instance fv_term_inst : FV term := { fv := fv_term }.
 Instance fv_argsterm_inst : FV argsterm := { fv := fv_argsterm }.
 
+
+
+Fixpoint bv_term e : set string :=
+  match e with
+  | TmSink | TmUnit | TmNil => empty_set
+  | TmVar x => empty_set
+  | TmComma e1 e2 | TmSemic e1 e2 | TmCons e1 e2 => set_union (bv_term e1) (bv_term e2)
+  | TmLetPar x y z e | TmLetCat _ x y z e => set_union (bv_term e) (set_union (singleton_set x) (singleton_set y))
+  | TmLet x e e' => set_union (bv_term e) (singleton_set x)
+  | TmInl e | TmInr e => bv_term e
+  | TmPlusCase _ _ z x e1 y e2 => set_union (set_union (bv_term e1) (singleton_set x)) (set_union (bv_term e2) (singleton_set y))
+  | TmStarCase _ _ z e1 x xs e2 => (set_union (bv_term e1) (set_union (bv_term e2) (set_union (singleton_set x) (singleton_set xs))))
+  | TmFix args _ _ _ _ => bv_argsterm args
+  | TmRec args _ => bv_argsterm args
+  | TmArgsLet args _ _ => bv_argsterm args
+  | TmHistPgm _ _ => empty_set
+  | TmWait _ _ _ x e => (bv_term e)
+  end
+with
+bv_argsterm e : set string :=
+  match e with
+  | ATmEmpty => empty_set
+  | ATmSng e => bv_term e
+  | ATmComma e1 e2 | ATmSemic1 e1 e2 => set_union (bv_argsterm e1) (bv_argsterm e2)
+  | ATmSemic2 e2 => bv_argsterm e2
+  end.
+
 (* TODO: will *)
 Theorem fv_histval_subst : forall v n e, SetEq (fv e) (fv (histval_subst v n e)).
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem bv_histval_subst : forall v n e, SetEq (bv_term e) (bv_term (histval_subst v n e)).
+Proof.
+Admitted.
+
+(* TODO: will *)
+Theorem bv_fixsubst : forall g r e e', SetEq (bv_term e') (bv_term (fix_subst g r e e')).
 Proof.
 Admitted.

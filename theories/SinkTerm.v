@@ -1,3 +1,4 @@
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Terms
   Prefix.
@@ -18,3 +19,8 @@ Fixpoint sink_tm (p : prefix) : term :=
   | PfxStarFirst p1 => sink_tm p1
   | PfxStarRest p1 p2 => sink_tm p2
   end.
+
+Theorem bv_sinktm : forall p x, ~(bv_term (sink_tm p) x).
+Proof.
+induction p; intros s; intro H; sauto lq: on.
+Qed.

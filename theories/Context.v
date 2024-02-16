@@ -75,10 +75,12 @@ Inductive CtxSubst (x : string) (y : string) : context -> context -> Prop :=
     CtxSubst x y g g' ->
     CtxSubst x y (CtxSemic d g) (CtxSemic d g').
 
+(* TODO: will *)
 Theorem ctx_subst_exists : forall x y g, fv g y -> exists g', CtxSubst x y g g'.
 Proof.
 Admitted.
   
+(* TODO: will *)
 Theorem ctx_subst_det : forall x y g g' g'',
   WFContext g ->
   CtxSubst x y g g' ->
@@ -87,3 +89,9 @@ Theorem ctx_subst_det : forall x y g g' g'',
 Proof.
 Admitted.
 
+(* TODO: will *)
+Theorem ctx_subst_found_fv : forall x y g g',
+  CtxSubst x y g g' ->
+  fv g y.
+Proof.
+Admitted.
