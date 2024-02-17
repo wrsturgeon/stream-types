@@ -255,6 +255,14 @@ hauto l: on use: wf_fill.
 Qed.
 Hint Resolve wf_fill_reflect : core.
 
+Theorem wf_fill_reflect' : forall h d hd,
+  Fill h d hd ->
+  WFContext hd -> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
+Proof.
+best use:wf_fill_reflect.
+Qed.
+Hint Resolve wf_fill_reflect : core.
+
 Lemma set_minus_fill_cancel : forall G z r,
   ~fv G z ->
   SetEq
@@ -521,4 +529,16 @@ Theorem hole_subst_no_found_fv : forall z h' h x y,
 Proof.
 intros. generalize dependent z.
 induction H;sfirstorder use:ctx_subst_no_found_fv.
+Qed.
+
+Theorem hole_subst_not_in_fill : forall y d h x h' hd,
+  Fill h d hd ->
+  WFContext hd ->
+  HoleSubst x y h h' ->
+  ~fv d y.
+Proof.
+  intros.
+  intro.
+  edestruct wf_fill_reflect' as [A [B C]]; eauto.
+  hauto lq: on use:hole_subst_found_fv.
 Qed.
