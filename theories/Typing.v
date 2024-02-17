@@ -216,32 +216,7 @@ sfirstorder use:typing_fix_subst_mut.
 Qed.
 
 
-(* Theorem typing_sub_inert_mut :
-  (forall g rs e s i, Typed g rs e s i -> Typed g (jumpify rs) e s Jumpy)
-  /\
-  (forall g rs e g' i, ArgsTyped g rs e g' i -> ArgsTyped g (jumpify rs) e g' Jumpy)
-.
-Proof.
-  apply Typed_mutual; intros.
-  - ecrush.
-  - sfirstorder.
-  - sblast.
-  - sfirstorder.
-  - hauto l: on.
-  - sauto lq: on.
-  - sfirstorder.
-  - econstructor. eauto. 
-  - sfirstorder.
-  - best.
-  - econstructor; eauto. scongruence.
-  - eapply TRec.
-Admitted. *)
 
-(* TODO:
-Theorem typed_wf_term : forall G x T,
-  G |- x \in T ->
-  WFTerm (fv G) x.
-*)
 
 Theorem fv_hole_minus : forall GD,
   WFContext GD ->
@@ -312,7 +287,12 @@ Proof.
    cbn in He'. destruct He'. { contradiction Hx. } assumption.
  - sfirstorder.
  - sfirstorder.
- - admit. (* last remaining case *)
+ - repeat destruct H1.
+   + hauto q: on use:fv_context_derivative,fv_fill.
+   + eapply (fv_context_derivative eta Gz). eauto. eapply fv_fill. eauto. right.
+     eapply H in H1. qauto use:fv_fill.
+   + eapply (fv_context_derivative eta Gz). eauto. eapply fv_fill. eauto. right.
+     eapply H0 in H1. qauto use:fv_fill.
  - sfirstorder.
  - sfirstorder.
  - sfirstorder.
@@ -326,52 +306,8 @@ Proof.
  - sfirstorder.
  - sfirstorder.
  - sfirstorder.
-Admitted.
+Qed.
 
-(* Theorem typing_fv' : forall G e s i,
-  Typed G e s i ->
-  forall x,
-  fv e x ->
-  fv G x.
-Proof.
-  intros G e s i Ht x Hfv. generalize dependent x. (* just for naming *)
-  induction Ht; try rename x into x' (* hands off my `x`! *); intros x H'; cbn in *.
-  - destruct H'; [apply IHHt1 | apply IHHt2]; assumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
-    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
-    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
-  - destruct H'; [left; apply IHHt1 | right; apply IHHt2]; assumption.
-  - eapply fv_fill. { eassumption. } cbn. destruct H' as [| [[H2' H3'] H4]]; [left | right]. { assumption. }
-    specialize (IHHt _ H2'). eapply fv_fill in IHHt; [| eassumption].
-    cbn in IHHt. destruct IHHt; [| assumption]. destruct H5; contradiction H5.
-  - destruct H' as [].
-  - destruct H' as [].
-  - eapply fv_fill. { eassumption. } cbn. left. assumption.
-  - (*eapply subcontext_fv_subset; [| apply IHHt]; eassumption.*) admit.
-  - admit.
-  (* - eapply fv_fill. { eassumption. } cbn. destruct H' as [H' | [H' H'']]; [left | right]. { apply IHHt1. assumption. }
-    specialize (IHHt2 _ H'). eapply fv_fill in IHHt2; [| eassumption].
-    cbn in IHHt2. destruct IHHt2. { contradiction. } assumption. *)
-  - apply IHHt. assumption.
-  - (*apply IHHt. assumption. *) admit.
-  - admit. (*apply fv_context_derivative in H5. apply H5. clear Gz' H5. eapply fv_fill; [eassumption |]. cbn.
-    destruct H'. { left. assumption. } destruct H5 as [[Hfv Hx'x] | [Hfv Hyx]]. {
-      apply IHHt1 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption. }
-    apply IHHt2 in Hfv. eapply fv_fill in Hfv; [| eassumption]. destruct Hfv. { tauto. } right. assumption.*)
-Admitted. *)
-
-
-
-(* Theorem argstyping_fv' : forall g e g',
-  ArgsTyped g e g' ->
-  forall x,
-  fv e x ->
-  fv g x.
-Proof.
-  intros.
-  generalize dependent x.
-  induction H; hauto l:on use:typing_fv'.
-Qed. *)
 
 Theorem typing_fv : forall G e s i rs o,
   Typed o G rs e s i ->
@@ -668,57 +604,5 @@ Theorem typing_subst' : forall G G' e x y t i rs o,
   CtxSubst x y G G' ->
   Typed o G' rs (subst_var e x y) t i.
 Proof.
-intros.
-  generalize dependent G'.
-  generalize dependent y.
-  generalize dependent x.
-  generalize dependent H0.
-  induction H; intros.
-  - cbn. econstructor. best. best. best.
-  - admit.
-  - cbn. sinvert H6.
-    + econstructor. sauto. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq:on. admit. (*true*) best. best. } sfirstorder.
-    + sinvert H2. econstructor. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. { admit. (* true *) } best. best. } sfirstorder. best.
-  - admit.
-  - best.
-  - best.
-  - cbn.
-    assert (x = y \/ x <> y) by admit.
-    destruct H5.
-    + rewrite -> H5 in *.
-      assert (eqb y y = true) by best use:eqb_refl.
-      rewrite -> H6 in *. econstructor; eapply ctx_subst_fill_transport; eauto. 
-    + assert (eqb x y = false) by best use:eqb_neq. rewrite -> H6 in *.
-      edestruct ctx_subst_fill_other_hole as [h']; eauto.
-  - edestruct (ctx_subst_fill_arb G D) as [[G'0 [U [V W]]] | [D' [U V]]]; eauto.
-    + cbn.
-      assert (fv G y) by best use:hole_subst_found_fv.
-      assert (~ fv D x0) by best use:fv_fill.
-      assert (~ fv e y). { assert (~ fv D y). admit. (* GD is wf *) hauto q:on use:typing_fv. }
-      assert (Typed o D rs (subst_var e x0 y) s Inert). eapply typing_subst_nop. eauto. hauto l: on use:wf_ctx_fill. eauto. eauto. best. best.
-      edestruct (W (CtxHasTy x s)) as [G'0x [L M]]. eauto.
-      assert (Typed o G'0x rs (subst_var e' x0 y) t i). eapply IHTyped2. { admit.  (* true *) } admit. (* true *) best. best. best.
-      eapply (TLet G'0 D). { eapply hole_subst_no_found_fv; sfirstorder. } best. eauto. eauto. sfirstorder. sfirstorder.
-    + cbn. 
-      assert (Typed o D' rs (subst_var e x0 y) s Inert). { eapply IHTyped1. best use:wf_fill_reflect. best use:fv_fill. best. sfirstorder. sfirstorder. }
-      assert (Typed o Gxs rs (subst_var e' x0 y) t i). { eapply typing_subst_nop. eauto. admit. (*true*) admit. (* true *) admit. (* true, since y was in D, not G (so not e', because x is not y) *) best. best. }
-      eapply (TLet G D'); [eauto | eapply ctx_subst_no_found_fv;sfirstorder | eauto | eauto | eauto | eauto].
-  - best.
-  - best.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - best.
-  - edestruct (fill_derivative eta G (CtxHasTy z s)) as [G'0 [d_d [A [B [C D]]]]]; eauto.
-    sinvert A.
-    edestruct (ctx_subst_fill_arb G'0 (CtxHasTy z s')) as [[G'00 [U [V W]]] | [D' [U V]]]. eauto. eauto.
-    + admit.
-    + sinvert U.
-      cbn.
-      assert (H00 : eqb z z = true) by best use:eqb_refl. rewrite -> H00 in *.
-      eapply (TWait).
-      econstructor.
-Admitted.
+best use:typing_subst.
+Qed.
