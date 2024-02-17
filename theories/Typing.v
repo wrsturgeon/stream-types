@@ -439,61 +439,6 @@ Proof.
     assert (H00 : ts = app nil ts) by scongruence. rewrite -> H00.
     hauto lq: on rew: off use: typing_histval_subst.
 Qed.
-(* 
-Theorem typing_subst_nop : forall G e x y t i rs o,
-  Typed o G rs e t i ->
-  WFContext G ->
-  ~ fv G x ->
-  ~ fv e y ->
-  ~ bv_term e x ->
-  ~ bv_term e y ->
-  Typed o G rs (subst_var e x y) t i.
-Proof.
-  intros.
-  generalize dependent y.
-  generalize dependent x.
-  generalize dependent H0.
-  induction H; intros; cbn.
-  - econstructor. best. best. best.
-  - assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00. econstructor. sfirstorder. sfirstorder. scongruence. sfirstorder. sfirstorder. sfirstorder. sfirstorder. eapply IHTyped.  { admit. (* true *) } { admit. (* true *) } best. best. best.
-  - econstructor. best. best. best.
-  - assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00. admit.
-  - best.
-  - best.
-  - assert (H00 : eqb x y = false) by best use:eqb_neq. rewrite -> H00. sfirstorder.
-  - admit.
-  - best.
-  - best.
-   (* need at least x0 not in fv G for envs. *)
-  - assert (~fv_ctx Gz x0) by best use: fv_context_derivative.
-    assert (z <> x0) by best use:fv_fill.
-    assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00.
-    econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. best use:bv_var_subst. best use:bv_var_subst. best use:bv_var_subst. best use:bv_var_subst. sfirstorder. sfirstorder. sfirstorder.
-    { eapply env_subst_var_nop; [|eauto]. hauto q:on use:fv_context_derivative. } eauto.
-    { eapply context_derivative_subst_var_nop; eauto. }
-    admit.
-    admit.
-    { intro. unfold env_subst_var. assert (H01 : eqb z x0 = false) by best use: eqb_neq. rewrite -> H01 in *. eauto. }
-  - best.
-  - best.
-  - admit.
-  - admit.
-  - admit.
-  - best.
-  - admit.
-  - eapply TSubCtx. eauto. eapply IHTyped. best use:subtcontext_wf. best use:subcontext_fv_subset. best. best. best.
-Admitted.
-
-(* TODO: tie the knot with the above theorem. *)
-Theorem argstyping_subst_nop : forall G e x y t i rs o,
-  ArgsTyped o G rs e t i ->
-  WFContext G ->
-  ~ fv G x ->
-  ~ fv e y ->
-  ~ bv_argsterm e x ->
-  ~ bv_argsterm e y ->
-  ArgsTyped o G rs (subst_var_argsterm e x y) t i.
-Admitted. *)
 
 Theorem typing_subst :
   (forall o G rs e t i, Typed o G rs e t i ->
@@ -504,14 +449,6 @@ Theorem typing_subst :
       ~ bv_term e y ->
       (forall G', CtxSubst x y G G' -> Typed o G' rs (subst_var e x y) t i) /\ 
       (~fv e y -> Typed o G rs (subst_var e x y) t i)) /\
-(* Typed o G rs e t i ->
-  WFContext G ->
-  ~ fv G x ->
-  ~ fv e y ->
-  ~ bv_term e x ->
-  ~ bv_term e y ->
-  Typed o G rs (subst_var e x y) t i. fold hese together. one branch says (forall G', CtxSubst x y G G' -> ...,), the othe rsays  (~fv e y -> ...)
- *)
 
   (forall o G rs e G0 i, ArgsTyped o G rs e G0 i ->
     forall x y,
@@ -584,7 +521,7 @@ Proof.
   - edestruct (H x0 y). admit. admit. best. best.
     edestruct (H0 x0 y). admit. admit. best. best.
     admit.
-  (* edestruct (ctx_subst_fill_arb G D) as [[G'0 [U [V W]]] | [D' [U V]]]; eauto.
+  edestruct (ctx_subst_fill_arb G D) as [[G'0 [U [V W]]] | [D' [U V]]]; eauto.
     + cbn.
       assert (fv G y) by best use:hole_subst_found_fv.
       assert (~ fv D x0) by best use:fv_fill.
@@ -596,7 +533,7 @@ Proof.
     + cbn. 
       assert (Typed o D' rs (subst_var e x0 y) s Inert). { eapply H. best use:wf_fill_reflect. best use:fv_fill. best. sfirstorder. sfirstorder. }
       assert (Typed o Gxs rs (subst_var e' x0 y) t i). { eapply typing_subst_nop. eauto. admit. (*true*) admit. (* true *) admit. (* true, since y was in D, not G (so not e', because x is not y) *) best. best. }
-      eapply (TLet G D'); [eauto | eapply ctx_subst_no_found_fv;sfirstorder | eauto | eauto | eauto | eauto]. *)
+      eapply (TLet G D'); [eauto | eapply ctx_subst_no_found_fv;sfirstorder | eauto | eauto | eauto | eauto].
   - admit.
   - admit.
   - admit.

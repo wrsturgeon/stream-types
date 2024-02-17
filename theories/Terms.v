@@ -203,17 +203,19 @@ bv_argsterm e : set string :=
   | ATmSemic2 e2 => bv_argsterm e2
   end.
 
-(* TODO: will *)
-Theorem fv_histval_subst : forall v n e, SetEq (fv e) (fv (histval_subst v n e)).
+Theorem fv_histval_subst : (forall e, forall v n, (fv e) = (fv (histval_subst v n e))) /\ (forall e, forall v n, fv e = fv (histval_subst_args v n e)).
 Proof.
-Admitted.
+apply term_mutual; hauto q: on.
+Qed.
 
-(* TODO: will *)
-Theorem bv_histval_subst : forall v n e, SetEq (bv_term e) (bv_term (histval_subst v n e)).
+Theorem bv_histval_subst : (forall e, forall v n, (bv_term e) = (bv_term (histval_subst v n e))) /\ (forall e, forall v n, bv_argsterm e = bv_argsterm (histval_subst_args v n e)).
 Proof.
-Admitted.
+apply term_mutual; hauto q: on.
+Qed.
 
-(* TODO: will *)
-Theorem bv_fixsubst : forall g r e e', SetEq (bv_term e') (bv_term (fix_subst g r e e')).
+Theorem bv_fixsubst : 
+(forall e', forall g r e, (bv_term e') = (bv_term (fix_subst g r e e'))) /\
+(forall e', forall g r e, bv_argsterm e' = bv_argsterm (fix_subst_args g r e e')).
 Proof.
-Admitted.
+apply term_mutual; hauto q: on.
+Qed.

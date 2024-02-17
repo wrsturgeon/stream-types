@@ -85,15 +85,14 @@ induction g; intros.
 - sauto q: on.
 - sauto q: on.
 Qed.
-  
-(* TODO: will *)
-Theorem ctx_subst_det : forall x y g g' g'',
-  WFContext g ->
-  CtxSubst x y g g' ->
-  CtxSubst x y g g'' ->
-  g' = g''.
+
+Theorem ctx_subst_not_exists : forall y g,
+  ~fv g y ->
+  (forall x g', ~CtxSubst x y g g').
 Proof.
-Admitted.
+intros y g. generalize dependent y.
+induction g; sauto lq: on.
+Qed.
 
 Theorem ctx_subst_found_fv : forall x y g g',
   CtxSubst x y g g' ->
@@ -101,6 +100,35 @@ Theorem ctx_subst_found_fv : forall x y g g',
 Proof.
   intros.
   induction H; hauto lq: on.
+Qed.
+
+Theorem ctx_subst_det : forall x y g g' g'',
+  WFContext g ->
+  CtxSubst x y g g' ->
+  CtxSubst x y g g'' ->
+  g' = g''.
+Proof.
+  intros.
+  generalize dependent g''.
+  generalize dependent H.
+  induction H0; intros H; sinvert H; intros.
+  - best.
+  - sinvert H1;[sfirstorder|].
+    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
+    assert (~fv d y) by sfirstorder.
+    hauto q: on use:ctx_subst_not_exists.
+  - sinvert H1;[|sfirstorder].
+    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
+    assert (~fv d y) by sfirstorder.
+    hauto q: on use:ctx_subst_not_exists.
+  - sinvert H1;[sfirstorder|].
+    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
+    assert (~fv d y) by sfirstorder.
+    hauto q: on use:ctx_subst_not_exists.
+  - sinvert H1;[|sfirstorder].
+    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
+    assert (~fv d y) by sfirstorder.
+    hauto q: on use:ctx_subst_not_exists.
 Qed.
 
 Theorem ctx_subst_found_fv' : forall x y g g',
@@ -120,15 +148,3 @@ Proof.
 intros. generalize dependent z.
 induction H;sfirstorder.
 Qed.
-
-Theorem ctx_subst_wf : forall x y g g',
-  WFContext g ->
-  ~fv g x ->
-  CtxSubst x y g g' ->
-  WFContext g' /\ (SetEq (fv g') (set_minus (set_union (fv g) (singleton_set x)) (singleton_set y))).
-Proof.
-  intros.
-  generalize dependent H. generalize dependent H0.
-  induction H1; intros.
-Admitted.
-
