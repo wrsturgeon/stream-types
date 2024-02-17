@@ -27,16 +27,16 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
   | SParR : forall n e1 e1' e2 e2' p1 p2,
       Step n e1 e1' p1 ->
       Step n e2 e2' p2 ->
-      Step n (e1, e2) (e1', e2') (PfxParPair p1 p2)
+      Step n (TmComma e1 e2) (TmComma e1' e2') (PfxParPair p1 p2)
   | SCatR1 : forall n e1 e1' e2 p,
       Step n e1 e1' p ->
       ~MaximalPrefix p ->
-      Step n (e1; e2) (e1'; e2) (PfxCatFst p)
+      Step n (TmSemic e1 e2) (TmSemic e1' e2) (PfxCatFst p)
   | SCatR2 : forall n e1 e1' e2 e2' p1 p2,
       Step n e1 e1' p1 ->
       MaximalPrefix p1 ->
       Step n e2 e2' p2 ->
-      Step n (e1; e2) e2' (PfxCatBoth p1 p2)
+      Step n (TmSemic e1 e2) e2' (PfxCatBoth p1 p2)
   | SParL : forall n x y z e e' p1 p2 p',
       n z = Some (PfxParPair p1 p2) ->
       Step (env_union n (env_union (singleton_env x p1) (singleton_env y p2))) e e' p' ->
@@ -78,7 +78,7 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
   | SCons1 : forall n e1 e1' e2 p,
       Step n e1 e1' p ->
       ~MaximalPrefix p ->
-      Step n (TmCons e1 e2) (e1'; e2) (PfxStarFirst p)
+      Step n (TmCons e1 e2) (TmSemic e1' e2) (PfxStarFirst p)
   | SCons2 : forall n e1 e1' e2 e2' p1 p2,
       Step n e1 e1' p1 ->
       MaximalPrefix p1 ->
@@ -191,7 +191,7 @@ apply Step_mutual; intros.
 - best.
 - best.
 - best.
-- cbn. cbn in H0. best use:bv_sinktm.
+- cbn. cbn in H0. hauto q: on use:bv_sinktm, bv_var_subst.
 - best.
 - best.
 - best.

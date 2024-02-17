@@ -126,7 +126,7 @@ Hint Constructors term : core.
 
 Declare Scope term_scope.
 Bind Scope term_scope with term.
-Notation "'sink'" := TmSink : term_scope.
+(* Notation "'sink'" := TmSink : term_scope.
 Notation "'unit'" := TmUnit : term_scope.
 (* Notation "`id`" := (TmVar id) : term_scope. *)
 Notation "'(' lhs ',' rhs ')'" := (TmComma lhs rhs) : term_scope.
@@ -134,7 +134,7 @@ Notation "'(' lhs ';' rhs ')'" := (TmSemic lhs rhs) : term_scope.
 Notation "'let' x '=' bound 'in' body" :=
   (TmLet x bound body) (at level 97, right associativity) : term_scope.
 Notation "'let' '(' lhs ',' rhs ')' '=' both 'in' body" :=
-  (TmLetPar lhs rhs both body) (at level 97, right associativity) : term_scope.
+  (TmLetPar lhs rhs both body) (at level 97, right associativity) : term_scope. *)
 
 (* Scheme Equality for term.
 Theorem eqb_spec_term : forall a b : term, Bool.reflect (a = b) (term_beq a b).
@@ -184,7 +184,7 @@ Fixpoint bv_term e : set string :=
   | TmVar x => empty_set
   | TmComma e1 e2 | TmSemic e1 e2 | TmCons e1 e2 => set_union (bv_term e1) (bv_term e2)
   | TmLetPar x y z e | TmLetCat _ x y z e => set_union (bv_term e) (set_union (singleton_set x) (singleton_set y))
-  | TmLet x e e' => set_union (bv_term e) (singleton_set x)
+  | TmLet x e e' => set_union (set_union (bv_term e) (bv_term e')) (singleton_set x)
   | TmInl e | TmInr e => bv_term e
   | TmPlusCase _ _ z x e1 y e2 => set_union (set_union (bv_term e1) (singleton_set x)) (set_union (bv_term e2) (singleton_set y))
   | TmStarCase _ _ z e1 x xs e2 => (set_union (bv_term e1) (set_union (bv_term e2) (set_union (singleton_set x) (singleton_set xs))))

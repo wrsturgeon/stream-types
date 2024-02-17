@@ -27,15 +27,14 @@ Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
   | TmSemic lhs rhs =>
       TmSemic (subst_var lhs x y) (subst_var rhs x y)
   | TmLet x' e e' =>
-      TmLet x' (if eqb y x' then e else subst_var e x y) (subst_var e' x y)
+      TmLet x' (subst_var e x y) (subst_var e' x y)
   | TmLetPar lhs rhs bound body =>
       let subst_bound := subst_str x y bound in
-      let subst_body := if (eqb x lhs || eqb x rhs)%bool then body else subst_var body x y in
-      TmLetPar lhs rhs subst_bound body
+      TmLetPar lhs rhs subst_bound (subst_var body x y)
   | TmLetCat t lhs rhs bound body =>
       let subst_bound := subst_str x y bound in
-      let subst_body := if (eqb x lhs || eqb x rhs)%bool then body else subst_var body x y in
-      TmLetCat t lhs rhs subst_bound body
+      (* let subst_body := if (eqb x lhs || eqb x rhs)%bool then body else subst_var body x y in *)
+      TmLetCat t lhs rhs subst_bound (subst_var body x y)
   | TmInl e =>
       TmInl (subst_var e x y)
   | TmInr e =>
@@ -96,11 +95,6 @@ Proof.
   - best.
 Qed.
 
-
-Lemma no_explosions_please : forall e x y x' e',
-  subst_var (TmLet x' e e') x y =
-  TmLet x' (if eqb y x' then e else subst_var e x y) (subst_var e' x y).
-Proof. reflexivity. Qed.
 
 (* NOTE: Had to add non-equality of x & y and make it a bi-implication
 (* TODO: This still doesn't seem to work. Try `subst_var e x y = e <-> (x = y \/ ~fv e y)` *)

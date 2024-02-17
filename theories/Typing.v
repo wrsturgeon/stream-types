@@ -1,8 +1,7 @@
 From Coq Require Import
   Program.Equality
   List
-  (* String. *)
-.
+  String.
 From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
@@ -31,7 +30,7 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o G rs e1 s i1 ->
       Typed o G rs e2 t i2 ->
       i_ub i1 i2 i3 ->
-      Typed o G rs (e1, e2) (TyPar s t) i3
+      Typed o G rs (TmComma e1 e2) (TyPar s t) i3
   | TParL : forall G x y z s t e r Gxsyt Gzst i rs o,
       x <> y ->
       ~fv G x ->
@@ -44,12 +43,13 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o G rs e1 s i1 ->
       Typed o D rs e2 t i2 ->
       inert_guard (i1 = Inert /\ ~(Nullable s)) i3 ->
-      Typed o (CtxSemic G D) rs (e1; e2) (TyDot s t) i3
+      Typed o (CtxSemic G D) rs (TmSemic e1 e2) (TyDot s t) i3
   | TCatL : forall G x y z s t e r Gxsyt Gzst i rs o,
       x <> z -> 
       y <> z -> 
       x <> y ->
       ~ bv_term e z ->
+      ~ bv_term e y ->
       ~fv G x ->
       ~fv G y ->
       Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy y t)) Gxsyt ->
@@ -179,7 +179,7 @@ intros.
   - econstructor. { eapply H; eauto. } { eapply H0; eauto. } hauto l: on.
   - hauto l: on.
   - hecrush.
-  - econstructor. best. best. best. best use:bv_fixsubst. best. best. best. best. best.
+  - econstructor. best. best. best. best use:bv_fixsubst. best use:bv_fixsubst. best. best. best. best. best.
   - sfirstorder.
   - sfirstorder.
   - sfirstorder.
@@ -454,14 +454,14 @@ Proof.
 Admitted. *)
 
 Theorem typing_histval_subst : 
-  (forall o g rs e s i, Typed o g rs e s i -> forall ts t ts' v n, o = app ts (cons t ts') -> length ts = n -> HistValTyped v t -> Typed (app ts ts') g rs (histval_subst v n e) s i) /\ 
-  (forall o g rs args g' i, ArgsTyped o g rs args g' i -> forall ts t ts' v n, o = app ts (cons t ts') -> length ts = n -> HistValTyped v t -> ArgsTyped (app ts ts') g rs (histval_subst_args v n args) g' i).
+  (forall o g rs e s i, Typed o g rs e s i -> forall ts t ts' v n, o = app ts (cons t ts') -> Datatypes.length ts = n -> HistValTyped v t -> Typed (app ts ts') g rs (histval_subst v n e) s i) /\ 
+  (forall o g rs args g' i, ArgsTyped o g rs args g' i -> forall ts t ts' v n, o = app ts (cons t ts') -> Datatypes.length ts = n -> HistValTyped v t -> ArgsTyped (app ts ts') g rs (histval_subst_args v n args) g' i).
 Proof.
   apply Typed_mutual; intros.
   - cbn. econstructor. eauto. eauto. sfirstorder.
   - hauto drew: off.
   - sblast.
-  - econstructor. best. best. best. best use:bv_histval_subst. best. best. best. best. best.
+  - econstructor. best. best. best. best use:bv_histval_subst. best use:bv_histval_subst. best. best. best. best. best.
   - hauto drew: off.
   - hauto drew: off.
   - hauto drew: off.
@@ -506,17 +506,21 @@ Theorem typing_subst_nop : forall G e x y t i rs o,
   ~ fv G x ->
   ~ fv G y ->
   Typed o G rs (subst_var e x y) t i.
-Proof.
+Admitted.
+(* Proof.
   intros.
   generalize dependent y.
   generalize dependent x.
   generalize dependent H0.
   induction H; intros.
   - cbn. econstructor. best. best. best.
-  - cbn. econstructor. eauto. eauto. eauto. eauto. admit. best.
-  - cbn. econstructor. best. best. admit.
-  - cbn. econstructor. admit. admit.
-Admitted.
+  - assert (z <> y0) by best use:fv_fill. cbn. econstructor. best. best. best. best. admit. eapply IHTyped. 
+  - cbn. econstructor. best. best. best.
+  - assert (z <> y0) by best use:fv_fill. best use:eqb_neq.
+  - best.
+  - best.
+  - assert (x <> y) by best use:fv_fill. best use:eqb_neq.
+  - admit. *)
 
 
 Theorem typing_subst' : forall G G' e x y t i rs o,
@@ -534,11 +538,22 @@ intros.
   generalize dependent H0.
   induction H; intros.
   - cbn. econstructor. best. best. best.
-  - cbn. econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. { eapply ctx_subst_fill'; eauto. } best.
+  - admit.
   - cbn. sinvert H5.
     + econstructor. sauto lq: on rew: off. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. sauto use:ctx_subst_found_fv. } sfirstorder.
     + econstructor. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. sauto use:ctx_subst_found_fv. } sauto lq: on rew: off. sfirstorder.
-  - cbn. cbn in H10. econstructor. admit. admit. sfirstorder. { admit. (* both z and x0 are not bvs in e.*) } sfirstorder. sfirstorder. sfirstorder. eapply ctx_subst_fill'; eauto. best.
+  - admit.
   - best.
   - best.
+  - cbn.
+    assert (x = y \/ x <> y) by admit.
+    destruct H4.
+    + rewrite -> H4 in *.
+      assert (eqb y y = true) by best use:eqb_refl.
+      rewrite -> H5 in *. econstructor; eapply ctx_subst_fill_transport; eauto. 
+    + assert (eqb x y = false) by best use:eqb_neq. rewrite -> H5 in *.
+      edestruct ctx_subst_fill_other_hole as [h']; eauto.
+  - edestruct (ctx_subst_fill_arb G D) as [[G'0 [U V]] | [D' [U V]]]; eauto.
+    + admit.
+    + cbn. eapply (TLet G D'). eauto. eapply ctx_subst_no_found_fv;sfirstorder. { eapply IHTyped1. best use:wf_fill_reflect. best use:fv_fill. best. sfirstorder. } eauto. eauto. admit.
 Admitted.

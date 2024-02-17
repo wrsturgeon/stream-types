@@ -410,7 +410,34 @@ Proof.
 Qed.
 Hint Resolve hole_compose_fv_fn : core.
 
-Theorem ctx_subst_fill : forall G G1 G2 x y s,
+Inductive HoleSubst (x : string) (y : string) : hole -> hole -> Prop :=
+| HSCommaL1 : forall h h' g,
+    HoleSubst x y h h' ->
+    HoleSubst x y (HoleCommaL h g) (HoleCommaL h' g)
+| HSCommaL2 : forall h g g',
+    CtxSubst x y g g' ->
+    HoleSubst x y (HoleCommaL h g) (HoleCommaL h g')
+| HSCommaR1 : forall h h' g,
+    HoleSubst x y h h' ->
+    HoleSubst x y (HoleCommaR g h) (HoleCommaR g h')
+| HSCommaR2 : forall h g g',
+    CtxSubst x y g g' ->
+    HoleSubst x y (HoleCommaR g h) (HoleCommaR g' h)
+| HSSemicL1 : forall h h' g,
+    HoleSubst x y h h' ->
+    HoleSubst x y (HoleSemicL h g) (HoleSemicL h' g)
+| HSSemicL2 : forall h g g',
+    CtxSubst x y g g' ->
+    HoleSubst x y (HoleSemicL h g) (HoleSemicL h g')
+| HSSemicR1 : forall h h' g,
+    HoleSubst x y h h' ->
+    HoleSubst x y (HoleSemicR g h) (HoleSemicR g h')
+| HSSemicR2 : forall h g g',
+    CtxSubst x y g g' ->
+    HoleSubst x y (HoleSemicR g h) (HoleSemicR g' h)
+.
+
+Theorem ctx_subst_exists_fill_exact : forall G G1 G2 x y s,
   Fill G (CtxHasTy y s) G1 ->
   Fill G (CtxHasTy x s) G2 ->
   CtxSubst x y G1 G2.
@@ -419,21 +446,48 @@ intro G.
 induction G; intros; sauto q: on.
 Qed.
 
-(* TODO: will? *)
-Theorem ctx_subst_fill' : forall G G1 G2 x y z s,
-  WFContext G1 ->
+Theorem ctx_subst_fill_exists : forall G1 G2 x y,
   CtxSubst x y G1 G2 ->
-  Fill G (CtxHasTy z s) G1 ->
-  Fill G (CtxHasTy (if String.eqb z y then x else z) s) G2.
+  exists G s,
+    Fill G (CtxHasTy y s) G1 /\
+    Fill G (CtxHasTy x s) G2.
 Proof.
-intros.
-generalize dependent z.
-generalize dependent s.
-generalize dependent G.
-generalize dependent H.
-induction H0; intros.
-- sauto lq: on.
-- sauto lq: on use:eqb_refl.
-- sinvert H1; sinvert H.
+  intros.
+  induction H; sauto lq: on.
+Qed.
+
+
+Theorem ctx_subst_fill_other_hole : forall G G' x x0 y s h,
+  Fill h (CtxHasTy x s) G ->
+  CtxSubst x0 y G G' ->
+  x <> y ->
+  exists h', Fill h' (CtxHasTy x s) G'.
+Proof.
 Admitted.
 
+Theorem ctx_subst_fill_arb : forall G D GD G0 x y,
+  Fill G D GD ->
+  CtxSubst x y GD G0 ->
+  (exists G', HoleSubst x y G G' /\ Fill G' D G0) \/
+  (exists D', CtxSubst x y D D' /\ Fill G D' G0).
+Proof.
+  intros.
+  generalize dependent G0.
+  generalize dependent x.
+  generalize dependent y.
+  induction H; intros.
+  - sfirstorder.
+  - sinvert H0; sauto lq: on.
+  - sinvert H0; sauto lq: on.
+  - sinvert H0; sauto lq: on.
+  - sinvert H0; sauto lq: on.
+Qed.
+
+(* TODO: will? *)
+Theorem ctx_subst_fill_transport : forall G G1 G2 x y s,
+  WFContext G1 ->
+  CtxSubst x y G1 G2 ->
+  Fill G (CtxHasTy y s) G1 ->
+  Fill G (CtxHasTy x s) G2.
+Proof.
+Admitted.

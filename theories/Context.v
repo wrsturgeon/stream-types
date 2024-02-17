@@ -1,3 +1,4 @@
+From Hammer Require Import Tactics.
 From QuickChick Require Import QuickChick.
 From LambdaST Require Import
   Sets
@@ -60,7 +61,6 @@ Inductive WFContext : context -> Prop :=
 Hint Constructors WFContext : core.
 
 Inductive CtxSubst (x : string) (y : string) : context -> context -> Prop :=
-| CSEmp : CtxSubst x y CtxEmpty CtxEmpty
 | CSSng : forall s, CtxSubst x y (CtxHasTy y s) (CtxHasTy x s)
 | CSComma1 : forall g g' d,
     CtxSubst x y g g' ->
@@ -95,3 +95,25 @@ Theorem ctx_subst_found_fv : forall x y g g',
   fv g y.
 Proof.
 Admitted.
+
+Theorem ctx_subst_no_found_fv : forall z g' g x y,
+  CtxSubst x y g g' ->
+  ~fv g z ->
+  z <> x ->
+  ~fv g' z.
+Proof.
+intros. generalize dependent z.
+induction H;sfirstorder.
+Qed.
+
+Theorem ctx_subst_wf : forall x y g g',
+  WFContext g ->
+  ~fv g x ->
+  CtxSubst x y g g' ->
+  WFContext g' /\ (SetEq (fv g') (set_minus (set_union (fv g) (singleton_set x)) (singleton_set y))).
+Proof.
+  intros.
+  generalize dependent H. generalize dependent H0.
+  induction H1; intros.
+Admitted.
+

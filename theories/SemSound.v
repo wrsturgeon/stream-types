@@ -234,15 +234,15 @@ Proof.
   - assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped1; eauto.
     assert (DisjointSets (dom (singleton_env x p)) (dom (singleton_env y (emp t)))). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_singleton in H00. eapply dom_singleton in H01. scongruence. }
-    assert (DisjointSets (dom (env_union (singleton_env x p) (singleton_env y (emp t)))) (fv G)). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_union in H00. destruct H00; eapply dom_singleton in H11; scongruence. }
+    assert (DisjointSets (dom (env_union (singleton_env x p) (singleton_env y (emp t)))) (fv G)). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_union in H00. destruct H00; eapply dom_singleton in H12; scongruence. }
     split; try split.
     + sfirstorder.
     + intros. edestruct (fill_derivative n) as [G' [dzst [A' [B' [C' D']]]]];[|eauto|]. eauto.
       sinvert A'. 
       destruct (ltac:(scongruence) : PfxCatFst p = p0).
-      sinvert H20.
+      sinvert H21.
       edestruct (D' (CtxSemic (CtxHasTy x s0) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'1) (CtxHasTy y t)) Gxsyt (env_union (singleton_env x p) (singleton_env y (emp t)))) as [G'xs'1yt [U V]]. eauto. { eapply no_conflict_on_disjoint. hauto l: on. } { eapply context_derivative_semic; [eauto| |]; eapply context_derivative_sng. eauto. hauto l:on use:derivative_emp. }
-      econstructor; [ eauto | eauto | eauto | eauto | | | eauto | | ]. best use:step_bv. hauto q: on use:fv_hole_derivative. hauto q: on use:fv_hole_derivative. eauto.
+      econstructor; [ eauto | eauto | eauto | eauto | eauto | | | eauto | | ]. best use:step_bv. best use:step_bv. hauto q: on use:fv_hole_derivative. hauto q: on use:fv_hole_derivative. eauto.
       hauto l: on.
     + eapply preserves_cat_1; eauto.
   (* cat-l-2 *)
@@ -253,11 +253,11 @@ Proof.
     + intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]]; eauto.
       sinvert A'.
       destruct (ltac:(scongruence) : (PfxCatBoth p1 p2) = p).
-      sinvert H20.
+      sinvert H21.
       edestruct (derivative_fun p1 s0) as [s'']; eauto.
       assert (DisjointSets (dom (singleton_env x p1)) (dom (singleton_env y p2))). { eapply DisjointSets_inj. intros x0 H00. intro H01. eapply dom_singleton in H00. eapply dom_singleton in H01. scongruence. }
       specialize (D' (CtxSemic (CtxHasTy x s0) (CtxHasTy y t)) (CtxSemic (CtxHasTy x s'') (CtxHasTy y s'0)) Gxsyt (env_union (singleton_env x p1) (singleton_env y p2))).
-      edestruct D' as [u [A'' B'']]. eauto. { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H17; scongruence. } eapply context_derivative_semic; [eauto | | ]; eapply context_derivative_sng; eauto.
+      edestruct D' as [u [A'' B'']]. eauto. { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H18; scongruence. } eapply context_derivative_semic; [eauto | | ]; eapply context_derivative_sng; eauto.
       specialize (B u s').
       edestruct (fill_reflect_fun G' (CtxSemic CtxEmpty (CtxHasTy z s'0))) as [g''].
       eapply (TSubCtx g' g''); [ eapply (SubCong G'); eauto |].
@@ -270,7 +270,7 @@ Proof.
         sfirstorder use:sink_tm_typing.
         { eapply hole_compose_fill. eauto. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split. hauto l:on. hauto l: on use:reflect_fill. }
         { eapply hole_compose_fill. eapply reflect_hole_compose; eauto. exists (CtxSemic CtxEmpty (CtxHasTy z s'0)). split. hauto l:on. scongruence use:reflect_fill. }
-        eapply typing_subst'. eauto. admit. admit. { intro. eapply step_bv in H21; [|eauto]. best. } { admit. (* true!*) }
+        eapply typing_subst'. eauto. { admit. (* true *) } { admit. (*true*) } { intro H00. eapply step_bv in H00;[|eauto]. best. } { admit. (* true!*) }
     + eapply preserves_cat_2; eauto.
   (* Let *)
   - 
