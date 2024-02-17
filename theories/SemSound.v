@@ -117,7 +117,7 @@ split.
   intro. intros.
   cbn in H00'.
   unfold PropOnItem in *.
-  assert (H02 : x = x0 \/ y = x0 \/ (~(x = x0 \/ y = x0))) by admit.
+  assert (H02 : x = x0 \/ y = x0 \/ (x <> x0 /\ y <> x0)). { edestruct (string_dec x x0); edestruct (string_dec y x0); sfirstorder. }
   destruct H02 as [A | [B | C]].
   + rewrite <- A in *. exists p. hauto drew: off use:eqb_neq,eqb_eq.
   + rewrite <- B in *. exists (emp t). hauto q: on use:eqb_neq,eqb_eq,emp_empty.
@@ -208,8 +208,7 @@ Proof.
       assert (Nullable s1) by best use:empty_and_maximal_means_nullable.
       best. *)
   (* Par-L *)
-  - admit.
-    (* assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s0 t)) by hauto l: on use: maps_to_has_type_reflect.
+  - assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s0 t)) by hauto l: on use: maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]].
     + sfirstorder.
     + eassumption.
@@ -228,9 +227,8 @@ Proof.
         -- eapply context_derivative_comma; try (eapply context_derivative_sng; eassumption).
            intro test. cbn. destruct (eqb_spec x test); destruct (eqb_spec y test); sfirstorder.
         -- econstructor; [eauto | eauto | eauto | | | eauto | eauto |]. hauto q:on drew:off use:fv_hole_derivative. hauto q:on drew:off use:fv_hole_derivative. eapply B; eauto.
-      * intros. eapply C. admit.
-      * intros H00 H01. admit.
-      *)
+      * hauto q: on drew: off use:preserves_par.
+      * hauto lq: on rew: off use:preserves_par.
   (* cat-l-1 *)
   - admit.
     (* assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
@@ -249,8 +247,7 @@ Proof.
     + eapply preserves_cat_1; eauto.
     *)
   (* cat-l-2 *)
-  - admit.
-    (* assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
+  - assert (H00 : PrefixTyped (PfxCatBoth p1 p2) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped2; eauto.
     split; try split.
     + sfirstorder.
@@ -268,15 +265,16 @@ Proof.
       remember (hole_compose G' (HoleSemicL HoleHere (CtxHasTy z s'0))).
       assert (DisjointSets (fv G) (singleton_set z)). { edestruct (wf_fill_reflect G); eauto. hauto l: on. }
       assert (HoleCompose G' (HoleSemicL HoleHere (CtxHasTy z s'0)) h) by best use:reflect_hole_compose.
-      eapply (TLet h CtxEmpty (fill G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)))).
-        { intro H00. eapply hole_compose_fv in H00;[|eauto]. edestruct H00. hauto q:on use:fv_hole_derivative. sfirstorder. }
+      assert (H00 : ~fv Gxsyt z). { intro. destruct (fv_fill' G (CtxSemic (CtxHasTy x s0) (CtxHasTy y t)) Gxsyt (ltac:(auto)) z). assert (H01 : fv G z \/ x = z \/ y = z) by sfirstorder. edestruct H01 as [ | [ | ]];[|sfirstorder|sfirstorder]. sfirstorder use:wf_fill_reflect. }
+      edestruct (fill_reflect_fun G' (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0))) as [Gxz].
+      eapply (TLet h CtxEmpty Gxz).
+        { intro H01. eapply hole_compose_fv in H01;[|eauto]. edestruct H01. hauto q:on use:fv_hole_derivative. sfirstorder. }
         sfirstorder.
         sfirstorder use:sink_tm_typing.
         { eapply hole_compose_fill. eauto. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split. hauto l:on. hauto l: on use:reflect_fill. }
         { eapply hole_compose_fill. eapply reflect_hole_compose; eauto. exists (CtxSemic CtxEmpty (CtxHasTy z s'0)). split. hauto l:on. scongruence use:reflect_fill. }
-        eapply typing_subst'. eauto. { admit. (* true *) } { admit. (*true*) } { intro H00. eapply step_bv in H00;[|eauto]. best. } { intro H00. eapply step_bv in H00;[|eauto]. scongruence. } { admit. (* true!*) }
+        eapply typing_subst'. eauto. { eapply context_derivative_wf;[|eauto]. eapply wf_ctx_fill. eauto. hauto l:on use:wf_fill_reflect. { econstructor; [hauto l:on|hauto l:on|sfirstorder]. } eapply DisjointSets_inj'. sfirstorder. } { intro. eapply H00. hauto drew: off use:fv_context_derivative. } { intro H01. eapply step_bv in H01;[|eauto]. best. } { intro H01. eapply step_bv in H01;[|eauto]. scongruence. } { eapply ctx_subst_same_hole;[|eauto|eauto]. sauto l: on. }
     + eapply preserves_cat_2; eauto.
-    *)
   (* Let *)
   - admit.
     (* edestruct H as [A [B [U V]]]; [eauto | eauto | eauto | eauto | ].
