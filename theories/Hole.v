@@ -482,14 +482,14 @@ Theorem ctx_subst_fill_arb : forall G D GD G0 x y,
   Fill G D GD ->
   CtxSubst x y GD G0 ->
   (exists G', HoleSubst x y G G' /\ Fill G' D G0 /\ (forall D' GD', Fill G D' GD' -> exists G'D', Fill G' D' G'D' /\ CtxSubst x y GD' G'D')) \/
-  (exists D', CtxSubst x y D D' /\ Fill G D' G0).
+  (exists D', CtxSubst x y D D' /\ Fill G D' G0 /\ (forall D0 D0' GD0, CtxSubst x y D0 D0' -> Fill G D0 GD0 -> exists GD0', Fill G D0' GD0' /\ CtxSubst x y GD0 GD0')).
 Proof.
   intros.
   generalize dependent G0.
   generalize dependent x.
   generalize dependent y.
   induction H; intros.
-  - sfirstorder.
+  - best.
   - sinvert H0; sauto lq: on.
   - sinvert H0; sauto lq: on.
   - sinvert H0; sauto lq: on.

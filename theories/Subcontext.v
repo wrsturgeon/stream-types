@@ -144,3 +144,41 @@ dependent induction H; intros.
 - sinvert H1. sinvert H6. destruct (ltac:(best use:context_derivative_det) : G' = g1'). sfirstorder.
 - sinvert H1. sinvert H4. destruct (ltac:(best use:context_derivative_det) : D' = g1'). sfirstorder.
 Qed.
+
+Theorem subcontext_ctxsubst : forall G G' G0 x y,
+  WFContext G ->
+  Subcontext G G' ->
+  CtxSubst x y G G0 ->
+  (exists G'0, CtxSubst x y G' G'0 /\ Subcontext G0 G'0) \/ (Subcontext G0 G' /\ ~fv G' y).
+intros.
+  generalize dependent G0.
+  generalize dependent H.
+  dependent induction H0; intros.
+  - edestruct (ctx_subst_fill_arb g d) as [[G' [A [B C]]] | [d'' [A [B C]]]]. eauto. eauto.
+    + edestruct (C d' gd') as [g'd' [U V]]; eauto.
+    + edestruct IHSubcontext as [[d'0 [A' B']] | [A' B']]. best use:wf_fill. eauto.
+      * edestruct (C d') as [gd'0 [U V]]; eauto. 
+      *  right. split. { eapply SubCong. eauto. eauto. eauto. } { intro. eapply B'. assert (H00 : fv g y \/ fv d' y) by sfirstorder use: (fv_fill' g). edestruct H00;[|sfirstorder]. assert (fv d y) by sfirstorder use:ctx_subst_found_fv. assert (~fv g y) by qauto l: on use:wf_fill_reflect'. sfirstorder. }
+  - best.
+  - sinvert H1. best.
+  - sinvert H.
+    sinvert H1.
+    + left. best.
+    + best.
+  - sinvert H. sinvert H1.
+    + left. best.
+    + right. split. best. hauto q: on use:ctx_subst_found_fv.
+  - sinvert H; sinvert H1.
+    + left. best.
+    + right. split. best. hauto q: on use:ctx_subst_found_fv.
+  - sinvert H. sinvert H1.
+    + right. hauto l: on use:ctx_subst_found_fv.
+    + left. sfirstorder.
+  - best.
+  - best.
+  - best.
+Qed.
+
+  (* G <= G'
+  ->
+  G[x/y] <: G'[x/y] *)

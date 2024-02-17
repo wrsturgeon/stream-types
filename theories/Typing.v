@@ -347,52 +347,6 @@ dependent induction Ht; sinvert Hm; cbn; intros o rs g s' Hd.
 - sauto lq: on.
 Qed.
 
-(* 
-Todo: will: PRIORITY.
-Theorem typing_subst : forall h e x y s t i gx gy rs o,
-  Typed o gx rs e t i ->
-  WFContext gx ->
-  ~ fv h y ->
-  Fill h (CtxHasTy x s) gx ->
-  Fill h (CtxHasTy y s) gy ->
-  Typed o gy rs (subst_var e y x) t i.
-Proof.
-  intros h e x y s t i gx gy rs o Ht Hw Hn Hx Hy.
-  generalize dependent gy.
-  generalize dependent s.
-  generalize dependent y.
-  generalize dependent x.
-  generalize dependent h.
-  generalize dependent Hw.
-  induction Ht; cbn in *; intros.
-  - econstructor; [eapply IHHt1 | eapply IHHt2 |]; eassumption.
-  - econstructor; try eassumption. assert (HwG := wf_ctx_hole _ Hw _ _ H3).
-    assert (Hwfc : WFContext (CtxComma (CtxHasTy x s) (CtxHasTy y t))). {
-      repeat constructor; intros Hf C; cbn in *; subst; apply H; reflexivity. }
-    assert (Hd : DisjointSets (fv G) (fv (CtxComma (CtxHasTy x s) (CtxHasTy y t)))). {
-      constructor; [intros Hf [] | intros [] Hf]; cbn in *; subst; contradiction Hf. }
-    eassert (HwGxsyt := wf_ctx_fill _ _ _ H2 HwG Hwfc Hd).
-    Search gy. admit.
-  - assert (subst_var (TmSemic e1 e2) y x = TmSemic (subst_var e1 y x) (subst_var e2 y x)) by best.
-    admit.
-  - admit.
-  - best.
-  - best.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - sfirstorder.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - best.
-  - admit.
-  - admit.
-Admitted. *)
-
 Theorem typing_histval_subst : 
   (forall o g rs e s i, Typed o g rs e s i -> forall ts t ts' v n, o = app ts (cons t ts') -> Datatypes.length ts = n -> HistValTyped v t -> Typed (app ts ts') g rs (histval_subst v n e) s i) /\ 
   (forall o g rs args g' i, ArgsTyped o g rs args g' i -> forall ts t ts' v n, o = app ts (cons t ts') -> Datatypes.length ts = n -> HistValTyped v t -> ArgsTyped (app ts ts') g rs (histval_subst_args v n args) g' i).
@@ -517,41 +471,52 @@ Proof.
       * assert (eqb x y = false) by best use:eqb_neq. rewrite -> H5 in *.
         edestruct ctx_subst_fill_other_hole as [h']; eauto.
     + destruct (ltac:(sfirstorder use:eqb_neq) : false = eqb x y). sfirstorder.
-    
-  - edestruct (H x0 y). admit. admit. best. best.
-    edestruct (H0 x0 y). admit. admit. best. best.
-    admit.
-  edestruct (ctx_subst_fill_arb G D) as [[G'0 [U [V W]]] | [D' [U V]]]; eauto.
-    + cbn.
-      assert (fv G y) by best use:hole_subst_found_fv.
-      assert (~ fv D x0) by best use:fv_fill.
-      assert (~ fv e y). { assert (~ fv D y). admit. (* GD is wf *) hauto q:on use:typing_fv. }
-      assert (Typed o D rs (subst_var e x0 y) s Inert). eapply typing_subst_nop. eauto. hauto l: on use:wf_ctx_fill. eauto. eauto. best. best.
-      edestruct (W (CtxHasTy x s)) as [G'0x [L M]]. eauto.
-      assert (Typed o G'0x rs (subst_var e' x0 y) t i). eapply H0. { admit.  (* true *) } admit. (* true *) best. best. best.
-      eapply (TLet G'0 D). { eapply hole_subst_no_found_fv; sfirstorder. } best. eauto. eauto. sfirstorder. sfirstorder.
-    + cbn. 
-      assert (Typed o D' rs (subst_var e x0 y) s Inert). { eapply H. best use:wf_fill_reflect. best use:fv_fill. best. sfirstorder. sfirstorder. }
-      assert (Typed o Gxs rs (subst_var e' x0 y) t i). { eapply typing_subst_nop. eauto. admit. (*true*) admit. (* true *) admit. (* true, since y was in D, not G (so not e', because x is not y) *) best. best. }
+  (* cut *)
+  - edestruct (H x0 y) as [A B]. admit. admit. best. best.
+    edestruct (H0 x0 y) as [A' B']. admit. admit. best. best.
+    split; intros.
+    + edestruct (ctx_subst_fill_arb G D) as [[G'0 [U [V W]]] | [D' [U V]]]. eauto. eauto.
+      * cbn.
+        edestruct (W (CtxHasTy x s)) as [G'0x [L M]]. eauto.
+        assert (Typed o D rs (subst_var e x0 y) s Inert). eapply B. admit.
+        assert (Typed o G'0x rs (subst_var e' x0 y) t i). eapply A'. eauto.
+        eapply (TLet G'0 D). { eapply hole_subst_no_found_fv; sfirstorder. } best. best. eauto. sfirstorder. sfirstorder.
+      * cbn. 
+      assert (Typed o D' rs (subst_var e x0 y) s Inert). eapply A. eauto.
+      assert (Typed o Gxs rs (subst_var e' x0 y) t i). eapply B'. admit.
       eapply (TLet G D'); [eauto | eapply ctx_subst_no_found_fv;sfirstorder | eauto | eauto | eauto | eauto].
+    + sfirstorder.
+  - hauto l: on.
+  - hauto l: on.
   - admit.
+  - sfirstorder.
+  - edestruct (H x y) as [U V]. sauto lq: on rew: off. sfirstorder. sfirstorder. sfirstorder.
+    edestruct (H0 x y) as [W X]. sauto lq: on rew: off. sfirstorder. sfirstorder. sfirstorder.
+    sinvert H1.
+    split; intros; cbn.
+    -- sinvert H1.
+       + econstructor. best. eapply X. { intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. }
+       + econstructor. { eapply V. intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. } sfirstorder.
+    -- econstructor; sfirstorder.
+  - hauto l: on.
+  - hauto l: on.
+  - hauto l: on.
+  - sfirstorder.
   - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - edestruct (fill_derivative eta G (CtxHasTy z s)) as [G'0 [d_d [A [B [C D]]]]]; eauto.
+  (* edestruct (fill_derivative eta G (CtxHasTy z s)) as [G'0 [d_d [A [B [C D]]]]]; eauto.
     sinvert A.
     edestruct (ctx_subst_fill_arb G'0 (CtxHasTy z s')) as [[G'00 [U [V W]]] | [D' [U V]]]. eauto. eauto.
     + admit.
     + sinvert U.
       cbn.
       assert (H00 : eqb z z = true) by best use:eqb_refl. rewrite -> H00 in *.
-      eapply (TWait); admit.
-  - admit.
+      eapply (TWait); admit. *)
+  - edestruct (H x y). sfirstorder use:subtcontext_wf. qauto l: on use:subcontext_fv_subset. best. best.
+    split; intros.
+    + edestruct subcontext_ctxsubst as [[G'1 [U V]] | [U V]]. eauto. eauto.
+      * eapply TSubCtx. eauto. best.
+      * eapply TSubCtx. eauto. eapply H5. qauto l:on use:typing_fv.
+    + eapply TSubCtx;sfirstorder.
   - best.
   - best.
   - cbn. econstructor.
@@ -573,7 +538,6 @@ Proof.
 Admitted.
 
 
-(* TODO: copy completed cases up to mutually recursive verion.. *)
 Theorem typing_subst' : forall G G' e x y t i rs o,
   Typed o G rs e t i ->
   WFContext G ->
