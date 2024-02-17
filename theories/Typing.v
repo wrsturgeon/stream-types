@@ -504,23 +504,40 @@ Theorem typing_subst_nop : forall G e x y t i rs o,
   Typed o G rs e t i ->
   WFContext G ->
   ~ fv G x ->
-  ~ fv G y ->
+  ~ fv e y ->
+  ~ bv_term e x ->
+  ~ bv_term e y ->
   Typed o G rs (subst_var e x y) t i.
-Admitted.
-(* Proof.
+Proof.
   intros.
   generalize dependent y.
   generalize dependent x.
   generalize dependent H0.
-  induction H; intros.
-  - cbn. econstructor. best. best. best.
-  - assert (z <> y0) by best use:fv_fill. cbn. econstructor. best. best. best. best. admit. eapply IHTyped. 
-  - cbn. econstructor. best. best. best.
-  - assert (z <> y0) by best use:fv_fill. best use:eqb_neq.
+  induction H; intros; cbn.
+  - econstructor. best. best. best.
+  - econstructor. sfirstorder. sfirstorder. scongruence. sfirstorder. { admit. (*true*) } eapply IHTyped. { admit. (* true *) } { admit. (* true *) } best. best. best.
+  - econstructor. best. best. best.
+  - assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00. admit.
   - best.
   - best.
-  - assert (x <> y) by best use:fv_fill. best use:eqb_neq.
-  - admit. *)
+  - assert (H00 : eqb x y = false) by best use:eqb_neq. rewrite -> H00. sfirstorder.
+  - admit.
+  - best.
+  - best.
+   (* need at least x0 not in fv G for envs. *)
+  - assert (~fv_ctx Gz x0) by best use: fv_context_derivative.
+    assert (z <> x0) by best use:fv_fill.
+    assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00.
+    econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. best use:bv_var_subst. best use:bv_var_subst. sfirstorder. sfirstorder. sfirstorder. { eapply env_subst_var_nop; [|eauto]. hauto q:on use:fv_context_derivative. } eauto. { eapply context_derivative_subst_var_nop; eauto. } admit. admit. { intro. unfold env_subst_var. assert (H01 : eqb z x0 = false) by best use: eqb_neq. rewrite -> H01 in *. eauto. }
+  - best.
+  - best.
+  - admit.
+  - admit.
+  - admit.
+  - best.
+  - admit.
+  - eapply TSubCtx. eauto. eapply IHTyped. best use:subtcontext_wf. best use:subcontext_fv_subset. best. best. best.
+Admitted.
 
 
 Theorem typing_subst' : forall G G' e x y t i rs o,
@@ -528,6 +545,7 @@ Theorem typing_subst' : forall G G' e x y t i rs o,
   WFContext G ->
   ~ fv G x ->
   ~ bv_term e x ->
+  ~ bv_term e y ->
   CtxSubst x y G G' ->
   Typed o G' rs (subst_var e x y) t i.
 Proof.
@@ -539,21 +557,21 @@ intros.
   induction H; intros.
   - cbn. econstructor. best. best. best.
   - admit.
-  - cbn. sinvert H5.
-    + econstructor. sauto lq: on rew: off. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. sauto use:ctx_subst_found_fv. } sfirstorder.
-    + econstructor. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. sauto use:ctx_subst_found_fv. } sauto lq: on rew: off. sfirstorder.
+  - cbn. sinvert H6.
+    + econstructor. sauto. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq:on. admit. (*true*) best. best. } sfirstorder.
+    + sinvert H2. econstructor. { eapply typing_subst_nop. eauto. sauto lq: on. sauto lq: on. { admit. (* true *) } best. best. } sfirstorder. best.
   - admit.
   - best.
   - best.
   - cbn.
     assert (x = y \/ x <> y) by admit.
-    destruct H4.
-    + rewrite -> H4 in *.
+    destruct H5.
+    + rewrite -> H5 in *.
       assert (eqb y y = true) by best use:eqb_refl.
-      rewrite -> H5 in *. econstructor; eapply ctx_subst_fill_transport; eauto. 
-    + assert (eqb x y = false) by best use:eqb_neq. rewrite -> H5 in *.
+      rewrite -> H6 in *. econstructor; eapply ctx_subst_fill_transport; eauto. 
+    + assert (eqb x y = false) by best use:eqb_neq. rewrite -> H6 in *.
       edestruct ctx_subst_fill_other_hole as [h']; eauto.
   - edestruct (ctx_subst_fill_arb G D) as [[G'0 [U V]] | [D' [U V]]]; eauto.
     + admit.
-    + cbn. eapply (TLet G D'). eauto. eapply ctx_subst_no_found_fv;sfirstorder. { eapply IHTyped1. best use:wf_fill_reflect. best use:fv_fill. best. sfirstorder. } eauto. eauto. admit.
+    + cbn. eapply (TLet G D'). eauto. eapply ctx_subst_no_found_fv;sfirstorder. { eapply IHTyped1. best use:wf_fill_reflect. best use:fv_fill. best. sfirstorder. sfirstorder. } eauto. eauto. { eapply typing_subst_nop. eauto. admit. (*true*) admit. (* true *) admit. (* true, since y was in D, not G (so not e', because x is not y) *) best. best. }
 Admitted.

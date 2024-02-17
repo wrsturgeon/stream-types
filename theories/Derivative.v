@@ -550,3 +550,17 @@ Proof.
     hauto lq: on.
 Qed.
 Hint Resolve context_derivative_emp' : core.
+
+Theorem context_derivative_subst_var_nop : forall D D' x y eta,
+  ~ fv_ctx D x ->
+  ContextDerivative eta D D' ->
+  ContextDerivative (env_subst_var x y eta) D D'.
+Proof.
+  intros.
+  generalize dependent x. generalize dependent y.
+  induction H0; intros.
+  - best.
+  - cbn in *. unfold env_subst_var in *. econstructor. best use:eqb_neq. sfirstorder.
+  - sfirstorder.
+  - sfirstorder.
+Qed.
