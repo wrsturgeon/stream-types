@@ -445,6 +445,41 @@ Inductive HoleSubst (x : string) (y : string) : hole -> hole -> Prop :=
     HoleSubst x y (HoleSemicR g h) (HoleSemicR g' h)
 .
 
+Theorem hole_subst_same_fill : forall x y G Gxy GD D GxyD,
+  HoleSubst x y G Gxy ->
+  Fill G D GD ->
+  Fill Gxy D GxyD ->
+  CtxSubst x y GD GxyD.
+Proof.
+  intros.
+  generalize dependent D.
+  generalize dependent GD.
+  generalize dependent GxyD.
+  induction H; intros.
+  - sauto lq: on.
+  - sinvert H1. sinvert H0. hfcrush use:reflect_fill.
+  - sinvert H1. sinvert H0. hfcrush use:reflect_fill.
+  - sinvert H1. sinvert H0. hfcrush use:reflect_fill.
+  - sinvert H1. sinvert H0. hfcrush use:reflect_fill.
+  - sinvert H1. sinvert H0. hfcrush use:reflect_fill.
+  - sinvert H1. sinvert H0. hfcrush use:reflect_fill.
+  - sinvert H1. sinvert H0. hfcrush use:reflect_fill.
+Qed.
+
+Theorem ctx_subst_same_hole : forall x y G GD GDxy D Dxy,
+  CtxSubst x y D Dxy ->
+  Fill G D GD ->
+  Fill G Dxy GDxy ->
+  CtxSubst x y GD GDxy.
+Proof.
+  intros.
+  generalize dependent x.
+  generalize dependent y.
+  generalize dependent GDxy.
+  generalize dependent Dxy.
+  induction H0; intros; sauto lq: on.
+Qed.
+
 Theorem ctx_subst_exists_fill_exact : forall G G1 G2 x y s,
   Fill G (CtxHasTy y s) G1 ->
   Fill G (CtxHasTy x s) G2 ->
@@ -506,7 +541,6 @@ Proof.
   - sinvert H0; sauto lq: on.
   - sinvert H0; sauto lq: on.
 Qed.
-
 
 
 Theorem hole_subst_found_fv : forall x y h h',

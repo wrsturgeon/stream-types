@@ -520,17 +520,25 @@ Proof.
   (* histpgm *)
   - sfirstorder.
   (* wait *)
-  - edestruct (H x y). admit. admit. best. best.
+  - assert (WFContext Gz) by sfirstorder use:context_derivative_wf.
+    assert (~fv G x). { intro. assert (~fv Gz x) by hauto q: on use:fv_context_derivative. hauto q: on use:fv_fill. }
+    assert (WFContext Gemp) by (eapply wf_fill_reflect; [eauto|sfirstorder use:wf_fill_reflect]).
+    edestruct (H x y) as [A0 B0]. eauto. hauto q: on use:fv_fill. scongruence. scongruence.
     split; intros.
-    + edestruct (fill_derivative eta G (CtxHasTy z s)) as [G'0 [d_d [A [B [C D]]]]]; [eauto|eauto| ].
-      sinvert A.
-      edestruct (ctx_subst_fill_arb G'0 (CtxHasTy z s')) as [[G'00 [U [V W]]] | [D' [U [V W]]]]; [eauto|eauto| | ].
-      * assert (fv G'0 y) by hauto l:on use:hole_subst_found_fv.
-        assert (DisjointSets (fv G'0) (fv (CtxHasTy z s'))) by best use:wf_fill.
-        assert (~fv G'0 z) by sfirstorder.
-        assert (y <> z) by sfirstorder.
-        assert (H00 : eqb z y = false) by sauto lq: on use:eqb_neq. rewrite -> H00 in *.
-        admit.
+    + edestruct (fill_derivative_ctx_subst eta G (CtxHasTy z s)) as [Gz_xy [dD [G'' [B [C [D [E [[Gxy [G''xy [F [I [J K]]]]] | [xyz [U [F [I [J]]]]]]]]]]]]]. eauto. eauto. eauto.
+      * sinvert C.
+        assert (z <> x). {  assert (~fv Gz x) by hauto q: on use:fv_context_derivative. hauto q: on use:fv_fill. }
+        assert (fv G y) by hauto l:on use:hole_subst_found_fv.
+        (* assert (y <> z) by sfirstorder. *)
+        assert (H00 : eqb z y = false) by admit. rewrite -> H00 in *.
+        assert (WFContext Gz_xy). eapply ctx_subst_wf;[| eauto | ]. scongruence use:context_derivative_wf. hauto q: on use:fv_context_derivative.
+        edestruct (fill_reflect_fun Gxy CtxEmpty) as [Gxyemp].
+        eapply (TWait Gxy). eauto. { eapply env_subst_var_typed';[| | eauto | ]; eauto. }
+        { eapply context_derivative_subst_var;[| | | | eauto ]. best use:context_derivative_wf. eauto. eauto. eauto. }
+        eauto.
+        eapply A0.
+        eapply hole_subst_same_fill; [| eauto | eauto ]. eauto.
+        { intro H01. rewrite -> H01 in *. split;[|sfirstorder]. intros. unfold env_subst_var in *. admit. }
       * sinvert U. assert (H00 : eqb z z = true) by best use:eqb_refl. rewrite -> H00 in *.
         admit.
     + assert (H00 : eqb z y = false) by best use:eqb_neq. rewrite -> H00 in *.

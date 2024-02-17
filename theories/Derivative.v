@@ -564,3 +564,94 @@ Proof.
   - sfirstorder.
   - sfirstorder.
 Qed.
+
+(* Can also get away with this theorem having WFContext for D', Dxy, D'xy, etc. will also have a hole version. *)
+Theorem context_derivative_subst_var : forall D D' x y eta Dxy D'xy,
+  WFContext D ->
+  WFContext Dxy ->
+  CtxSubst x y D Dxy ->
+  CtxSubst x y D' D'xy ->
+  ContextDerivative eta D D' ->
+  ContextDerivative (env_subst_var x y eta) Dxy D'xy.
+Proof.
+  intros.
+  generalize dependent Dxy.
+  generalize dependent D'xy.
+  generalize dependent x.
+  generalize dependent y.
+  generalize dependent H.
+  induction H3; intros.
+  - best.
+  - sinvert H1. sinvert H2. sinvert H4. econstructor. unfold env_subst_var. best use:eqb_refl. sfirstorder.
+  - sinvert H. sinvert H2; sinvert H1; sinvert H0.
+    + econstructor. best. eapply context_derivative_subst_var_nop; [|eauto]. sauto use:ctx_subst_found_fv'.
+    + assert (fv G' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by sfirstorder use:ctx_subst_found_fv. assert (fv G y) by hauto l: on use:fv_context_derivative. sfirstorder.
+    + assert (fv G y) by sfirstorder use:ctx_subst_found_fv. assert (fv D' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by hauto l: on use:fv_context_derivative. sfirstorder.
+    + econstructor. eapply context_derivative_subst_var_nop;[|eauto ]. sauto use:ctx_subst_found_fv'. sfirstorder.
+  - sinvert H. sinvert H2; sinvert H1; sinvert H0.
+    + econstructor. best. eapply context_derivative_subst_var_nop; [|eauto]. sauto use:ctx_subst_found_fv'.
+    + assert (fv G' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by sfirstorder use:ctx_subst_found_fv. assert (fv G y) by hauto l: on use:fv_context_derivative. sfirstorder.
+    + assert (fv G y) by sfirstorder use:ctx_subst_found_fv. assert (fv D' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by hauto l: on use:fv_context_derivative. sfirstorder.
+    + econstructor. eapply context_derivative_subst_var_nop;[|eauto ]. sauto use:ctx_subst_found_fv'. sfirstorder.
+Qed.
+
+Theorem derivative_ctx_subst : forall x y g dg dgxy eta,
+  CtxSubst x y dg dgxy ->
+  ContextDerivative eta g dg ->
+  exists gxy, CtxSubst x y g gxy.
+Proof.
+  intros.
+  edestruct (ctx_subst_exists x y g).
+  eapply fv_context_derivative. eauto. best use:ctx_subst_found_fv.
+  best.
+Qed.
+
+
+Theorem hole_derivative_hole_subst : forall x y g dg dgxy eta,
+  HoleSubst x y dg dgxy ->
+  HoleDerivative eta g dg ->
+  exists gxy, HoleSubst x y g gxy.
+Proof.
+  intros.
+Admitted.
+
+(* Absolutely no idea how i came up with this one. just kept adding conclusions until we got what we needed, and then prayed it was true. *)
+
+Theorem fill_derivative_ctx_subst : forall eta G D GD dGD x y dGDxy,
+  Fill G D GD ->
+  ContextDerivative eta GD dGD ->
+  CtxSubst x y dGD dGDxy ->
+  exists GDxy dD dG,
+    CtxSubst x y GD GDxy /\
+    ContextDerivative eta D dD /\
+    HoleDerivative eta G dG /\
+    Fill dG dD dGD /\
+    ((exists Gxy dGxy , HoleSubst x y G Gxy /\ Fill Gxy D GDxy /\  HoleSubst x y dG dGxy /\ Fill dGxy dD dGDxy)
+      \/
+     (exists Dxy dDxy, CtxSubst x y D Dxy /\ Fill G Dxy GDxy /\ CtxSubst x y dD dDxy /\ Fill dG dDxy dGDxy)
+    ).
+Proof.
+  intros.
+  generalize dependent x.
+  generalize dependent y.
+  generalize dependent dGDxy.
+  generalize dependent G.
+  generalize dependent D.
+  induction H0; intros.
+  -  best.
+  - sinvert H1. sinvert H2. sauto lq: on rew: off.
+  - sinvert H1; sinvert H.
+    + best.
+    + best.
+    + best use:fill_derivative, derivative_ctx_subst.
+    + best.
+    + best use:fill_derivative, derivative_ctx_subst.
+    + best.
+  - sinvert H1; sinvert H.
+    + best.
+    + best.
+    + best use:fill_derivative, derivative_ctx_subst.
+    + best.
+    + best use:fill_derivative, derivative_ctx_subst.
+    + best use:fill_derivative, derivative_ctx_subst.
+Qed.

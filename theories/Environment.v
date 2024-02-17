@@ -803,3 +803,16 @@ Proof.
     + edestruct (IHEnvTyped2 hd). sfirstorder. sfirstorder. sfirstorder. sfirstorder.
       edestruct (env_subst_var_nop G x y). hauto q: on use:fv_fill. sfirstorder. sfirstorder.
 Qed.
+
+Theorem env_subst_var_typed' : forall x y Gx Gy eta,
+  WFContext Gx ->
+  WFContext Gy ->
+  CtxSubst x y Gy Gx ->
+  EnvTyped eta Gy ->
+  EnvTyped (env_subst_var x y eta) Gx.
+Proof.
+  intros.
+  edestruct ctx_subst_fill_localize as [h [s [A B]]]. eauto.
+  eapply env_subst_var_typed; [eauto | eauto | eauto | | eauto].
+  hauto q: on use:wf_fill_reflect.
+Qed.
