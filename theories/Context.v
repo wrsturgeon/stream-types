@@ -148,3 +148,27 @@ Proof.
 intros. generalize dependent z.
 induction H;sfirstorder.
 Qed.
+
+Theorem ctx_subst_fv : forall x y g g',
+  CtxSubst x y g g' ->
+  WFContext g ->
+  SetEq (fv g') (set_union (set_minus (fv g) (singleton_set y)) (singleton_set x)).
+Proof.
+  intros.
+  generalize dependent H0.
+  induction H; intros; [sfirstorder | | | | ]; sinvert H0; assert (fv g y) by sfirstorder use:ctx_subst_found_fv; assert (~fv d y) by sfirstorder; hauto q: on.
+Qed.
+
+
+Theorem ctx_subst_wf : forall x y g g',
+  WFContext g ->
+  CtxSubst x y g g' ->
+  ~ fv g x ->
+  WFContext g'.
+Proof.
+  intros.
+  generalize dependent H.
+  generalize dependent H1.
+  induction H0; intros; [ sauto lq: on | | | | ]; sauto q: on use:ctx_subst_fv.
+Qed.
+

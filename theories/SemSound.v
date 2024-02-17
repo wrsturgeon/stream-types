@@ -305,13 +305,12 @@ Proof.
   (* inr *)
   - sauto lq: on.
   (* sum-l-1 *)
-  - admit.
-    (* split; try split; try split.
+  - split; try split; try split.
     + best use:emp_well_typed.
     + intros.
       assert (Derivative (emp r) r r) by best use:derivative_emp.
       destruct (ltac:(sfirstorder use:derivative_det) : r = s').
-      edestruct (env_cat_exists_when_typed Gz) as [eta''0 [A [B [C D]]]]; eauto.
+      edestruct (env_cat_exists_when_typed Gz) as [eta''0 [A [B [C D]]]]; [eauto | eauto | eauto | eauto | ].
       destruct (ltac:(hauto l:on use:env_cat_unique) : eta'' = eta''0).
       eapply TPlusCase; eauto. 
     + assert (Subset (singleton_set z) (fv (TmPlusCase eta' r z x e1 y e2))) by sfirstorder.
@@ -320,7 +319,6 @@ Proof.
       assert (Hcontra : MaximalPrefix PfxSumEmp) by qauto l:on.
       sinvert Hcontra.
     + best use:emp_empty.
-    *)
   (* sum-l-2 *)
   - 
     assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
@@ -414,7 +412,7 @@ Proof.
   - repeat split.
     + sfirstorder use:emp_well_typed.
     + intros. destruct (ltac:(sfirstorder use: derivative_emp') : r = s').
-      edestruct (env_cat_exists_when_typed Gx) as [eta''0 [A [B [C D]]]]; [ sfirstorder use:context_derivative_wf' |eauto|eauto|eauto|eauto]. 
+      edestruct (env_cat_exists_when_typed Gz) as [eta''0 [A [B [C D]]]]; [ sfirstorder use:context_derivative_wf' |eauto|eauto|eauto|eauto]. 
       destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
       econstructor; eauto. { cbn. intros. split; [scongruence|]. intro. assert (H00 : PrefixTyped p s) by hauto l: on use:maps_to_has_type_reflect. eapply nullable_means_maximal in H00;[|eauto]. sfirstorder. }
     + intros.
@@ -423,7 +421,7 @@ Proof.
       hauto lq: on use:pfx_cat_maximal.
     + sfirstorder use:emp_empty.
   (* wait 2 *)
-  - edestruct (env_cat_exists_when_typed Gx) as [eta''0 [A [B [C D]]]]; [ sfirstorder use:context_derivative_wf' |eauto|eauto|eauto|eauto]. 
+  - edestruct (env_cat_exists_when_typed Gz) as [eta''0 [A [B [C D]]]]; [ sfirstorder use:context_derivative_wf' |eauto|eauto|eauto|eauto]. 
     destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
     assert (PrefixTyped p s) by hauto l:on use:maps_to_has_type_reflect.
     assert (WFContext Gemp). { eapply wf_fill_reflect;[eauto|]. repeat split; [ | eauto|eauto|eauto]. eapply context_derivative_wf' in H5;[ | eauto]. sfirstorder use:wf_fill_reflect. }
@@ -433,7 +431,7 @@ Proof.
     repeat split.
     + eauto.
     + intros. 
-      assert (ContextDerivative eta'' Gx g'). eapply D; eauto.
+      assert (ContextDerivative eta'' Gz g'). eapply D; eauto.
       edestruct (fill_derivative eta'') as [G'' [d_d [U [V [W X]]]]]; [|eauto|]; eauto.
       sinvert U.
       destruct (ltac:(scongruence) : p = p1).

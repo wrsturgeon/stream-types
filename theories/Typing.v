@@ -121,14 +121,14 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
   | TmHistPgm : forall G rs hp s o,
       HistTyped o hp (flatten_type s) ->
       Typed o G rs (TmHistPgm hp s) s Jumpy
-  | TWait : forall G Gx Gx' Gemp z s r i i' e rs eta o,
-      Fill G (CtxHasTy z s) Gx ->
-      EnvTyped eta Gx ->
-      ContextDerivative eta Gx Gx' ->
+  | TWait : forall G Gz Gz' Gemp z s r i i' e rs eta o,
+      Fill G (CtxHasTy z s) Gz ->
+      EnvTyped eta Gz ->
+      ContextDerivative eta Gz Gz' ->
       Fill G CtxEmpty Gemp ->
       Typed (cons (flatten_type s) o) Gemp rs e r i ->
       inert_guard ((forall p, eta z = Some p -> ~ MaximalPrefix p) /\ ~Nullable s) i' ->
-      Typed o Gx' rs (TmWait eta r s z e) r i'
+      Typed o Gz' rs (TmWait eta r s z e) r i'
   | TSubCtx : forall G G' e s i rs o,
       Subcontext G G' ->
       Typed o G' rs e s i ->
@@ -418,19 +418,24 @@ Proof.
   (* par-r *)
   - edestruct H as [U V]. eauto. eauto. best. best.
     edestruct H0 as [U' V']. eauto. eauto. best. best.
-    split; intros; hauto l: on.
+    split; intros.
+    + econstructor. best. best. best.
+    + econstructor. best. best. best.
   (* par-l *)
   - cbn.
-    edestruct (H x0 y0). { admit. } { intro. assert (H00 : fv G x0 \/ x = x0 \/ y = x0) by qauto use:fv_fill. destruct H00 as [A | [B | C]]; [|sfirstorder|sfirstorder]. hauto q: on use:fv_fill. } sfirstorder. sfirstorder.
+    assert (WFContext Gxsyt). { eapply wf_fill_reflect. eauto. split. sfirstorder use:wf_fill_reflect. split. sauto. eapply DisjointSets_inj'. intros x1 H00. cbn in H00. destruct H00; scongruence. }
+    assert (~fv Gxsyt x0). { intro H00. eapply fv_fill in H00;[|eauto]. cbn in H00. destruct H00;[sfirstorder|]. hauto q: on use:fv_fill. }
+    edestruct (H x0 y0). eauto. { intro. assert (H00 : fv G x0 \/ x = x0 \/ y = x0) by qauto use:fv_fill. destruct H00 as [A | [B | C]]; [|sfirstorder|sfirstorder]. hauto q: on use:fv_fill. } sfirstorder. sfirstorder.
     split; intros.
     -- edestruct (ctx_subst_fill_arb G (CtxHasTy z (TyPar s t))) as [[G'00 [U [V W]]] | [D' [U V]]]. eauto. eauto.
        + assert (z <> y0) by sfirstorder use:hole_subst_not_in_fill.
          assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00 in *.
          edestruct (W (CtxComma (CtxHasTy x s) (CtxHasTy y t))) as [u [L M]]. eauto.
-         eapply (TParL G'00). scongruence. scongruence. scongruence. admit. admit. sfirstorder. sfirstorder. hauto l: on.
+         assert (WFContext u) by (eapply (ctx_subst_wf x0 y0 Gxsyt); eauto).
+         eapply (TParL G'00). scongruence. scongruence. scongruence. hauto q:on use:wf_fill_reflect. hauto q: on use:wf_fill_reflect. sfirstorder. sfirstorder. hauto l: on.
        + sinvert U.
          assert (H00 : eqb z z = true) by best use:eqb_refl; rewrite -> H00 in *.
-         econstructor. best. best. best. best. best. best. best. { eapply H5. admit. }
+         econstructor. best. best. best. best. best. best. best. { eapply H6. admit. }
     -- assert (H00 : eqb z y0 = false) by best use:eqb_neq ; rewrite -> H00 in *.
        sfirstorder.
   (* cat-r *)
@@ -444,16 +449,19 @@ Proof.
     -- econstructor; sfirstorder.
   (* cat-l *)
   - cbn.
-    edestruct (H x0 y0). { admit. } { intro. assert (H00 : fv G x0 \/ x = x0 \/ y = x0) by qauto use:fv_fill. destruct H00 as [A | [B | C]]; [|sfirstorder|sfirstorder]. hauto q: on use:fv_fill. } sfirstorder. sfirstorder.
+    assert (WFContext Gxsyt). { eapply wf_fill_reflect. eauto. split. sfirstorder use:wf_fill_reflect. split. sauto. eapply DisjointSets_inj'. intros x1 H00. cbn in H00. destruct H00; scongruence. }
+    assert (~fv Gxsyt x0). { intro H00. eapply fv_fill in H00;[|eauto]. cbn in H00. destruct H00;[sfirstorder|]. hauto q: on use:fv_fill. }
+    edestruct (H x0 y0). eauto. { intro. assert (H00 : fv G x0 \/ x = x0 \/ y = x0) by qauto use:fv_fill. destruct H00 as [A | [B | C]]; [|sfirstorder|sfirstorder]. hauto q: on use:fv_fill. } sfirstorder. sfirstorder.
     split; intros.
     -- edestruct (ctx_subst_fill_arb G (CtxHasTy z (TyDot s t))) as [[G'00 [U [V W]]] | [D' [U V]]]. eauto. eauto.
        + assert (z <> y0) by sfirstorder use:hole_subst_not_in_fill.
          assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00 in *.
          edestruct (W (CtxSemic (CtxHasTy x s) (CtxHasTy y t))) as [u [L M]]. eauto.
-         eapply (TCatL G'00). scongruence. scongruence. scongruence. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. admit. admit. sfirstorder. sfirstorder. hauto l: on.
+         assert (WFContext u) by (eapply (ctx_subst_wf x0 y0 Gxsyt); eauto).
+         eapply (TCatL G'00). scongruence. scongruence. scongruence. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. hauto q: on use:wf_fill_reflect. hauto q: on use:wf_fill_reflect. sfirstorder. sfirstorder. hauto l: on.
        + sinvert U.
          assert (H00 : eqb z z = true) by best use:eqb_refl; rewrite -> H00 in *.
-         econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. best. best. best. best. { eapply H5. admit. }
+         econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. best. best. best. best. { eapply H7. admit. }
     -- assert (H00 : eqb z y0 = false) by best use:eqb_neq ; rewrite -> H00 in *.
        econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. eauto. eauto. eauto. eauto. sfirstorder.
   (* oner *)
@@ -462,7 +470,7 @@ Proof.
   - sfirstorder.
   (* var *)
   - cbn.
-    assert (H00 : x = y \/ x <> y) by admit.
+    assert (H00 : x = y \/ x <> y) by sfirstorder use:string_dec.
     split; intros.
     + destruct H00.
       * rewrite -> H4 in *.
@@ -484,12 +492,17 @@ Proof.
       * cbn. 
       assert (Typed o D' rs (subst_var e x0 y) s Inert). eapply A. eauto.
       assert (Typed o Gxs rs (subst_var e' x0 y) t i). eapply B'. admit.
-      eapply (TLet G D'); [eauto | eapply ctx_subst_no_found_fv;sfirstorder | eauto | eauto | eauto | eauto].
+      eapply (TLet G D'); [eauto | eapply ctx_subst_no_found_fv;sfirstorder | eauto | eauto | eauto | eauto]. best.
     + sfirstorder.
+  (* inl *)
   - hauto l: on.
+  (* inr *)
   - hauto l: on.
+  (* pluscase *)
   - admit.
+  (* nil *)
   - sfirstorder.
+  (* cons *)
   - edestruct (H x y) as [U V]. sauto lq: on rew: off. sfirstorder. sfirstorder. sfirstorder.
     edestruct (H0 x y) as [W X]. sauto lq: on rew: off. sfirstorder. sfirstorder. sfirstorder.
     sinvert H1.
@@ -498,43 +511,56 @@ Proof.
        + econstructor. best. eapply X. { intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. }
        + econstructor. { eapply V. intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. } sfirstorder.
     -- econstructor; sfirstorder.
+  (* tmrec *)
   - hauto l: on.
+  (* tmfix *)
   - hauto l: on.
+  (* tmargslet *)
   - hauto l: on.
+  (* histpgm *)
   - sfirstorder.
-  - admit.
-  (* edestruct (fill_derivative eta G (CtxHasTy z s)) as [G'0 [d_d [A [B [C D]]]]]; eauto.
-    sinvert A.
-    edestruct (ctx_subst_fill_arb G'0 (CtxHasTy z s')) as [[G'00 [U [V W]]] | [D' [U V]]]. eauto. eauto.
-    + admit.
-    + sinvert U.
-      cbn.
-      assert (H00 : eqb z z = true) by best use:eqb_refl. rewrite -> H00 in *.
-      eapply (TWait); admit. *)
+  (* wait *)
+  - edestruct (H x y). admit. admit. best. best.
+    split; intros.
+    + edestruct (fill_derivative eta G (CtxHasTy z s)) as [G'0 [d_d [A [B [C D]]]]]; [eauto|eauto| ].
+      sinvert A.
+      edestruct (ctx_subst_fill_arb G'0 (CtxHasTy z s')) as [[G'00 [U [V W]]] | [D' [U [V W]]]]; [eauto|eauto| | ].
+      * assert (fv G'0 y) by hauto l:on use:hole_subst_found_fv.
+        assert (DisjointSets (fv G'0) (fv (CtxHasTy z s'))) by best use:wf_fill.
+        assert (~fv G'0 z) by sfirstorder.
+        assert (y <> z) by sfirstorder.
+        assert (H00 : eqb z y = false) by sauto lq: on use:eqb_neq. rewrite -> H00 in *.
+        admit.
+      * sinvert U. assert (H00 : eqb z z = true) by best use:eqb_refl. rewrite -> H00 in *.
+        admit.
+    + assert (H00 : eqb z y = false) by best use:eqb_neq. rewrite -> H00 in *.
+      assert (H02 : eqb z x = false). { eapply eqb_neq. assert (~fv Gz x) by hauto q:on use:fv_context_derivative. hauto q:on use:fv_fill. }
+      econstructor.
+      eauto. eapply env_subst_var_nop; hauto q:on use:fv_context_derivative. eapply context_derivative_subst_var_nop; hauto q: on use:fv_context_derivative. eauto. best.
+      { intro H01. rewrite -> H01 in *. edestruct i0. eauto. split;[|eauto]. intros. unfold env_subst_var in *. hauto q: on. }
   - edestruct (H x y). sfirstorder use:subtcontext_wf. qauto l: on use:subcontext_fv_subset. best. best.
     split; intros.
-    + edestruct subcontext_ctxsubst as [[G'1 [U V]] | [U V]]. eauto. eauto.
+    + edestruct subcontext_ctxsubst as [[G'1 [U V]] | [U V]]. eauto. eauto. eauto.
       * eapply TSubCtx. eauto. best.
       * eapply TSubCtx. eauto. eapply H5. qauto l:on use:typing_fv.
     + eapply TSubCtx;sfirstorder.
   - best.
   - best.
-  - cbn. econstructor.
-    + best.
-    + best.
-    + best.
-  - cbn. sinvert H5.
-    + econstructor.
-      * best.
-      * eapply argstyping_subst_nop. best. best. best. admit. (* true *) best. best.
-      * best.
-    + econstructor.
-      * eapply argstyping_subst_nop. best. best. best. admit. (* true *) best. best.
-      * best.
-      * best.
-  - cbn. sinvert H0. sinvert H4.
-    + econstructor. eauto. eapply argstyping_subst_nop. eauto. best. best. { intro. assert (fv g1 y) by best use: ctx_subst_found_fv.  assert (~fv g2 y) by best. eapply H5. best use:typing_fv_args. } sfirstorder. sfirstorder.
-    + econstructor. eauto. best.
+  - cbn. split; intros; econstructor; qauto l: on.
+  - edestruct H; [sauto lq: on| hauto q:on | sfirstorder | hauto l: on | ].
+    edestruct H0; [sauto lq: on rew: off | hauto q: on | sfirstorder | hauto l: on | ].
+    sinvert H1.
+    split; intros.
+    + sinvert H1.
+      * econstructor;[sfirstorder | | sfirstorder]. eapply H8. { intro. assert (fv g2 y) by hauto l: on use:typing_fv_args. assert (fv g1 y) by hauto l: on use:ctx_subst_found_fv. sfirstorder. }
+      * econstructor. eapply H6. { intro. assert (fv g1 y) by qauto l: on use:typing_fv_args. assert (fv g2 y) by hauto l: on use:ctx_subst_found_fv. sfirstorder. } sfirstorder. sfirstorder.
+    + econstructor; sfirstorder.
+  - sinvert H0.
+    edestruct (H x y). best. best. best. best.
+    split; intros.
+    + sinvert H5.
+      * econstructor. best. eapply H4. { intro. assert (fv g2 y) by hauto l: on use:typing_fv_args. assert (fv g1 y) by hauto l: on use:ctx_subst_found_fv. sfirstorder. }
+      * econstructor. scongruence. hauto l: on.
 Admitted.
 
 
