@@ -507,14 +507,7 @@ Proof.
   - sinvert H0; sauto lq: on.
 Qed.
 
-(* TODO: will? *)
-Theorem ctx_subst_fill_transport : forall G G1 G2 x y s,
-  WFContext G1 ->
-  CtxSubst x y G1 G2 ->
-  Fill G (CtxHasTy y s) G1 ->
-  Fill G (CtxHasTy x s) G2.
-Proof.
-Admitted.
+
 
 Theorem hole_subst_found_fv : forall x y h h',
   HoleSubst x y h h' ->
@@ -552,4 +545,24 @@ Proof.
   intro.
   edestruct wf_fill_reflect' as [A [B C]]; eauto.
   hauto lq: on use:hole_subst_found_fv.
+Qed.
+
+Theorem ctx_subst_fill_localize : forall x y G G',
+  CtxSubst x y G G' ->
+  exists h s, Fill h (CtxHasTy y s) G /\ Fill h (CtxHasTy x s) G'.
+Proof.
+  intros.
+  induction H; sauto lq: on.
+Qed.
+
+Theorem ctx_subst_fill_transport : forall G G1 G2 x y s,
+  WFContext G1 ->
+  CtxSubst x y G1 G2 ->
+  Fill G (CtxHasTy y s) G1 ->
+  Fill G (CtxHasTy x s) G2.
+Proof.
+  intros.
+  edestruct ctx_subst_fill_localize as [h [s' [A B]]]. eauto.
+  edestruct (fill_reflect_var_localize G h); [eauto|eauto|eauto| ]. 
+  hauto lq: on.
 Qed.
