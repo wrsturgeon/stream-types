@@ -318,8 +318,7 @@ Proof.
       sinvert Hcontra.
     + best use:emp_empty.
   (* sum-l-2 *)
-  - 
-    assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+  - assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
     assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
     destruct Hwf.
     assert (~ fv G z) by sfirstorder.
@@ -360,8 +359,46 @@ Proof.
       destruct (ltac:(scongruence) : PfxSumInl p = p'').
       sinvert UU'.
   (* sum-l-3 *)
-  - admit.
-
+  - assert (WFContext Gz) by sfirstorder use:context_derivative_wf'.
+  assert (Hwf : WFHole G /\ DisjointSets (fv G) (singleton_set z)) by sauto use:wf_fill_reflect.
+  destruct Hwf.
+  assert (~ fv G z) by sfirstorder.
+  assert (WFHole G). { eapply (wf_fill_reflect G (CtxHasTy z _)). eauto. sfirstorder use:context_derivative_wf'. }
+  edestruct (env_cat_exists_when_typed Gz) as [eta''0 [A [B [C D]]]]; eauto.
+  destruct (ltac:(sfirstorder use:env_cat_unique) : eta'' = eta''0).
+  assert (Hty : exists p0, eta'' z = Some p0 /\ PrefixTyped p0 (TySum s0 t)) by best use:maps_to_has_type_reflect.
+  edestruct Hty as [p0 [L M]].
+  destruct (ltac:(scongruence) : PfxSumInr p = p0).
+  sinvert M.
+  edestruct H as [A' [B' [C' D']]]. eauto. eauto. { eapply wf_fill_reflect. eauto. sfirstorder. } { eapply sumcaseenvtyped2; eauto. }
+  split; try split; try split.
+  + eauto.
+  + intros.
+    edestruct (fill_derivative eta'' G (CtxHasTy z (TySum s0 t))) as [G' [d_s [A'' [B'' [C'' D'']]]]]; [eauto | eapply D; eauto |]. 
+    sinvert A''.
+    destruct (ltac:(scongruence) : PfxSumInr p = p0).
+    sinvert H29.
+    assert (WFContext Gy). { eapply wf_fill_reflect. eauto. hauto drew: off. }
+    edestruct (D'' (CtxHasTy y t) (CtxHasTy y s'0) Gy (singleton_env y p)) as [Gy' [U V]]. eauto. { eapply no_conflict_on_disjoint. right. eapply wf_fill_reflect in H24;[|eauto]. eapply DisjointSets_inj. intros. destruct H24 as [_ [_ U]]. eapply U. eapply dom_singleton in H25. scongruence. } eapply context_derivative_sng; eauto.
+    eapply (typing_subst'). eauto. hauto l:on use:context_derivative_wf. { intro. eapply fv_fill in H25;[|eauto]. destruct H25; [scongruence|]. assert (DisjointSets (fv G) (singleton_set z)) by best use:wf_fill. assert (H00 : ~fv G z) by scongruence. eapply H00. hauto drew: off use:fv_hole_derivative. } { intro. eapply H4; eapply step_bv;eauto. } { intro. eapply H6. eapply step_bv; eauto. } { eapply ctx_subst_exists_fill_exact; eauto. }
+  + intros.
+    assert (MaximalOn (set_union (set_minus (fv e2) (singleton_set y)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
+    assert (MaximalOn (set_union (set_minus (fv e2) (singleton_set y)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | ].
+    { intro x0. intro H00. destruct H00; [|hauto drew: off]. edestruct H24. eapply B. eapply fv_fill. eauto. right. eapply fv_fill' in H8. eapply typing_fv in H25; [|eauto]. hauto q:on use:fv_fill. }
+    hauto lq: on rew: off.
+    edestruct (H24 z) as [p00 [L' R]]. hauto lq: on rew: off.
+    destruct (ltac:(scongruence) : PfxSumInr p = p00).
+    sinvert R.
+    eapply C'. eapply prop_on_minus. eauto. hfcrush.
+  + intros H00 H01.
+    rewrite -> H00 in *.
+    assert (eta' z = Some PfxSumEmp) by sfirstorder.
+    assert (EmptyOn (singleton_set z) eta) by hauto q: on use:prop_on_contains.
+    assert (EmptyOn (singleton_set z) eta') by sblast.
+    assert (H02 : EmptyOn (singleton_set z) eta''). eapply env_cat_empty'; [ | eauto | eauto | eauto]. scrush.
+    edestruct (H02 z) as [p'' [UU UU']]; eauto.
+    destruct (ltac:(scongruence) : PfxSumInr p = p'').
+    sinvert UU'.
   (* nil *)
   - sauto lq: on.
   (* cons-1 *)
