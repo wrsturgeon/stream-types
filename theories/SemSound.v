@@ -208,8 +208,8 @@ Proof.
       assert (Nullable s1) by best use:empty_and_maximal_means_nullable.
       best. *)
   (* Par-L *)
-  - admit.
-    (* assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s0 t)) by hauto l: on use: maps_to_has_type_reflect.
+  - 
+    assert (H00 : PrefixTyped (PfxParPair p1 p2) (TyPar s0 t)) by hauto l: on use: maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]].
     + sfirstorder.
     + eassumption.
@@ -218,7 +218,7 @@ Proof.
     + repeat split.
       * sfirstorder.
       * intros. edestruct fill_derivative as [G' [zst' [A' [B' [C' D']]]]];
-        [| eassumption |]; [eassumption |]. sinvert A'. sinvert H16.
+        [| eassumption |]; [eassumption |]. sinvert A'. sinvert H18.
         assert (p0 = p1) by congruence. assert (p3 = p2) by congruence. subst.
         specialize (D' (CtxComma (CtxHasTy x s0) (CtxHasTy y t))).
         specialize (D' (CtxComma (CtxHasTy x s'1) (CtxHasTy y t'))).
@@ -227,9 +227,9 @@ Proof.
         -- eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. assert (H00 : (dom (singleton_env x p1) x0) \/ (dom (singleton_env y p2) x0)) by hauto l:on use:dom_singleton',dom_union'; destruct H00; hauto l:on use:dom_singleton'.
         -- eapply context_derivative_comma; try (eapply context_derivative_sng; eassumption).
            intro test. cbn. destruct (eqb_spec x test); destruct (eqb_spec y test); sfirstorder.
-        -- econstructor; [| | | eauto | eauto |]. eauto. hauto q:on drew:off use:fv_hole_derivative. hauto q:on drew:off use:fv_hole_derivative. eapply B; eauto.
+        -- econstructor; [eauto | eauto | eauto | | | eauto | eauto |]. hauto q:on drew:off use:fv_hole_derivative. hauto q:on drew:off use:fv_hole_derivative. eapply B; eauto.
       * intros. eapply C. admit.
-      * intros H00 H01. admit. *)
+      * intros H00 H01. admit.
   (* cat-l-1 *)
   - assert (H00 : PrefixTyped (PfxCatFst p) (TyDot s0 t)) by best use:maps_to_has_type_reflect.
     sinvert H00. edestruct H as [A [B C]]. eauto. eauto. eauto. eapply catrenvtyped1; eauto.
@@ -270,7 +270,7 @@ Proof.
         sfirstorder use:sink_tm_typing.
         { eapply hole_compose_fill. eauto. exists (CtxSemic (CtxHasTy x s'') (CtxHasTy z s'0)). split. hauto l:on. hauto l: on use:reflect_fill. }
         { eapply hole_compose_fill. eapply reflect_hole_compose; eauto. exists (CtxSemic CtxEmpty (CtxHasTy z s'0)). split. hauto l:on. scongruence use:reflect_fill. }
-        eapply typing_subst'. eauto. { admit. (* true *) } { admit. (*true*) } { intro H00. eapply step_bv in H00;[|eauto]. best. } { admit. (* true!*) }
+        eapply typing_subst'. eauto. { admit. (* true *) } { admit. (*true*) } { intro H00. eapply step_bv in H00;[|eauto]. best. } { intro H00. eapply step_bv in H00;[|eauto]. scongruence. } { admit. (* true!*) }
     + eapply preserves_cat_2; eauto.
   (* Let *)
   - 
@@ -337,7 +337,7 @@ Proof.
       sinvert H27.
       assert (WFContext Gx). { eapply wf_fill_reflect. eauto. hauto drew: off. }
       edestruct (D'' (CtxHasTy x s0) (CtxHasTy x s'0) Gx (singleton_env x p)) as [Gx' [U V]]. eauto. { eapply no_conflict_on_disjoint. right. eapply wf_fill_reflect in H22;[|eauto]. eapply DisjointSets_inj. intros. destruct H22 as [_ [_ U]]. eapply U. eapply dom_singleton in H23. scongruence. } eapply context_derivative_sng; eauto.
-      eapply (typing_subst'). eauto. hauto l:on use:context_derivative_wf. { intro. eapply fv_fill in H23;[|eauto]. destruct H23; [scongruence|]. assert (DisjointSets (fv G) (singleton_set z)) by best use:wf_fill. assert (H00 : ~fv G z) by scongruence. eapply H00. hauto drew: off use:fv_hole_derivative. } { intro. } { eapply ctx_subst_fill; eauto. }
+      eapply (typing_subst'). eauto. hauto l:on use:context_derivative_wf. { intro. eapply fv_fill in H23;[|eauto]. destruct H23; [scongruence|]. assert (DisjointSets (fv G) (singleton_set z)) by best use:wf_fill. assert (H00 : ~fv G z) by scongruence. eapply H00. hauto drew: off use:fv_hole_derivative. } { intro. eapply H3. eapply step_bv;eauto. } { best. } { eapply ctx_subst_fill; eauto. }
     + intros.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta) by hfcrush use:prop_on_contains.
       assert (MaximalOn (set_union (set_minus (fv e1) (singleton_set x)) (singleton_set z)) eta''). eapply env_cat_maximal; [ eauto | | ].

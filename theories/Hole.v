@@ -463,12 +463,17 @@ Theorem ctx_subst_fill_other_hole : forall G G' x x0 y s h,
   x <> y ->
   exists h', Fill h' (CtxHasTy x s) G'.
 Proof.
-Admitted.
+  intros.
+  generalize dependent x.
+  generalize dependent h.
+  generalize dependent s.
+  induction H0; intros; sauto lq: on.
+Qed.
 
 Theorem ctx_subst_fill_arb : forall G D GD G0 x y,
   Fill G D GD ->
   CtxSubst x y GD G0 ->
-  (exists G', HoleSubst x y G G' /\ Fill G' D G0) \/
+  (exists G', HoleSubst x y G G' /\ Fill G' D G0 /\ (forall D' GD', Fill G D' GD' -> exists G'D', Fill G' D' G'D' /\ CtxSubst x y GD' G'D')) \/
   (exists D', CtxSubst x y D D' /\ Fill G D' G0).
 Proof.
   intros.
@@ -491,3 +496,29 @@ Theorem ctx_subst_fill_transport : forall G G1 G2 x y s,
   Fill G (CtxHasTy x s) G2.
 Proof.
 Admitted.
+
+Theorem hole_subst_found_fv : forall x y h h',
+  HoleSubst x y h h' ->
+  fv h y.
+Proof.
+  intros.
+  induction H; hauto lq: on use:ctx_subst_found_fv.
+Qed.
+
+Theorem hole_subst_found_fv' : forall x y h h',
+  HoleSubst x y h h' ->
+  fv h' x.
+Proof.
+  intros.
+  induction H; hauto lq: on use:ctx_subst_found_fv'.
+Qed.
+
+Theorem hole_subst_no_found_fv : forall z h' h x y,
+  HoleSubst x y h h' ->
+  ~fv h z ->
+  z <> x ->
+  ~fv h' z.
+Proof.
+intros. generalize dependent z.
+induction H;sfirstorder use:ctx_subst_no_found_fv.
+Qed.

@@ -75,10 +75,16 @@ Inductive CtxSubst (x : string) (y : string) : context -> context -> Prop :=
     CtxSubst x y g g' ->
     CtxSubst x y (CtxSemic d g) (CtxSemic d g').
 
-(* TODO: will *)
 Theorem ctx_subst_exists : forall x y g, fv g y -> exists g', CtxSubst x y g g'.
 Proof.
-Admitted.
+intros.
+generalize dependent x. generalize dependent y.
+induction g; intros.
+- best.
+- sauto lq: on.
+- sauto q: on.
+- sauto q: on.
+Qed.
   
 (* TODO: will *)
 Theorem ctx_subst_det : forall x y g g' g'',
@@ -89,12 +95,21 @@ Theorem ctx_subst_det : forall x y g g' g'',
 Proof.
 Admitted.
 
-(* TODO: will *)
 Theorem ctx_subst_found_fv : forall x y g g',
   CtxSubst x y g g' ->
   fv g y.
 Proof.
-Admitted.
+  intros.
+  induction H; hauto lq: on.
+Qed.
+
+Theorem ctx_subst_found_fv' : forall x y g g',
+  CtxSubst x y g g' ->
+  fv g' x.
+Proof.
+  intros.
+  induction H; hauto lq: on.
+Qed.
 
 Theorem ctx_subst_no_found_fv : forall z g' g x y,
   CtxSubst x y g g' ->
