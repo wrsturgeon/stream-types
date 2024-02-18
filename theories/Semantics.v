@@ -162,41 +162,6 @@ Scheme Step_ind' := Induction for Step Sort Prop
 with ArgsStep_ind' := Induction for ArgsStep Sort Prop.
 Combined Scheme Step_mutual from Step_ind', ArgsStep_ind'.
 
-(* TODO:will eta eta', agree on fv e *)
-Theorem step_det : forall eta e e1 e2 p1 p2,
-    Step eta e e1 p1 ->
-    Step eta e e2 p2 ->
-    e1 = e2 /\ p1 = p2.
-Proof.
-  intros. generalize dependent e2. generalize dependent p2. induction H; cbn in *; intros.
-  - sinvert H0. repeat constructor.
-  - sinvert H0. repeat constructor.
-  - sinvert H0. rewrite H in H3. sinvert H3. repeat constructor.
-  - sinvert H1. specialize (IHStep1 _ _ H5) as [Ee1 Ep1].
-    specialize (IHStep2 _ _ H8) as [Ee2 Ep2]. subst. repeat constructor.
-  - sinvert H1. { specialize (IHStep _ _ H5) as [Ee Ep]. subst. repeat constructor. }
-    specialize (IHStep _ _ H4) as [Ee Ep]. subst. apply H0 in H6 as [].
-  - sinvert H2. { specialize (IHStep1 _ _ H6) as [Ee Ep]. subst. apply H9 in H0 as []. }
-    specialize (IHStep1 _ _ H5) as [Ee1 Ep1]. specialize (IHStep2 _ _ H10) as [Ee2 Ep2].
-    subst. repeat constructor.
-  - sinvert H1. rewrite H in H9. sinvert H9. specialize (IHStep _ _ H10) as [Ee Ep].
-    subst. repeat constructor.
-  - sinvert H1; rewrite H in H10; sinvert H10.
-    specialize (IHStep _ _ H11) as [Ee Ep]. subst. repeat constructor.
-  - sinvert H1; rewrite H in H10; sinvert H10.
-    specialize (IHStep _ _ H11) as [Ee Ep]. subst. repeat constructor.
-  - sinvert H1. specialize (IHStep1 _ _ H8) as [Ee Ep]. subst.
-    edestruct IHStep2 as [Ee Ep]; [| split; f_equal]; eassumption.
-  - sauto lq: on rew: off.
-  - sauto lq: on rew: off.
-  - sinvert H1; assert (A := env_cat_unique _ _ _ _ H H12); subst; [repeat constructor | |]; congruence.
-  - sinvert H2; assert (A := env_cat_unique _ _ _ _ H H13); subst; [congruence | | congruence].
-    assert (p = p0) by congruence. subst. specialize (IHStep _ _ H15) as [Ee Ep]. subst. sfirstorder.
-  - sinvert H2; assert (A := env_cat_unique _ _ _ _ H H13); subst; [congruence | congruence |].
-    assert (p = p0) by congruence. subst. specialize (IHStep _ _ H15) as [Ee Ep]. subst. sfirstorder.
-  - admit.
-Admitted.
-Hint Resolve step_det : core.
 
 Theorem step_bv :
       (forall eta e e' p, Step eta e e' p -> forall x, bv_term e' x -> bv_term e x) /\

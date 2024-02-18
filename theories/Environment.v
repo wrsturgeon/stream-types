@@ -852,6 +852,7 @@ Theorem starcaseenvtyped4 : forall G Gz Gxxs x xs z p p' s r n,
   (~ fv G x) ->
   (~ fv G xs) ->
   n z = Some (PfxStarRest p p') ->
+  MaximalPrefix p ->
   PrefixTyped p s ->
   PrefixTyped p' (TyStar s) ->
   Fill G (CtxHasTy z r) Gz ->
@@ -862,8 +863,8 @@ Theorem starcaseenvtyped4 : forall G Gz Gxxs x xs z p p' s r n,
 Proof.
 intros.
 eapply (env_subctx_bind' G (CtxHasTy z r)); [eauto | eauto | | eauto | | split ].
-{ eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H7; scongruence. }
-{ eapply env_typed_semic. eapply DisjointSets_inj. intros. eapply dom_singleton in H7. sinvert H7. intro. eapply dom_singleton in H7. best. best. best. left. intro. cbn. best use:eqb_refl. }
-{ intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
-{ intro. intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
-Admitted.
+{ eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H9; scongruence. }
+{ eapply env_typed_semic. eapply DisjointSets_inj. intros. eapply dom_singleton in H9. sinvert H9. intro. eapply dom_singleton in H9. best. best. best. right. intro. cbn. best use:eqb_refl. }
+{ intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarRest p p' = p0). sinvert B. eapply prop_on_set_union. split. exists p. sauto use:eqb_neq,eqb_refl. exists p'. hauto q: on use:eqb_refl. }
+{ intro. intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarRest p p' = p0). sinvert B. }
+Qed.
