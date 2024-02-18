@@ -422,8 +422,7 @@ Proof.
     + econstructor. best. best. best.
     + econstructor. best. best. best.
   (* par-l *)
-  - admit.
-    (* cbn.
+  - cbn.
     assert (WFContext Gxsyt). { eapply wf_fill_reflect. eauto. split. sfirstorder use:wf_fill_reflect. split. sauto. eapply DisjointSets_inj'. intros x1 H00. cbn in H00. destruct H00; scongruence. }
     assert (~fv Gxsyt x0). { intro H00. eapply fv_fill in H00;[|eauto]. cbn in H00. destruct H00;[sfirstorder|]. hauto q: on use:fv_fill. }
     edestruct (H x0 y0). eauto. { intro. assert (H00 : fv G x0 \/ x = x0 \/ y = x0) by qauto use:fv_fill. destruct H00 as [A | [B | C]]; [|sfirstorder|sfirstorder]. hauto q: on use:fv_fill. } sfirstorder. sfirstorder.
@@ -439,11 +438,9 @@ Proof.
          assert (~fv G z). { assert (DisjointSets (fv G) (singleton_set z)) by hauto drew: off use:wf_fill_reflect. best. }
          econstructor. best. best. best. best. best. best. best. { eapply H7. intro. assert (fv Gxsyt z) by hauto q: on use:typing_fv. assert (H02 : fv G z \/ x = z \/ y = z) by hauto q:on use:fv_fill. destruct H02;sfirstorder. }
     -- assert (H00 : eqb z y0 = false) by best use:eqb_neq ; rewrite -> H00 in *.
-       sfirstorder. *)
+       sfirstorder.
   (* cat-r *)
-  - admit.
-    (*
-    edestruct (H x y) as [U V]. sauto lq: on rew: off. sfirstorder. sfirstorder. sfirstorder.
+  - edestruct (H x y) as [U V]. sauto lq: on rew: off. sfirstorder. sfirstorder. sfirstorder.
     edestruct (H0 x y) as [W X]. sauto lq: on rew: off. sfirstorder. sfirstorder. sfirstorder.
     sinvert H1.
     split; intros; cbn.
@@ -451,10 +448,8 @@ Proof.
        + econstructor. best. eapply X. { intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. } best.
        + econstructor. { eapply V. intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. } sfirstorder. sfirstorder.
     -- econstructor; sfirstorder.
-    *)
   (* cat-l *)
-  - admit.
-    (*cbn.
+  - cbn.
     assert (WFContext Gxsyt). { eapply wf_fill_reflect. eauto. split. sfirstorder use:wf_fill_reflect. split. sauto. eapply DisjointSets_inj'. intros x1 H00. cbn in H00. destruct H00; scongruence. }
     assert (~fv Gxsyt x0). { intro H00. eapply fv_fill in H00;[|eauto]. cbn in H00. destruct H00;[sfirstorder|]. hauto q: on use:fv_fill. }
     edestruct (H x0 y0). eauto. { intro. assert (H00 : fv G x0 \/ x = x0 \/ y = x0) by qauto use:fv_fill. destruct H00 as [A | [B | C]]; [|sfirstorder|sfirstorder]. hauto q: on use:fv_fill. } sfirstorder. sfirstorder.
@@ -471,7 +466,6 @@ Proof.
          econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. best. best. best. best. { eapply H7. intro. assert (fv Gxsyt z) by hauto q: on use:typing_fv. assert (H02 : fv G z \/ x = z \/ y = z) by hauto q:on use:fv_fill. destruct H02;sfirstorder. }
     -- assert (H00 : eqb z y0 = false) by best use:eqb_neq ; rewrite -> H00 in *.
        econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. eauto. eauto. eauto. eauto. sfirstorder.
-    *)
   (* oner *)
   - sfirstorder.
   (* epsr *)
@@ -488,8 +482,7 @@ Proof.
         edestruct ctx_subst_fill_other_hole as [h']; eauto.
     + destruct (ltac:(sfirstorder use:eqb_neq) : false = eqb x y). sfirstorder.
   (* cut *)
-  - admit.
-    (*edestruct (H x0 y) as [A B]. sfirstorder. hauto q:on use:fv_fill. sfirstorder. sfirstorder.
+  - edestruct (H x0 y) as [A B]. sfirstorder. hauto q:on use:fv_fill. sfirstorder. sfirstorder.
     edestruct (H0 x0 y) as [A' B']. { eapply wf_ctx_fill. eauto. hauto l: on use:wf_fill_reflect. sauto lq:on. qauto l:on use:DisjointSets_inj. } { assert (~fv G x0) by hauto q: on use:fv_fill. intro. edestruct (fv_fill G (CtxHasTy x s)). eauto. hauto q: on. } sfirstorder. sfirstorder.
     split; intros.
     + edestruct (ctx_subst_fill_arb G D) as [[G'0 [U [V W]]] | [D' [U V]]]. eauto. eauto.
@@ -503,7 +496,6 @@ Proof.
       assert (Typed o Gxs rs (subst_var e' x0 y) t i). eapply B'.  { intro. assert (fv D y) by hauto l:on use:ctx_subst_found_fv. assert (fv Gxs y) by hauto drew: off use:typing_fv. assert (x <> y) by scongruence. assert (fv G y) by qauto use:fv_fill. assert (DisjointSets (fv G) (fv D)) by hauto l:on use: wf_ctx_fill. sfirstorder. }
       eapply (TLet G D'); [eauto | eapply ctx_subst_no_found_fv;sfirstorder | eauto | eauto | eauto | eauto]. best.
     + sfirstorder.
-    *)
   (* inl *)
   - hauto l: on.
   (* inr *)
@@ -513,21 +505,25 @@ Proof.
     assert (~fv G x). { intro. assert (~fv Gz x) by hauto q: on use:fv_context_derivative. hauto q: on use:fv_fill. }
     assert (WFContext Gx) by (eapply wf_fill_reflect; [eauto|sfirstorder use:wf_fill_reflect]).
     assert (WFContext Gy) by (eapply wf_fill_reflect; [eauto|sfirstorder use:wf_fill_reflect]).
-    edestruct (H x0 y0) as [A0 B0]. eauto. admit. sfirstorder. sfirstorder.
-    edestruct (H0 x0 y0) as [A1 B1]. eauto. admit. sfirstorder. sfirstorder.
+    assert (~ fv Gx x0). { intro. assert (x = x0 \/ fv G x0) by hauto drew: off use:(fv_fill G (CtxHasTy x s)). destruct H10;[sfirstorder|]. assert (~fv Gz x0) by hauto q: on use:fv_context_derivative. hauto q:on use:fv_fill. }
+    assert (~ fv Gy x0). { intro. assert (y = x0 \/ fv G x0) by hauto drew: off use:(fv_fill G (CtxHasTy y t)). destruct H11;[sfirstorder|]. assert (~fv Gz x0) by hauto q: on use:fv_context_derivative. hauto q:on use:fv_fill. }
+    edestruct (H x0 y0) as [A0 B0]. eauto. eauto. sfirstorder. sfirstorder.
+    edestruct (H0 x0 y0) as [A1 B1]. eauto. eauto. sfirstorder. sfirstorder.
     split; intros.
     + edestruct (fill_derivative_ctx_subst eta G (CtxHasTy z (TySum s t))) as [Gz_xy [dD [G'' [B [C [D [E [[Gxy [G''xy [F [I [J K]]]]] | [xyz [U [F [I [J]]]]]]]]]]]]]. eauto. eauto. eauto.
       * sinvert C.
         assert (~fv G z) by sauto use: (wf_fill_reflect G (CtxHasTy z (TySum s t))).
-        assert (z <> x0). {  assert (~fv Gz x0) by best use:fv_context_derivative. admit. }
+        assert (z <> x0). {  assert (~fv Gz x0) by hauto q: on drew: off use:fv_context_derivative. hauto use:fv_fill. }
         assert (fv G y0) by hauto l:on use:hole_subst_found_fv.
         assert (y0 <> z) by sfirstorder.
         assert (H00 : eqb z y0 = false) by hauto lq:on rew:off use: eqb_neq. rewrite -> H00 in *.
         assert (x0 <> z) by sfirstorder.
         assert (WFContext Gz_xy). eapply ctx_subst_wf;[| eauto | ]. scongruence use:context_derivative_wf. hauto q: on use:fv_context_derivative.
+        assert (~ fv Gxy x). { intro. assert ((set_union (set_minus (fv G) (singleton_set y0)) (singleton_set x0)) x). eapply hole_subst_fv. eauto. hauto l:on use:wf_fill. eauto. destruct H21;[sfirstorder|hauto drew: off]. }
+        assert (~ fv Gxy y). { intro. assert ((set_union (set_minus (fv G) (singleton_set y0)) (singleton_set x0)) y). eapply hole_subst_fv. eauto. hauto l:on use:wf_fill. eauto. destruct H22;[sfirstorder|hauto drew: off]. }
         edestruct (fill_reflect_fun Gxy (CtxHasTy x s)) as [Gxyxs].
         edestruct (fill_reflect_fun Gxy (CtxHasTy y t)) as [Gxyyt].
-        eapply (TPlusCase Gxy). eauto. eauto. eauto. admit. admit. hauto l:on use:bv_var_subst. hauto l: on use:bv_var_subst. hauto l:on use:bv_var_subst. hauto l: on use:bv_var_subst. eauto. eauto. eauto. { eapply env_subst_var_typed';[| | eauto | ]; eauto. }
+        eapply (TPlusCase Gxy). eauto. eauto. eauto. eauto. eauto. hauto l:on use:bv_var_subst. hauto l: on use:bv_var_subst. hauto l:on use:bv_var_subst. hauto l: on use:bv_var_subst. eauto. eauto. eauto. { eapply env_subst_var_typed';[| | eauto | ]; eauto. }
         { eapply context_derivative_subst_var;[| | | | eauto ]. scongruence use:context_derivative_wf. eauto. eauto. eauto. }
         eapply A0; eapply hole_subst_same_fill; [| eauto | eauto ];eauto.
         eapply A1; eapply hole_subst_same_fill; [| eauto | eauto ];eauto.
@@ -537,8 +533,8 @@ Proof.
         assert (WFContext Gz_xy). eapply ctx_subst_wf;[| eauto | ]. scongruence use:context_derivative_wf. hauto q: on use:fv_context_derivative.
         eapply (TPlusCase G). sfirstorder. sfirstorder. eauto. eauto. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. eauto. eauto. eauto. { eapply env_subst_var_typed; [ | | | | eauto]; eauto.  }
         { eapply context_derivative_subst_var;[| | | | eauto ]. scongruence use:context_derivative_wf. eauto. eauto. eauto. }
-        eapply B0. { intro. eapply H11. assert (fv Gx z) by hauto drew: off use:typing_fv. hauto q: on drew: off use:fv_fill. }
-        eapply B1. { intro. eapply H11. assert (fv Gy z) by hauto drew: off use:typing_fv. hauto q: on drew: off use:fv_fill. }
+        eapply B0. { intro. eapply H13. assert (fv Gx z) by hauto drew: off use:typing_fv. hauto q: on drew: off use:fv_fill. }
+        eapply B1. { intro. eapply H13. assert (fv Gy z) by hauto drew: off use:typing_fv. hauto q: on drew: off use:fv_fill. }
         { intro H01. unfold env_subst_var in *. hauto q:on use:eqb_refl. }
     + assert (H00 : eqb z y0 = false) by best use:eqb_neq. rewrite -> H00 in *.
       assert (H02 : eqb z x0 = false). { eapply eqb_neq. assert (~fv Gz x0) by hauto q:on use:fv_context_derivative. hauto q:on use:fv_fill. }
@@ -620,8 +616,9 @@ Proof.
     split; intros.
     + sinvert H5.
       * econstructor. best. eapply H4. { intro. assert (fv g2 y) by hauto l: on use:typing_fv_args. assert (fv g1 y) by hauto l: on use:ctx_subst_found_fv. sfirstorder. }
-      * econstructor. scongruence. hauto l: on.
-Admitted.
+      * econstructor. best. hauto l: on.
+    + econstructor. scongruence. sfirstorder.
+Qed.
 
 
 Theorem typing_subst' : forall G G' e x y t i rs o,

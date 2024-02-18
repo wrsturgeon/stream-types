@@ -445,6 +445,7 @@ Inductive HoleSubst (x : string) (y : string) : hole -> hole -> Prop :=
     HoleSubst x y (HoleSemicR g h) (HoleSemicR g' h)
 .
 
+
 Theorem hole_subst_same_fill : forall x y G Gxy GD D GxyD,
   HoleSubst x y G Gxy ->
   Fill G D GD ->
@@ -599,4 +600,23 @@ Proof.
   edestruct ctx_subst_fill_localize as [h [s' [A B]]]. eauto.
   edestruct (fill_reflect_var_localize G h); [eauto|eauto|eauto| ]. 
   hauto lq: on.
+Qed.
+
+
+Theorem hole_subst_fv : forall x y h h',
+  HoleSubst x y h h' ->
+  WFHole h ->
+  SetEq (fv h') (set_union (set_minus (fv h) (singleton_set y)) (singleton_set x)).
+Proof.
+  intros.
+  generalize dependent H0.
+  induction H; intros; sinvert H0.
+  - assert (fv h y) by sfirstorder use:hole_subst_found_fv; assert (~fv g y) by sfirstorder; hauto q: on.
+  - assert (fv g y) by sfirstorder use:ctx_subst_found_fv. assert (~fv h y) by sfirstorder. hauto q: on use: ctx_subst_fv.
+  - assert (fv h y) by sfirstorder use:hole_subst_found_fv; assert (~fv g y) by sfirstorder; hauto q: on.
+  - assert (fv g y) by sfirstorder use:ctx_subst_found_fv. assert (~fv h y) by sfirstorder. qauto use: ctx_subst_fv.
+  - assert (fv h y) by sfirstorder use:hole_subst_found_fv; assert (~fv g y) by sfirstorder; hauto q: on.
+  - assert (fv g y) by sfirstorder use:ctx_subst_found_fv. assert (~fv h y) by sfirstorder. hauto q: on use: ctx_subst_fv.
+  - assert (fv h y) by sfirstorder use:hole_subst_found_fv; assert (~fv g y) by sfirstorder; hauto q: on.
+  - assert (fv g y) by sfirstorder use:ctx_subst_found_fv. assert (~fv h y) by sfirstorder. hauto q: on use: ctx_subst_fv.
 Qed.
