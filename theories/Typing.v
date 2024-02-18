@@ -103,6 +103,25 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o G rs e1 s i1 ->
       Typed o D rs e2 (TyStar s) i2 ->
       Typed o (CtxSemic G D) rs (TmCons e1 e2) (TyStar s) Jumpy
+  | TStarCase : forall G x xs z s r Gz Gemp Gxxs Gz' e1 e2 eta i i1 i2 rs o,
+      x <> z ->
+      xs <> z ->
+      x <> xs ->
+      ~ fv G x ->
+      ~ fv G xs ->
+      ~ bv_term e1 z ->
+      ~ bv_term e2 z ->
+      ~ bv_term e2 x ->
+      ~ bv_term e2 xs ->
+      Fill G (CtxHasTy z (TyStar s)) Gz ->
+      Fill G CtxEmpty Gemp ->
+      Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy xs (TyStar s))) Gxxs ->
+      EnvTyped eta Gz ->
+      ContextDerivative eta Gz Gz' ->
+      Typed o Gemp rs e1 r i1 ->
+      Typed o Gxxs rs e2 r i2 ->
+      inert_guard (eta z = Some PfxStarEmp) i ->
+      Typed o Gz' rs (TmStarCase eta r z e1 x xs e2) r i
   | TRec : forall G G' s i args o o' hpargs,
       HistArgsTyped o hpargs o' ->
       ArgsTyped o G' (Rec o' G s i) args G i ->
@@ -193,6 +212,7 @@ intros.
   - econstructor; hauto q: on use:bv_fixsubst. 
   - econstructor; hauto q:on use:bv_fixsubst.
   - cbn. econstructor;sfirstorder.
+  - econstructor; sfirstorder use:bv_fixsubst.
   - hauto l: on.
   - hauto l: on.
   - hauto l: on.
@@ -263,7 +283,6 @@ Definition P_argstyping_fv (o : histctx) (g : context) (rs : recsig) (args : arg
   forall x, fv args x -> fv g x.
 Arguments P_argstyping_fv o g rs args g' i/.
 
-(* TODO: will: priority *)
 Theorem typing_fv' :
   (forall o g rs e s i, Typed o g rs e s i -> P_typing_fv o g rs e s i) /\
   (forall o g rs args g' i, ArgsTyped o g rs args g' i -> P_argstyping_fv o g rs args g' i).
@@ -295,6 +314,12 @@ Proof.
      eapply H0 in H1. qauto use:fv_fill.
  - sfirstorder.
  - sfirstorder.
+ - repeat destruct H1.
+   + hauto q: on use:fv_context_derivative,fv_fill.
+   + eapply (fv_context_derivative eta Gz). eauto. eapply fv_fill. eauto. right.
+     eapply H in H1. qauto use:fv_fill.
+   + eapply (fv_context_derivative eta Gz). eauto. eapply fv_fill. eauto. right.
+     eapply H0 in H1. qauto use:fv_fill.
  - sfirstorder.
  - sfirstorder.
  - sfirstorder.
@@ -365,6 +390,7 @@ Proof.
   - econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. hauto q:on use:bv_histval_subst. hauto q: on use:bv_histval_subst. hauto q: on use:bv_histval_subst. hauto q: on use:bv_histval_subst. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder.
   - hauto drew: off.
   - cbn. econstructor; sfirstorder.
+  - econstructor. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. hauto q:on use:bv_histval_subst. hauto q: on use:bv_histval_subst. hauto q: on use:bv_histval_subst. hauto q: on use:bv_histval_subst.  sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder. sfirstorder.
   - best use:histval_subst_histargs_thm.
   - hauto l: on use:histval_subst_histargs_thm.
   - hauto l: on.
@@ -553,6 +579,48 @@ Proof.
        + econstructor. best. eapply X. { intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. }
        + econstructor. { eapply V. intro. eapply typing_fv in H1;[|eauto]. hauto q: on use:ctx_subst_found_fv. } sfirstorder.
     -- econstructor; sfirstorder.
+  - assert (WFContext Gz) by sfirstorder use:context_derivative_wf.
+    assert (~fv G x). { intro. assert (~fv Gz x) by hauto q: on use:fv_context_derivative. hauto q: on use:fv_fill. }
+    assert (~fv G xs). { intro. assert (~fv Gz xs) by hauto q: on use:fv_context_derivative. hauto q: on use:fv_fill. }
+    assert (WFContext Gxxs). eapply wf_fill_reflect. eauto. split;[|split];[ sfirstorder use:wf_fill | sauto | eapply DisjointSets_inj'; sfirstorder]. 
+    assert (WFContext Gemp). eapply wf_fill_reflect. eauto. split;[|split];[ sfirstorder use:wf_fill | hauto l:on | best use:DisjointSets_inj']. exact string.
+    assert (~ fv Gxxs x0). { intro. assert (x = x0 \/ xs = x0 \/ fv G x0) by hauto drew: off use:(fv_fill G (CtxSemic (CtxHasTy x s) (CtxHasTy xs (TyStar s)))). (repeat destruct H11);[sfirstorder | sfirstorder | ]. assert (~fv Gz x0) by hauto q: on use:fv_context_derivative. hauto q:on use:fv_fill. }
+    assert (~ fv Gemp x0). { intro. assert (fv G x0) by hauto drew: off use:(fv_fill G CtxEmpty).  assert (~fv Gz x0) by hauto q: on use:fv_context_derivative. hauto q:on use:fv_fill. }
+    edestruct (H x0 y) as [A0 B0]. eauto. eauto. sfirstorder. sfirstorder.
+    edestruct (H0 x0 y) as [A1 B1]. eauto. eauto. sfirstorder. sfirstorder.
+    split; intros.
+    + edestruct (fill_derivative_ctx_subst eta G (CtxHasTy z (TyStar s))) as [Gz_xy [dD [G'' [B [C [D [E [[Gxy [G''xy [F [I [J K]]]]] | [xyz [U [F [I [J]]]]]]]]]]]]]. eauto. eauto. eauto.
+      * sinvert C.
+        assert (~fv G z) by sauto use: (wf_fill_reflect G (CtxHasTy z (TyStar s))).
+        assert (z <> x0). {  assert (~fv Gz x0) by hauto q: on drew: off use:fv_context_derivative. hauto use:fv_fill. }
+        assert (fv G y) by hauto l:on use:hole_subst_found_fv.
+        assert (y <> z) by sfirstorder.
+        assert (H00 : eqb z y = false) by hauto lq:on rew:off use: eqb_neq. rewrite -> H00 in *.
+        assert (x0 <> z) by sfirstorder.
+        assert (WFContext Gz_xy). eapply ctx_subst_wf;[| eauto | ]. scongruence use:context_derivative_wf. hauto q: on use:fv_context_derivative.
+        assert (~ fv Gxy x). { intro. assert ((set_union (set_minus (fv G) (singleton_set y)) (singleton_set x0)) x). eapply hole_subst_fv. eauto. hauto l:on use:wf_fill. eauto. destruct H22;[sfirstorder|hauto drew: off]. }
+        assert (~ fv Gxy xs). { intro. assert ((set_union (set_minus (fv G) (singleton_set y)) (singleton_set x0)) xs). eapply hole_subst_fv. eauto. hauto l:on use:wf_fill. eauto. destruct H23;[sfirstorder|hauto drew: off]. }
+        edestruct (fill_reflect_fun Gxy (CtxSemic (CtxHasTy x s) (CtxHasTy xs (TyStar s)))) as [Gxyxxs].
+        edestruct (fill_reflect_fun Gxy CtxEmpty) as [Gxyemp].
+        eapply (TStarCase Gxy x xs). eauto. eauto. eauto. eauto. eauto. hauto l:on use:bv_var_subst. hauto l: on use:bv_var_subst. hauto l:on use:bv_var_subst. hauto l: on use:bv_var_subst. eauto. eauto. eauto. { eapply env_subst_var_typed';[| | eauto | ]; eauto. }
+        { eapply context_derivative_subst_var;[| | | | eauto ]. scongruence use:context_derivative_wf. eauto. eauto. eauto. }
+        eapply A0; eapply hole_subst_same_fill; [| eauto | eauto ];eauto.
+        eapply A1; eapply hole_subst_same_fill; [| eauto | eauto ];eauto.
+        { intro H01. rewrite -> H01 in *.  unfold env_subst_var in *. sauto use:eqb_neq. }
+      * sinvert C. sinvert F. sinvert J. assert (H00 : eqb z z = true) by best use:eqb_refl. rewrite -> H00 in *.
+        assert (~fv G z) by sauto use: (wf_fill_reflect G (CtxHasTy z (TyStar s))).
+        assert (WFContext Gz_xy). eapply ctx_subst_wf;[| eauto | ]. scongruence use:context_derivative_wf. hauto q: on use:fv_context_derivative.
+        eapply (TStarCase G x xs). sfirstorder. sfirstorder. eauto. eauto. eauto. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. sfirstorder use:bv_var_subst. eauto. eauto. eauto. { eapply env_subst_var_typed; [ | | | | eauto]; eauto.  }
+        { eapply context_derivative_subst_var;[| | | | eauto ]. scongruence use:context_derivative_wf. eauto. eauto. eauto. }
+        eapply B0. { intro. eapply H14. assert (fv Gemp z) by hauto drew: off use:typing_fv. hauto q: on drew: off use:fv_fill. }
+        eapply B1. { intro. eapply H14. assert (fv Gxxs z) by hauto drew: off use:typing_fv. hauto q: on drew: off use:fv_fill. }
+        { intro H01. unfold env_subst_var in *. hauto q:on use:eqb_refl. }
+    + assert (H00 : eqb z y = false) by best use:eqb_neq. rewrite -> H00 in *.
+      assert (H02 : eqb z x0 = false). { eapply eqb_neq. assert (~fv Gz x0) by hauto q:on use:fv_context_derivative. hauto q:on use:fv_fill. }
+      econstructor. 
+      eauto. eauto. eauto. eauto. eauto. hauto l: on use:bv_var_subst. hauto l:on use:bv_var_subst.  hauto l: on use:bv_var_subst. hauto l:on use:bv_var_subst. eauto. eauto. eauto.
+      eapply env_subst_var_nop; hauto q:on use:fv_context_derivative. eapply context_derivative_subst_var_nop; hauto q: on use:fv_context_derivative. hauto q: on. hauto q: on.
+      { intro H01. rewrite -> H01 in *. edestruct i0. eauto. unfold env_subst_var in *. hauto drew: off. }
   (* tmrec *)
   - hauto l: on.
   (* tmfix *)
