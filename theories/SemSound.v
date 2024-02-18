@@ -124,7 +124,7 @@ split.
   + edestruct (H00' x0) as [p0 [L M]]. sfirstorder.
     exists p0.
     cbn. hauto lq:on use:eqb_neq.
-Admitted.
+Qed.
 
 Theorem  preserves_cat_2 : forall (eta : env) e z p1 p2 p' i x y t,
   x <> y ->
@@ -275,7 +275,7 @@ Proof.
     assert (NoConflictOn eta (singleton_env x p) (fv G)). { eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros. intro. assert (x0 <> x) by scongruence. assert (x = x0) by qauto l: on use:dom_singleton. sfirstorder. }
     assert (EnvTyped (env_subst x p eta) Gxs). eapply env_subctx_bind'; [ | eauto | eauto | | | ]. eauto. eauto. { eapply env_typed_singleton. eauto. } { eapply preserves_to_agree. eapply typing_fv; eauto. sfirstorder. }
     edestruct (wf_fill_reflect G) as [QQ _]; eauto.
-    assert (WFContext Gxs). { eapply wf_fill_reflect. eauto. best use:DisjointSets_inj'. }
+    assert (WFContext Gxs). { eapply wf_fill_reflect. eauto. best use:DisjointSets_inj'. exact string. }
     edestruct H0 as [A' [B' [U' V']]]; eauto.
     split; try split; try split.
     + eauto.

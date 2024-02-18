@@ -607,14 +607,6 @@ Proof.
 Qed.
 
 
-Theorem hole_derivative_hole_subst : forall x y g dg dgxy eta,
-  HoleSubst x y dg dgxy ->
-  HoleDerivative eta g dg ->
-  exists gxy, HoleSubst x y g gxy.
-Proof.
-  intros.
-Admitted.
-
 (* Absolutely no idea how i came up with this one. just kept adding conclusions until we got what we needed, and then prayed it was true. *)
 
 Theorem fill_derivative_ctx_subst : forall eta G D GD dGD x y dGDxy,

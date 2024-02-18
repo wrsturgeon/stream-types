@@ -1,5 +1,9 @@
 (* From Coq Require Import String. *)
-From Coq Require Import List.
+From Coq Require Import
+  List
+  Program.Equality
+  .
+From Hammer Require Import Tactics.
 From LambdaST Require Import
   Context
   Prefix
@@ -83,17 +87,19 @@ Inductive PrefixFlatten : prefix -> histval -> Prop :=
 | PLDone : PrefixFlatten PfxStarDone HVNil
 | PLCons : forall p p' v v',
     PrefixFlatten p v ->
-    PrefixFlatten p v' ->
+    PrefixFlatten p' v' ->
     PrefixFlatten (PfxStarRest p p') (HVCons v v')
 .
 
-(* TODO: will *)
 Theorem prefix_flatten_det : forall p v v',
   PrefixFlatten p v ->
   PrefixFlatten p v' ->
   v = v'.
 Proof.
-Admitted.
+intros.
+generalize dependent v'.
+induction H; intros; sauto lq: on.
+Qed.
 
 (* TODO: will *)
 Theorem maximal_prefix_flatten : forall p s,
@@ -101,7 +107,23 @@ Theorem maximal_prefix_flatten : forall p s,
   MaximalPrefix p ->
   exists v, PrefixFlatten p v /\ HistValTyped v (flatten_type s).
 Proof.
-Admitted.
+intros.
+generalize dependent H0.
+induction H; intros.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto q: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto lq: on.
+- sauto.
+Qed.
 
 (* TODO: will *)
 Theorem maximal_prefix_flatten' : forall p s v,
@@ -110,7 +132,11 @@ Theorem maximal_prefix_flatten' : forall p s v,
   PrefixFlatten p v ->
   HistValTyped v (flatten_type s).
 Proof.
-Admitted.
+  intros.
+  generalize dependent v.
+  generalize dependent H0.
+  induction H; sauto lq: on.
+Qed.
 
 Inductive HistValLift : type -> histval -> prefix -> Prop :=
 | PFEps : HistValLift eps HVUnit PfxEpsEmp 
@@ -132,28 +158,40 @@ Inductive HistValLift : type -> histval -> prefix -> Prop :=
 | PFDone : forall s, HistValLift (TyStar s) HVNil PfxStarDone 
 | PFCons : forall s p p' v v',
     HistValLift s v p ->
-    HistValLift (TyStar s) v' p ->
+    HistValLift (TyStar s) v' p' ->
     HistValLift (TyStar s) (HVCons v v') (PfxStarRest p p')
 .
 
-(* TODO: will *)
 Theorem histval_lift_det : forall s v p p',
   HistValLift s v p ->
   HistValLift s v p' ->
   p = p'.
 Proof.
-Admitted.
+intros.
+generalize dependent p'.
+induction H; sauto lq: on rew: off.
+Qed.
 
 (* TODO: will *)
 Theorem histval_lift_fun : forall s v,
   HistValTyped v (flatten_type s) ->
   exists p, HistValLift s v p /\ MaximalPrefix p /\ PrefixTyped p s.
 Proof.
-Admitted.
+intros.
+dependent induction H.
+- best.
+- destruct s; cbn in *; try scongruence; sauto lq: on.
+- destruct s; cbn in *; try scongruence; sauto lq: on.
+- destruct s; cbn in *; try scongruence; sauto lq: on.
+- destruct s; cbn in *; try scongruence; sauto lq: on.
+- destruct s; cbn in *; try scongruence. 
+  edestruct (IHHistValTyped1 s). scongruence.
+  edestruct (IHHistValTyped2 (TyStar s)). scongruence.
+  sauto lq: on.
+Qed.
 
 Definition histtm : Set.
 Admitted.
-
 
 Definition histargs := list histtm.
 
@@ -190,7 +228,10 @@ Theorem HistArgsStep_sound : forall args ts vs,
   HistArgsStep args vs ->
   HistValAllTyped vs ts.
 Proof.
-Admitted.
+  intros.
+  generalize dependent vs.
+  dependent induction H; intros; sauto l: on use:HistStep_sound.
+Qed.
 
 Definition histval_subst_hist (v : histval) (n : nat) (e : histtm) : histtm.
 Admitted.
@@ -222,5 +263,11 @@ Theorem histval_subst_histargs_thm : forall t ts es ts' ts0' v n,
   HistValTyped v t ->
   HistArgsTyped (app ts ts') (histval_subst_histargs v n es) ts0'.
 Proof.
-Admitted.
+intros.
+generalize dependent n.
+generalize dependent v.
+dependent induction H; intros.
+- sfirstorder.
+- hauto l: on use:histval_subst_hist_thm.
+Qed.
 
