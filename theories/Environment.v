@@ -826,3 +826,16 @@ Proof.
   eapply env_subst_var_typed; [eauto | eauto | eauto | | eauto].
   hauto q: on use:wf_fill_reflect.
 Qed.
+
+Theorem starcaseenvtyped1 : forall G Gz Gemp x z r n,
+  (~ fv G x) ->
+  n z = Some PfxStarDone ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G CtxEmpty Gemp ->
+  EnvTyped n Gz ->
+  EnvTyped n Gemp.
+Proof.
+  intros.
+  eapply env_subctx_bind'.
+  best.
+  

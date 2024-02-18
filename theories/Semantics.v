@@ -84,6 +84,15 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       MaximalPrefix p1 ->
       Step n e2 e2' p2 ->
       Step n (TmCons e1 e2) e2' (PfxStarRest p1 p2)
+   | SStarCase1 : forall eta eta' eta'' r z x xs e1 e2,
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some PfxStarEmp ->
+        Step eta (TmStarCase eta' r z e1 x xs e2) (TmStarCase eta'' r z e1 x xs e2) (emp r)
+  | SStarCase2 : forall eta eta' eta'' r z x xs e1 e2 e' p',
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some PfxStarDone ->
+        Step eta'' e1 e' p' ->
+        Step eta (TmStarCase eta' r z e1 x xs e2) e' p' 
   | SFix : forall eta eta' g g' args args' e e' r p hpargs vs,
       HistArgsStep hpargs vs ->
       ArgsStep eta  g args args' g' eta' ->
@@ -198,6 +207,8 @@ apply Step_mutual; intros.
 - best.
 - best use:bv_var_subst.
 - best use:bv_var_subst.
+- best.
+- best.
 - best.
 - best.
 - best.
