@@ -132,7 +132,38 @@ Theorem  preserves_cat_2 : forall (eta : env) e z p1 p2 p' i x y t,
   Preserves i (env_union eta (env_union (singleton_env x p1) (singleton_env y p2))) p'  (fv e) ->
   Preserves i eta p' (fv (TmLetCat t x y z e)).
 Proof.
-Admitted.
+intros.
+split.
+assert (Hyx : eqb y x = false) by best use:eqb_neq.
+- intros.
+  eapply H1.
+  intro. intros H00.
+  edestruct (H2 z) as [x1 [L M]]. sfirstorder.
+  edestruct (ltac:(scongruence) : PfxCatBoth p1 p2 = x1).
+  sinvert M.
+  assert (H02 : x = x0 \/ y = x0 \/ (x <> x0 /\ y <> x0)). { edestruct (string_dec x x0); edestruct (string_dec y x0); sfirstorder. }
+  edestruct H02 as [A | [B | C]].
+  + rewrite <- A in *.
+    exists p1.
+    cbn. rewrite -> Hyx.
+    hauto lq: on use:eqb_refl.
+  + rewrite <- B in *.
+    exists p2.
+    qauto l:on use:eqb_refl.
+  + cbn.
+    assert (eqb y x0 = false) by best use:eqb_neq.
+    assert (eqb x x0 = false) by best use:eqb_neq.
+    rewrite H3.
+    rewrite H4.
+    hauto q: on.
+- intros.
+  rewrite -> H2 in *.
+  eapply H1. eauto.
+  intro. intros H00.
+  edestruct (H3 z) as [x1 [L M]]. sfirstorder.
+  edestruct (ltac:(scongruence) : PfxCatBoth p1 p2 = x1).
+  sinvert M.
+Qed.
 
 Theorem  preserves_par : forall (eta : env) e z p1 p2 p' i x y,
   x <> y ->
@@ -140,7 +171,52 @@ Theorem  preserves_par : forall (eta : env) e z p1 p2 p' i x y,
   Preserves i (env_union eta (env_union (singleton_env x p1) (singleton_env y p2))) p'  (fv e) ->
   Preserves i eta p' (fv (TmLetPar x y z e)).
 Proof.
-Admitted.
+intros.
+split; assert (Hyx : eqb y x = false) by best use:eqb_neq.
+- intros.
+  eapply H1.
+  intro. intros H00.
+  edestruct (H2 z) as [x1 [L M]]. sfirstorder.
+  edestruct (ltac:(scongruence) : PfxParPair p1 p2 = x1).
+  sinvert M.
+  assert (H02 : x = x0 \/ y = x0 \/ (x <> x0 /\ y <> x0)). { edestruct (string_dec x x0); edestruct (string_dec y x0); sfirstorder. }
+  edestruct H02 as [A | [B | C]].
+  + rewrite <- A in *.
+    exists p1.
+    cbn. rewrite -> Hyx.
+    hauto lq: on use:eqb_refl.
+  + rewrite <- B in *.
+    exists p2.
+    qauto l:on use:eqb_refl.
+  + cbn.
+    assert (eqb y x0 = false) by best use:eqb_neq.
+    assert (eqb x x0 = false) by best use:eqb_neq.
+    rewrite H3.
+    rewrite H4.
+    hauto q: on.
+- intros.
+  rewrite -> H2 in *.
+  eapply H1. eauto.
+  intro. intros H00.
+  edestruct (H3 z) as [x1 [L M]]. sfirstorder.
+  edestruct (ltac:(scongruence) : PfxParPair p1 p2 = x1).
+  sinvert M.
+  assert (H02 : x = x0 \/ y = x0 \/ (x <> x0 /\ y <> x0)). { edestruct (string_dec x x0); edestruct (string_dec y x0); sfirstorder. }
+  edestruct H02 as [A | [B | C]].
+  + rewrite <- A in *.
+    exists p1.
+    cbn. rewrite -> Hyx.
+    hauto lq: on use:eqb_refl.
+  + rewrite <- B in *.
+    exists p2.
+    qauto l:on use:eqb_refl.
+  + cbn.
+    assert (eqb y x0 = false) by best use:eqb_neq.
+    assert (eqb x x0 = false) by best use:eqb_neq.
+    rewrite H2.
+    rewrite H4.
+    hauto q: on.
+Qed.
 
 
 (* ArgsStep eta_in g_out e e' g_out' eta_out -> *)
