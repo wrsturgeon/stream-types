@@ -9,6 +9,7 @@ From LambdaST Require Import
   Derivative
   PrefixConcat
   History
+  Types
   Terms.
 
 
@@ -84,15 +85,25 @@ Inductive Step : env -> term -> term -> prefix -> Prop :=
       MaximalPrefix p1 ->
       Step n e2 e2' p2 ->
       Step n (TmCons e1 e2) e2' (PfxStarRest p1 p2)
-   | SStarCase1 : forall eta eta' eta'' r z x xs e1 e2,
+   | SStarCase1 : forall eta eta' eta'' r s z x xs e1 e2,
         EnvConcat eta' eta eta'' ->
         eta'' z = Some PfxStarEmp ->
-        Step eta (TmStarCase eta' r z e1 x xs e2) (TmStarCase eta'' r z e1 x xs e2) (emp r)
-  | SStarCase2 : forall eta eta' eta'' r z x xs e1 e2 e' p',
+        Step eta (TmStarCase eta' r s z e1 x xs e2) (TmStarCase eta'' r s z e1 x xs e2) (emp r)
+  | SStarCase2 : forall eta eta' eta'' r s z x xs e1 e2 e' p',
         EnvConcat eta' eta eta'' ->
         eta'' z = Some PfxStarDone ->
         Step eta'' e1 e' p' ->
-        Step eta (TmStarCase eta' r z e1 x xs e2) e' p' 
+        Step eta (TmStarCase eta' r s z e1 x xs e2) e' p' 
+  | SStarCase3 : forall eta eta' eta'' r s z x xs e1 e2 e' p p',
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some (PfxStarFirst p) ->
+        Step (env_union eta'' (env_union (singleton_env x p) (singleton_env xs PfxStarEmp))) e2 e' p' ->
+        Step eta (TmStarCase eta' r s z e1 x xs e2) (TmLetCat (TyStar s) x xs z e') p' 
+  | SStarCase4 : forall eta eta' eta'' r s z x xs e1 e2 e' p p' p'',
+        EnvConcat eta' eta eta'' ->
+        eta'' z = Some (PfxStarRest p p') ->
+        Step (env_union eta'' (env_union (singleton_env x p) (singleton_env xs p'))) e2 e' p'' ->
+        Step eta (TmStarCase eta' r s z e1 x xs e2) (TmLet x (sink_tm p) (subst_var e' z xs)) p''
   | SFix : forall eta eta' g g' args args' e e' r p hpargs vs,
       HistArgsStep hpargs vs ->
       ArgsStep eta  g args args' g' eta' ->
@@ -212,6 +223,8 @@ apply Step_mutual; intros.
 - best.
 - best.
 - best.
+- best.
+- hauto q: on use:bv_sinktm, bv_var_subst.
 - best.
 - best.
 - best use:bv_sinktm.

@@ -121,7 +121,7 @@ Inductive Typed : histctx -> context -> recsig -> term -> type -> inertness -> P
       Typed o Gemp rs e1 r i1 ->
       Typed o Gxxs rs e2 r i2 ->
       inert_guard (eta z = Some PfxStarEmp) i ->
-      Typed o Gz' rs (TmStarCase eta r z e1 x xs e2) r i
+      Typed o Gz' rs (TmStarCase eta r s z e1 x xs e2) r i
   | TRec : forall G G' s i args o o' hpargs,
       HistArgsTyped o hpargs o' ->
       ArgsTyped o G' (Rec o' G s i) args G i ->

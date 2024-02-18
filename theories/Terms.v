@@ -25,7 +25,7 @@ Inductive term : Set :=
   | TmPlusCase (eta : env) (r : type) (z : string) (x : string) (e1 : term) (y : string) (e2 : term)
   | TmNil
   | TmCons (e : term) (e' : term)
-  | TmStarCase (eta : env) (r : type) (z : string) (e1 : term) (x : string) (xs : string) (e2 : term)
+  | TmStarCase (eta : env) (r : type) (s : type) (z : string) (e1 : term) (x : string) (xs : string) (e2 : term)
   | TmFix (args : argsterm) (hpargs : histargs) (g : context) (r : type) (e : term)
   | TmRec (args : argsterm) (hpargs : histargs)
   | TmArgsLet (args : argsterm) (g : context) (e : term)
@@ -55,7 +55,7 @@ Fixpoint fix_subst (g : context) (r : type) (e : term) (e' : term) :=
   | TmPlusCase eta r' z x e1 y e2 => TmPlusCase eta r' z x (fix_subst g r e e1) y (fix_subst g r e e2)
   | TmNil => TmNil
   | TmCons e1 e2 => TmCons (fix_subst g r e e1) (fix_subst g r e e2)
-  | TmStarCase eta r' z e1 x xs e2 => TmStarCase eta r' z (fix_subst g r e e1) x xs (fix_subst g r e e2)
+  | TmStarCase eta r' s' z e1 x xs e2 => TmStarCase eta r' s' z (fix_subst g r e e1) x xs (fix_subst g r e e2)
   | TmFix args hpargs g' r' e' => TmFix (fix_subst_args g r e args) hpargs g' r' e'
   | TmRec args hpargs => TmFix (fix_subst_args g r e args) hpargs g r e
   | TmArgsLet args g' e' => TmArgsLet (fix_subst_args g r e args) g' (fix_subst g r e e')
@@ -92,7 +92,7 @@ Fixpoint histval_subst (v : histval) (n : nat) (e : term) :=
   | TmPlusCase eta r' z x e1 y e2 => TmPlusCase eta r' z x (histval_subst v n e1) y (histval_subst v n e2)
   | TmNil => TmNil
   | TmCons e1 e2 => TmCons (histval_subst v n e1) (histval_subst v n e2)
-  | TmStarCase eta r' z e1 x xs e2 => TmStarCase eta r' z (histval_subst v n e1) x xs (histval_subst v n e2)
+  | TmStarCase eta r' s' z e1 x xs e2 => TmStarCase eta r' s' z (histval_subst v n e1) x xs (histval_subst v n e2)
   | TmFix args hpargs g' r' e' => TmFix (histval_subst_args v n args) (histval_subst_histargs v n hpargs) g' r' e'
   | TmRec args hpargs => TmRec (histval_subst_args v n args) (histval_subst_histargs v n hpargs)
   | TmArgsLet args g' e' => TmArgsLet (histval_subst_args v n args) g' (histval_subst v n e')
@@ -157,7 +157,7 @@ Fixpoint fv_term e : set string :=
   | TmLet x e e' => set_union (fv_term e) (set_minus (fv_term e') (singleton_set x))
   | TmInl e | TmInr e => fv_term e
   | TmPlusCase _ _ z x e1 y e2 => set_union (singleton_set z) (set_union (set_minus (fv_term e1) (singleton_set x)) (set_minus (fv_term e2) (singleton_set y)))
-  | TmStarCase _ _ z e1 x xs e2 => set_union (singleton_set z) (set_union (fv_term e1) (set_minus (fv_term e2) (set_union (singleton_set x) (singleton_set xs))))
+  | TmStarCase _ _ _ z e1 x xs e2 => set_union (singleton_set z) (set_union (fv_term e1) (set_minus (fv_term e2) (set_union (singleton_set x) (singleton_set xs))))
   | TmFix args _ _ _ _ => fv_argsterm args
   | TmRec args _ => fv_argsterm args
   | TmArgsLet args _ _ => fv_argsterm args
@@ -187,7 +187,7 @@ Fixpoint bv_term e : set string :=
   | TmLet x e e' => set_union (set_union (bv_term e) (bv_term e')) (singleton_set x)
   | TmInl e | TmInr e => bv_term e
   | TmPlusCase _ _ z x e1 y e2 => set_union (set_union (bv_term e1) (singleton_set x)) (set_union (bv_term e2) (singleton_set y))
-  | TmStarCase _ _ z e1 x xs e2 => (set_union (bv_term e1) (set_union (bv_term e2) (set_union (singleton_set x) (singleton_set xs))))
+  | TmStarCase _ _ _ z e1 x xs e2 => (set_union (bv_term e1) (set_union (bv_term e2) (set_union (singleton_set x) (singleton_set xs))))
   | TmFix args _ _ _ _ => bv_argsterm args
   | TmRec args _ => bv_argsterm args
   | TmArgsLet args _ _ => bv_argsterm args

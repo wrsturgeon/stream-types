@@ -42,7 +42,7 @@ Fixpoint subst_var (e : term) (x : string) (y : string) : term :=
   | TmPlusCase eta r z x' e1 y' e2 => TmPlusCase (env_subst_var x y eta) r (subst_str x y z) x' (subst_var e1 x y) y' (subst_var e2 x y)
   | TmCons lhs rhs =>
       TmCons (subst_var lhs x y) (subst_var rhs x y)
-  | TmStarCase eta r z e1 x' xs' e2 => TmStarCase (env_subst_var x y eta) r (subst_str x y z) (subst_var e1 x y) x' xs' (subst_var e2 x y)
+  | TmStarCase eta r s z e1 x' xs' e2 => TmStarCase (env_subst_var x y eta) r s (subst_str x y z) (subst_var e1 x y) x' xs' (subst_var e2 x y)
   | TmFix args hpargs g r e =>
       TmFix (subst_var_argsterm args x y) hpargs g r e
   | TmRec args hpargs =>

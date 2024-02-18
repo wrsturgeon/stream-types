@@ -827,15 +827,43 @@ Proof.
   hauto q: on use:wf_fill_reflect.
 Qed.
 
-Theorem starcaseenvtyped1 : forall G Gz Gemp x z r n,
+Theorem starcaseenvtyped3 : forall G Gz Gxxs x xs z p s r n,
+  x <> xs ->
   (~ fv G x) ->
-  n z = Some PfxStarDone ->
+  (~ fv G xs) ->
+  n z = Some (PfxStarFirst p) ->
+  PrefixTyped p s ->
   Fill G (CtxHasTy z r) Gz ->
-  Fill G CtxEmpty Gemp ->
+  Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy xs (TyStar s))) Gxxs ->
   EnvTyped n Gz ->
-  EnvTyped n Gemp.
+  EnvTyped
+    (env_union n (env_union (singleton_env x p) (singleton_env xs PfxStarEmp))) Gxxs.
 Proof.
-  intros.
-  eapply env_subctx_bind'.
-  best.
-  
+intros.
+eapply (env_subctx_bind' G (CtxHasTy z r)); [eauto | eauto | | eauto | | split ].
+{ eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H7; scongruence. }
+{ eapply env_typed_semic. eapply DisjointSets_inj. intros. eapply dom_singleton in H7. sinvert H7. intro. eapply dom_singleton in H7. best. best. best. left. intro. cbn. best use:eqb_refl. }
+{ intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
+{ intro. intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
+Qed.
+
+Theorem starcaseenvtyped4 : forall G Gz Gxxs x xs z p p' s r n,
+  x <> xs ->
+  (~ fv G x) ->
+  (~ fv G xs) ->
+  n z = Some (PfxStarRest p p') ->
+  PrefixTyped p s ->
+  PrefixTyped p' (TyStar s) ->
+  Fill G (CtxHasTy z r) Gz ->
+  Fill G (CtxSemic (CtxHasTy x s) (CtxHasTy xs (TyStar s))) Gxxs ->
+  EnvTyped n Gz ->
+  EnvTyped
+    (env_union n (env_union (singleton_env x p) (singleton_env xs p'))) Gxxs.
+Proof.
+intros.
+eapply (env_subctx_bind' G (CtxHasTy z r)); [eauto | eauto | | eauto | | split ].
+{ eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H7; scongruence. }
+{ eapply env_typed_semic. eapply DisjointSets_inj. intros. eapply dom_singleton in H7. sinvert H7. intro. eapply dom_singleton in H7. best. best. best. left. intro. cbn. best use:eqb_refl. }
+{ intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
+{ intro. intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
+Admitted.
