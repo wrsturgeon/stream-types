@@ -632,18 +632,6 @@ Proof.
   induction H0; intros.
   -  best.
   - sinvert H1. sinvert H2. sauto lq: on rew: off.
-  - sinvert H1; sinvert H.
-    + best.
-    + best.
-    + best use:fill_derivative, derivative_ctx_subst.
-    + best.
-    + best use:fill_derivative, derivative_ctx_subst.
-    + best.
-  - sinvert H1; sinvert H.
-    + best.
-    + best.
-    + best use:fill_derivative, derivative_ctx_subst.
-    + best.
-    + best use:fill_derivative, derivative_ctx_subst.
-    + best use:fill_derivative, derivative_ctx_subst.
+  - sinvert H1; sinvert H; sauto q: on use: fill_derivative.
+  - sinvert H1; sinvert H; sauto q: on use: fill_derivative.
 Qed.
