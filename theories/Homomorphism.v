@@ -37,11 +37,11 @@ Definition P_hom g (e : term) (s : type) (i : inertness) eta (e' : term) p :=
 Proof.
 apply (lex_ind P_hom); unfold P_hom in *; intros.
 - eapply H2. eapply subtcontext_wf; eauto. eapply sub_preserves_env; eauto. eauto. eauto. eauto.
-- best.
+- fail.
 - sinvert H3; unfold EnvConcat in *; econstructor; qauto l: on use:pfx_cat_unique.
 - sauto lq: on rew: off.
 - sinvert H5. sinvert H7. sinvert H8. sinvert H6.
   + econstructor. hauto l: on. qauto l: on use:pfx_cat_maximal'.
-  + sinvert H8. sinvert H6. econstructor; [ eauto | |]. eapply pfx_cat_maximal. eauto. best use:sound.
+  + sinvert H8. sinvert H6. econstructor; [ eauto | |]. eapply pfx_cat_maximal. eauto. fail.
 intros.
 Admitted. *)

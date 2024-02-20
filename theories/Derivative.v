@@ -514,18 +514,15 @@ Theorem context_derivative_emp : forall g,
   WFContext g ->
   ContextDerivative (empty_env_for g) g g.
 Proof.
-  induction g; intros.
-  - sauto q:on.
-  - assert (empty_env_for (CtxHasTy id ty) id = Some (emp ty)) by best use:eqb_refl.
-    sfirstorder use:derivative_emp.
-  - assert (empty_env_for (CtxComma g1 g2) = env_union (empty_env_for g1) (empty_env_for g2)) by hauto q: on.
-    rewrite -> H0.
-    sinvert H.
-    eapply context_derivative_comma; [|eauto|eauto]. hauto lq:on use:empty_env_for_dom.
-  - assert (empty_env_for (CtxSemic g1 g2) = env_union (empty_env_for g1) (empty_env_for g2)) by hauto q: on.
-    rewrite -> H0.
-    sinvert H.
-    eapply context_derivative_semic; [|eauto|eauto]. hauto lq:on use:empty_env_for_dom.
+  induction g; cbn in *; intros.
+  - constructor.
+  - econstructor. { cbn. rewrite eqb_refl. reflexivity. } apply derivative_emp.
+  - sinvert H. apply context_derivative_comma; [| apply IHg1 | apply IHg2]; try assumption.
+    intro x. split; intros Hx C; apply empty_env_for_dom in Hx; apply empty_env_for_dom in C;
+    [apply H4 in C | apply H4 in Hx]; contradiction.
+  - sinvert H. apply context_derivative_semic; [| apply IHg1 | apply IHg2]; try assumption.
+    intro x. split; intros Hx C; apply empty_env_for_dom in Hx; apply empty_env_for_dom in C;
+    [apply H4 in C | apply H4 in Hx]; contradiction.
 Qed.
 
 Theorem context_derivative_emp' : forall g g' eta,
@@ -558,9 +555,9 @@ Theorem context_derivative_subst_var_nop : forall D D' x y eta,
 Proof.
   intros.
   generalize dependent x. generalize dependent y.
-  induction H0; intros.
-  - best.
-  - cbn in *. unfold env_subst_var in *. econstructor. best use:eqb_neq. sfirstorder.
+  induction H0; cbn in *; intros.
+  - constructor.
+  - econstructor; [| eassumption]. cbn. apply eqb_neq in H1. rewrite H1. assumption.
   - sfirstorder.
   - sfirstorder.
 Qed.
@@ -581,18 +578,38 @@ Proof.
   generalize dependent y.
   generalize dependent H.
   induction H3; intros.
-  - best.
-  - sinvert H1. sinvert H2. sinvert H4. econstructor. unfold env_subst_var. best use:eqb_refl. sfirstorder.
+  - sinvert H2.
+  - sinvert H1. sinvert H2. sinvert H4. sinvert H3.
+    econstructor; cbn. { rewrite eqb_refl. eassumption. } assumption.
   - sinvert H. sinvert H2; sinvert H1; sinvert H0.
-    + econstructor. best. eapply context_derivative_subst_var_nop; [|eauto]. sauto use:ctx_subst_found_fv'.
-    + assert (fv G' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by sfirstorder use:ctx_subst_found_fv. assert (fv G y) by hauto l: on use:fv_context_derivative. sfirstorder.
-    + assert (fv G y) by sfirstorder use:ctx_subst_found_fv. assert (fv D' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by hauto l: on use:fv_context_derivative. sfirstorder.
-    + econstructor. eapply context_derivative_subst_var_nop;[|eauto ]. sauto use:ctx_subst_found_fv'. sfirstorder.
-  - sinvert H. sinvert H2; sinvert H1; sinvert H0.
-    + econstructor. best. eapply context_derivative_subst_var_nop; [|eauto]. sauto use:ctx_subst_found_fv'.
-    + assert (fv G' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by sfirstorder use:ctx_subst_found_fv. assert (fv G y) by hauto l: on use:fv_context_derivative. sfirstorder.
-    + assert (fv G y) by sfirstorder use:ctx_subst_found_fv. assert (fv D' y) by sfirstorder use:ctx_subst_found_fv. assert (fv D y) by hauto l: on use:fv_context_derivative. sfirstorder.
-    + econstructor. eapply context_derivative_subst_var_nop;[|eauto ]. sauto use:ctx_subst_found_fv'. sfirstorder.
+    + econstructor. { apply IHContextDerivative1; assumption. }
+      apply context_derivative_subst_var_nop; [| assumption].
+      sauto use:ctx_subst_found_fv'.
+    + assert (fv G' y) by sfirstorder use:ctx_subst_found_fv.
+      assert (fv D y) by sfirstorder use:ctx_subst_found_fv.
+      assert (fv G y) by hauto l: on use:fv_context_derivative.
+      constructor; sfirstorder.
+    + assert (fv G y) by sfirstorder use:ctx_subst_found_fv.
+      assert (fv D' y) by sfirstorder use:ctx_subst_found_fv.
+      assert (fv D y) by hauto l: on use:fv_context_derivative.
+      constructor; sfirstorder.
+    + econstructor.
+      * eapply context_derivative_subst_var_nop; [| assumption].
+        apply H9. eapply ctx_subst_found_fv'. eassumption.
+      * apply IHContextDerivative2; assumption.
+  - sinvert H. specialize (IHContextDerivative1 H5). specialize (IHContextDerivative2 H6).
+    sinvert H2; sinvert H1; sinvert H0.
+    + econstructor. { apply IHContextDerivative1; assumption. }
+      eapply context_derivative_subst_var_nop; [| assumption].
+      apply H9. eapply ctx_subst_found_fv'. eassumption.
+    + apply ctx_subst_found_fv in H8. apply ctx_subst_found_fv in H4.
+      apply fv_context_derivative in H3_. apply H3_ in H8. apply H7 in H4. apply H4 in H8 as [].
+    + apply ctx_subst_found_fv in H8. apply ctx_subst_found_fv in H4.
+      apply fv_context_derivative in H3_0. apply H3_0 in H8. apply H7 in H8. apply H8 in H4 as [].
+    + constructor.
+      * apply context_derivative_subst_var_nop; [| assumption].
+        apply H9. eapply ctx_subst_found_fv'. eassumption.
+      * apply IHContextDerivative2; assumption.
 Qed.
 
 Theorem derivative_ctx_subst : forall x y g dg dgxy eta,
@@ -600,10 +617,8 @@ Theorem derivative_ctx_subst : forall x y g dg dgxy eta,
   ContextDerivative eta g dg ->
   exists gxy, CtxSubst x y g gxy.
 Proof.
-  intros.
-  edestruct (ctx_subst_exists x y g).
-  eapply fv_context_derivative. eauto. best use:ctx_subst_found_fv.
-  best.
+  intros. edestruct (ctx_subst_exists x y g); [| eexists; eassumption].
+  eapply fv_context_derivative. { eassumption. } eapply ctx_subst_found_fv. eassumption.
 Qed.
 
 
@@ -630,8 +645,20 @@ Proof.
   generalize dependent G.
   generalize dependent D.
   induction H0; intros.
-  -  best.
+  - sinvert H1.
   - sinvert H1. sinvert H2. sauto lq: on rew: off.
-  - sinvert H1; sinvert H; sauto q: on use: fill_derivative.
-  - sinvert H1; sinvert H; sauto q: on use: fill_derivative.
+  - sinvert H1; sinvert H.
+    + sauto q: on.
+    + sauto q: on.
+    + sauto q: on use: fill_derivative.
+    + sauto q: on.
+    + sauto q: on use: fill_derivative.
+    + sauto q: on.
+  - sinvert H1; sinvert H.
+    + sauto q: on.
+    + sauto q: on.
+    + sauto q: on use: fill_derivative.
+    + sauto q: on.
+    + sauto q: on use: fill_derivative.
+    + sauto q: on.
 Qed.

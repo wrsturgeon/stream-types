@@ -122,7 +122,7 @@ Proof.
   - sauto lq: on.
   - sinvert H.
     sinvert H1.
-    + best.
+    + sauto lq: on.
     + edestruct IHPrefixTyped as [p00 [A [B C]]]; eauto.
       exists (PfxCatBoth p00 p2).
       split; try split.

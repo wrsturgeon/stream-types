@@ -179,14 +179,14 @@ Theorem histval_lift_fun : forall s v,
 Proof.
 intros.
 dependent induction H.
-- best.
-- destruct s; cbn in *; try scongruence; sauto lq: on.
-- destruct s; cbn in *; try scongruence; sauto lq: on.
-- destruct s; cbn in *; try scongruence; sauto lq: on.
-- destruct s; cbn in *; try scongruence; sauto lq: on.
+- destruct s; cbn in *; sinvert x; eexists; sfirstorder.
+- destruct s; cbn in *; sinvert x; sauto lq: on.
+- destruct s; cbn in *; sinvert x; sauto lq: on.
+- destruct s; cbn in *; sinvert x; sauto lq: on.
+- destruct s; cbn in *; sinvert x; sauto lq: on.
 - destruct s; cbn in *; try scongruence. 
-  edestruct (IHHistValTyped1 s). scongruence.
-  edestruct (IHHistValTyped2 (TyStar s)). scongruence.
+  edestruct (IHHistValTyped1 s); [scongruence |].
+  edestruct (IHHistValTyped2 (TyStar s)); [scongruence |].
   sauto lq: on.
 Qed.
 

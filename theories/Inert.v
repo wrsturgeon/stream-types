@@ -18,10 +18,7 @@ Arguments i_ub i1 i2 i3/.
 Hint Unfold i_ub : i1 i2 i3.
 
 Theorem i_ub_inert : forall i1 i2, i_ub i1 i2 Inert -> i1 = Inert /\ i2 = Inert.
-Proof.
-best.
-Qed.
-
+Proof. sauto lq: on rew: off. Qed.
 
 (* if i is required to be inert, then p must hold.*)
 Definition inert_guard (p : Prop) (i : inertness) : Prop :=

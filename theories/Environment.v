@@ -60,9 +60,8 @@ sfirstorder.
 Qed.
 
 Definition env_subst_var (x : string) (y : string) (rho : env) :=
-    fun z => if eqb z x then rho y else rho z
-.
-
+    fun z => if eqb z x then rho y else rho z.
+Arguments env_subst_var x y rho z/.
 Hint Unfold env_subst_var : core.
 
 
@@ -771,12 +770,18 @@ Proof.
     + econstructor. unfold env_subst_var. hauto lq: on use:eqb_neq. sfirstorder.
     + intros. cbn in *. edestruct (H2 x); eauto.
       intros x2 e. rewrite <- e in *. exists x1. unfold env_subst_var. hauto b: on use:eqb_neq.
-  - edestruct IHEnvTyped1. hauto l:on.
-    edestruct IHEnvTyped2. hauto l:on.
-    sauto q: on.
-  - edestruct IHEnvTyped1. hauto l:on.
-    edestruct IHEnvTyped2. hauto l:on.
-    scrush.
+  - edestruct IHEnvTyped1. { intro C. apply H. left. eassumption. }
+    edestruct IHEnvTyped2. { intro C. apply H. right. eassumption. }
+    clear IHEnvTyped1 IHEnvTyped2.
+    split. { constructor; eassumption. } cbn in *. intros.
+    destruct H5 as [Hx0 | Hx0]; [eapply H1 | eapply H3]; try assumption;
+    intros x' Hx'; apply H4; [left | right]; assumption.
+  - edestruct IHEnvTyped1. { intro C. apply H0. left. eassumption. }
+    edestruct IHEnvTyped2. { intro C. apply H0. right. eassumption. }
+    clear IHEnvTyped1 IHEnvTyped2.
+    split. { constructor; try eassumption. destruct H; [left | right]; sfirstorder. }
+    cbn in *. intros. destruct H6 as [Hx0 | Hx0]; [eapply H2 | eapply H4]; try assumption;
+    intros x' Hx'; apply H5; [left | right]; assumption.
 Qed.
 
 Theorem env_subst_var_typed : forall G Gx Gy x y s eta,
@@ -839,12 +844,17 @@ Theorem starcaseenvtyped3 : forall G Gz Gxxs x xs z p s r n,
   EnvTyped
     (env_union n (env_union (singleton_env x p) (singleton_env xs PfxStarEmp))) Gxxs.
 Proof.
-intros.
-eapply (env_subctx_bind' G (CtxHasTy z r)); [eauto | eauto | | eauto | | split ].
-{ eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H7; scongruence. }
-{ eapply env_typed_semic. eapply DisjointSets_inj. intros. eapply dom_singleton in H7. sinvert H7. intro. eapply dom_singleton in H7. best. best. best. left. intro. cbn. best use:eqb_refl. }
-{ intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
-{ intro. intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarFirst p = p0). sinvert B. }
+  intros. eapply (env_subctx_bind' G (CtxHasTy z r)); [eauto | eauto | | eauto | | split].
+  - eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00.
+    eapply dom_union in H00. destruct H00; eapply dom_singleton in H7; scongruence.
+  - eapply env_typed_semic.
+    + eapply DisjointSets_inj. intros. eapply dom_singleton in H7. cbn in H7. subst.
+      intros [c C]. cbn in *. apply eqb_neq in H. rewrite eqb_sym in H. rewrite H in C. discriminate C.
+    + apply env_typed_singleton. assumption.
+    + apply env_typed_singleton. constructor.
+    + left. cbn. intros ? ->. rewrite eqb_refl. eexists. split. { reflexivity. } constructor.
+  - intros. specialize (H7 _ eq_refl) as [p' [Hp'1 Hp'2]]. rewrite H2 in Hp'1. sinvert Hp'1. sinvert Hp'2.
+  - intros _ He. specialize (He _ eq_refl) as [p' [Hp'1 Hp'2]]. rewrite H2 in Hp'1. sinvert Hp'1. sinvert Hp'2.
 Qed.
 
 Theorem starcaseenvtyped4 : forall G Gz Gxxs x xs z p p' s r n,
@@ -861,10 +871,19 @@ Theorem starcaseenvtyped4 : forall G Gz Gxxs x xs z p p' s r n,
   EnvTyped
     (env_union n (env_union (singleton_env x p) (singleton_env xs p'))) Gxxs.
 Proof.
-intros.
-eapply (env_subctx_bind' G (CtxHasTy z r)); [eauto | eauto | | eauto | | split ].
-{ eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00. destruct H00; eapply dom_singleton in H9; scongruence. }
-{ eapply env_typed_semic. eapply DisjointSets_inj. intros. eapply dom_singleton in H9. sinvert H9. intro. eapply dom_singleton in H9. best. best. best. right. intro. cbn. best use:eqb_refl. }
-{ intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarRest p p' = p0). sinvert B. eapply prop_on_set_union. split. exists p. sauto use:eqb_neq,eqb_refl. exists p'. hauto q: on use:eqb_refl. }
-{ intro. intro H00. edestruct (H00 z) as [p0 [A B]]. sfirstorder. destruct (ltac:(scongruence) : PfxStarRest p p' = p0). sinvert B. }
+  intros. eapply (env_subctx_bind' G (CtxHasTy z r)); [eauto | eauto | | eauto | | split].
+  - eapply no_conflict_on_disjoint. right. eapply DisjointSets_inj. intros x0 H00. eapply dom_union in H00.
+    destruct H00 as [Hs | Hs]; apply dom_singleton in Hs; cbn in Hs; subst; assumption.
+  - eapply env_typed_semic.
+    + eapply DisjointSets_inj. intros. eapply dom_singleton in H9. cbn in H9. subst.
+      intros [c C]. cbn in *. apply eqb_neq in H. rewrite eqb_sym in H. rewrite H in C. discriminate C.
+    + apply env_typed_singleton. assumption.
+    + apply env_typed_singleton. assumption.
+    + right. cbn. intros ? ->. rewrite eqb_refl. eexists. split. { reflexivity. } assumption.
+  - intros. specialize (H9 _ eq_refl) as [y [Hy1 Hy2]]. rewrite H2 in Hy1.
+    sinvert Hy1. sinvert Hy2. eapply prop_on_set_union. split; cbn; intros ? ->.
+    + apply eqb_neq in H. rewrite eqb_sym in H. rewrite H. rewrite eqb_refl.
+      eexists. split. { reflexivity. } assumption.
+    + rewrite eqb_refl. eexists. split. { reflexivity. } assumption.
+  - intros _ He. specialize (He _ eq_refl) as [y [Hy1 Hy2]]. rewrite H2 in Hy1. sinvert Hy1. sinvert Hy2.
 Qed.

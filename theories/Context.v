@@ -79,11 +79,11 @@ Theorem ctx_subst_exists : forall x y g, fv g y -> exists g', CtxSubst x y g g'.
 Proof.
 intros.
 generalize dependent x. generalize dependent y.
-induction g; intros.
-- best.
+induction g; cbn in *; intros.
+- destruct H.
+- subst. eexists. constructor.
 - sauto lq: on.
-- sauto q: on.
-- sauto q: on.
+- sauto lq: on.
 Qed.
 
 Theorem ctx_subst_not_exists : forall y g,
@@ -111,24 +111,24 @@ Proof.
   intros.
   generalize dependent g''.
   generalize dependent H.
-  induction H0; intros H; sinvert H; intros.
-  - best.
-  - sinvert H1;[sfirstorder|].
-    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
-    assert (~fv d y) by sfirstorder.
-    hauto q: on use:ctx_subst_not_exists.
-  - sinvert H1;[|sfirstorder].
-    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
-    assert (~fv d y) by sfirstorder.
-    hauto q: on use:ctx_subst_not_exists.
-  - sinvert H1;[sfirstorder|].
-    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
-    assert (~fv d y) by sfirstorder.
-    hauto q: on use:ctx_subst_not_exists.
-  - sinvert H1;[|sfirstorder].
-    assert (fv g y) by sfirstorder use:ctx_subst_found_fv.
-    assert (~fv d y) by sfirstorder.
-    hauto q: on use:ctx_subst_not_exists.
+  induction H0; intros H; sinvert H; cbn in *; intros.
+  - sinvert H1. reflexivity.
+  - sinvert H1. { f_equal. apply IHCtxSubst; assumption. }
+    apply ctx_subst_found_fv in H0.
+    apply ctx_subst_found_fv in H7.
+    sfirstorder.
+  - sinvert H1. 2: { f_equal. apply IHCtxSubst; assumption. }
+    apply ctx_subst_found_fv in H0.
+    apply ctx_subst_found_fv in H7.
+    sfirstorder.
+  - sinvert H1. { f_equal. apply IHCtxSubst; assumption. }
+    apply ctx_subst_found_fv in H0.
+    apply ctx_subst_found_fv in H7.
+    sfirstorder.
+  - sinvert H1. 2: { f_equal. apply IHCtxSubst; assumption. }
+    apply ctx_subst_found_fv in H0.
+    apply ctx_subst_found_fv in H7.
+    sfirstorder.
 Qed.
 
 Theorem ctx_subst_found_fv' : forall x y g g',

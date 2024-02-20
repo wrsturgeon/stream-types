@@ -67,30 +67,4 @@ Arguments subst_var_argsterm args x y.
 Theorem bv_var_subst :
   (forall e, forall x y, bv_term e = bv_term (subst_var e x y)) /\
   (forall e, forall x y, bv_argsterm e = bv_argsterm (subst_var_argsterm e x y)).
-Proof.
-  apply term_mutual.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-  - best.
-Qed.
+Proof. apply term_mutual; cbn in *; intros; hauto lq: on. Qed.

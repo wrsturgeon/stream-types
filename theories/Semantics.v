@@ -166,39 +166,4 @@ Combined Scheme Step_mutual from Step_ind', ArgsStep_ind'.
 Theorem step_bv :
       (forall eta e e' p, Step eta e e' p -> forall x, bv_term e' x -> bv_term e x) /\
       (forall eta g e e' g' eta', ArgsStep eta g e e' g' eta' -> forall x, bv_argsterm e' x -> bv_argsterm e x).
-Proof.
-apply Step_mutual; intros.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- cbn. cbn in H0. hauto q: on use:bv_sinktm, bv_var_subst.
-- best.
-- best.
-- best.
-- best.
-- best use:bv_var_subst.
-- best use:bv_var_subst.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-- hauto q: on use:bv_sinktm, bv_var_subst.
-- best.
-- best.
-- best use:bv_sinktm.
-- best.
-- best use:bv_histval_subst.
-- best.
-- best.
-- best.
-- best.
-- best.
-- best.
-Qed.
+Proof. apply Step_mutual; hauto q: on use: bv_sinktm, bv_var_subst, bv_histval_subst. Qed.

@@ -125,24 +125,24 @@ Theorem subctx_deriv : forall eta g1 g2 g1' g2',
   ContextDerivative eta g2 g2' ->
   Subcontext g1' g2'.
 Proof.
-intros.
-generalize dependent g1'.
-generalize dependent g2'.
-dependent induction H; intros.
-- edestruct (fill_derivative eta g d) as [dg [d_d [A [B [C D]]]]]; eauto.
-  edestruct (fill_derivative eta g d') as [dg2 [d_d' [A' [B' [C' D']]]]]; eauto.
-  assert (H00 : dg2 = dg) by sfirstorder use:hole_derivative_det.
-  rewrite <- H00 in *.
-  edestruct (D d' d_d' gd' eta); eauto.
-- sauto lq:on use:context_derivative_det.
-- sauto lq: on rew: off.
-- sinvert H1; sinvert H0. sauto lq: on use:context_derivative_det.
-- sinvert H0. sauto lq: on use:context_derivative_det.
-- sinvert H0. sauto lq: on use:context_derivative_det.
-- sinvert H0. sauto lq: on use:context_derivative_det.
-- sinvert H1. sinvert H6. destruct (ltac:(best use:context_derivative_det) : G' = g1'). sfirstorder.
-- sinvert H1. sinvert H6. destruct (ltac:(best use:context_derivative_det) : G' = g1'). sfirstorder.
-- sinvert H1. sinvert H4. destruct (ltac:(best use:context_derivative_det) : D' = g1'). sfirstorder.
+  intros.
+  generalize dependent g1'.
+  generalize dependent g2'.
+  dependent induction H; intros.
+  - edestruct (fill_derivative eta g d) as [dg [d_d [A [B [C D]]]]]; eauto.
+    edestruct (fill_derivative eta g d') as [dg2 [d_d' [A' [B' [C' D']]]]]; eauto.
+    assert (H00 : dg2 = dg) by sfirstorder use:hole_derivative_det.
+    rewrite <- H00 in *.
+    edestruct (D d' d_d' gd' eta); eauto.
+  - sauto lq:on use:context_derivative_det.
+  - sauto lq: on rew: off.
+  - sinvert H1; sinvert H0. sauto lq: on use:context_derivative_det.
+  - sinvert H0. sauto lq: on use:context_derivative_det.
+  - sinvert H0. sauto lq: on use:context_derivative_det.
+  - sinvert H0. sauto lq: on use:context_derivative_det.
+  - sinvert H1. sinvert H6. assert (A := context_derivative_det _ _ _ _ H0 H4). subst. constructor.
+  - sinvert H1. sinvert H6. assert (A := context_derivative_det _ _ _ _ H0 H4). subst. constructor.
+  - sinvert H1. sinvert H4. assert (A := context_derivative_det _ _ _ _ H0 H6). subst. constructor.
 Qed.
 
 Theorem subcontext_ctxsubst : forall G G' G0 x y,
@@ -156,29 +156,27 @@ intros.
   dependent induction H0; intros.
   - edestruct (ctx_subst_fill_arb g d) as [[G' [A [B C]]] | [d'' [A [B C]]]]. eauto. eauto.
     + edestruct (C d' gd') as [g'd' [U V]]; eauto.
-    + edestruct IHSubcontext as [[d'0 [A' B']] | [A' B']]. best use:wf_fill. eauto.
-      * edestruct (C d') as [gd'0 [U V]]; eauto. 
-      *  right. split. { eapply SubCong. eauto. eauto. eauto. } { intro. eapply B'. assert (H00 : fv g y \/ fv d' y) by sfirstorder use: (fv_fill' g). edestruct H00;[|sfirstorder]. assert (fv d y) by sfirstorder use:ctx_subst_found_fv. assert (~fv g y) by qauto l: on use:wf_fill_reflect'. sfirstorder. }
-  - best.
-  - sinvert H1. best.
-  - sinvert H.
-    sinvert H1.
-    + left. best.
-    + best.
+    + edestruct IHSubcontext as [[d'0 [A' B']] | [A' B']];
+      [sfirstorder | eassumption | edestruct C; sfirstorder |].
+      right. split.
+      * econstructor; eassumption.
+      * intro C'. apply B'. apply fv_fill in H0. cbn in H0. apply H0 in C'.
+        destruct C'. { assumption. } apply ctx_subst_found_fv in A.
+        assert (C' : ~fv g y). { eapply wf_fill_reflect'; [| eassumption |]; eassumption. }
+        contradiction C'.
+  - left. eexists. split. { eassumption. } constructor.
+  - sinvert H1. sfirstorder.
+  - left. sinvert H. sinvert H1; eexists; (split; [| apply SubCommaExc]); constructor; assumption.
   - sinvert H. sinvert H1.
-    + left. best.
-    + right. split. best. hauto q: on use:ctx_subst_found_fv.
-  - sinvert H; sinvert H1.
-    + left. best.
-    + right. split. best. hauto q: on use:ctx_subst_found_fv.
+    + left. eexists. split. { eassumption. } constructor.
+    + right. split. { constructor. } apply H5. eapply ctx_subst_found_fv. eassumption.
   - sinvert H. sinvert H1.
-    + right. hauto l: on use:ctx_subst_found_fv.
-    + left. sfirstorder.
-  - best.
-  - best.
-  - best.
+    + left. eexists. split. { eassumption. } constructor.
+    + right. split. { constructor. } apply H5. eapply ctx_subst_found_fv. eassumption.
+  - sinvert H. sinvert H1.
+    + right. split. { constructor. } apply H5. eapply ctx_subst_found_fv. eassumption.
+    + left. eexists. split. { eassumption. } constructor.
+  - left. eexists. split. { constructor. eassumption. } constructor.
+  - left. eexists. split. { constructor. eassumption. } constructor.
+  - left. eexists. split. { apply CSSemic2. eassumption. } constructor.
 Qed.
-
-  (* G <= G'
-  ->
-  G[x/y] <: G'[x/y] *)

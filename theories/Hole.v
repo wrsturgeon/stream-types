@@ -259,7 +259,7 @@ Theorem wf_fill_reflect' : forall h d hd,
   Fill h d hd ->
   WFContext hd -> (WFHole h /\ WFContext d /\ DisjointSets (fv h) (fv d)).
 Proof.
-best use:wf_fill_reflect.
+  hauto l: on.
 Qed.
 Hint Resolve wf_fill_reflect : core.
 
@@ -536,13 +536,12 @@ Proof.
   generalize dependent x.
   generalize dependent y.
   induction H; intros.
-  - best.
+  - sauto lq: on.
   - sinvert H0; sauto lq: on.
   - sinvert H0; sauto lq: on.
   - sinvert H0; sauto lq: on.
   - sinvert H0; sauto lq: on.
 Qed.
-
 
 Theorem hole_subst_found_fv : forall x y h h',
   HoleSubst x y h h' ->
